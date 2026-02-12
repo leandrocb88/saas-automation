@@ -1,0 +1,16 @@
+.git
+.env
+.env.example
+node_modules
+vendor
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/logs/*
+tests
+phpunit.xml
+README.md
+.idea
+.vscode
+.DS_Store
