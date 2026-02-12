@@ -12,15 +12,15 @@ RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy composer files first (for better caching)
-COPY --chown=webuser:webgroup composer.json composer.lock ./
+COPY --chown=www-data:www-data composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
 # Copy package files and install node dependencies
-COPY --chown=webuser:webgroup package.json package-lock.json ./
+COPY --chown=www-data:www-data package.json package-lock.json ./
 RUN npm ci --legacy-peer-deps
 
 # Copy the rest of the application
-COPY --chown=webuser:webgroup . .
+COPY --chown=www-data:www-data . .
 
 # Build assets and run Laravel optimizations
 RUN npm run build && \
@@ -31,4 +31,4 @@ RUN npm run build && \
 RUN chmod -R 775 storage bootstrap/cache
 
 # Switch back to the non-root user for security
-USER webuser
+USER www-data
