@@ -16,20 +16,20 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // YouTube Test User
-        User::factory()->create([
+        User::create([
             'name' => 'YouTube User',
             'email' => 'youtube@test.com',
             'service_type' => 'youtube',
-            'password' => 'password',
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
             'is_admin' => true,
         ]);
 
         // Zillow Test User
-        User::factory()->create([
+        User::create([
             'name' => 'Zillow User',
             'email' => 'zillow@test.com',
             'service_type' => 'zillow',
-            'password' => 'password',
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
         ]);
     }
 }
