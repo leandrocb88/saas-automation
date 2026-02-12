@@ -11,20 +11,25 @@ class AdminController extends Controller
 {
     public function index()
     {
-        // 1. Stats
-        $totalUsers = User::count();
-        $totalCreditsConsumed = User::sum('usage_ai_summary') + User::sum('usage_video_fetch'); // Assuming 1 credit = 1 fetch/summary
-        // Actually, let's just sum daily_usage if it tracks total? No, daily resets.
-        // Let's rely on usage columns.
-        
-        $totalVideosProcessed = Video::count();
-        $recentUsers = User::latest()->take(5)->get();
+        $host = request()->getHost();
+        $service = str_contains($host, 'zillow') ? 'zillow' : 'youtube';
 
-        // 2. Users Pagination
-        $users = User::withCount('channels')->latest()->paginate(20);
+        // 1. Stats filtered by service
+        $totalUsers = User::where('service_type', $service)->count();
+        $totalCreditsConsumed = User::where('service_type', $service)->sum('daily_usage'); // Using daily_usage as a proxy for activity
+        
+        $totalVideosProcessed = ($service === 'youtube') ? Video::count() : 0;
+        $recentUsers = User::where('service_type', $service)->latest()->take(5)->get();
+
+        // 2. Users Pagination filtered by service
+        $users = User::where('service_type', $service)
+            ->withCount('channels')
+            ->latest()
+            ->paginate(20);
 
         return Inertia::render('Admin/Dashboard', [
             'stats' => [
+                'service' => ucfirst($service),
                 'totalUsers' => $totalUsers,
                 'totalCreditsConsumed' => $totalCreditsConsumed,
                 'totalVideosProcessed' => $totalVideosProcessed,

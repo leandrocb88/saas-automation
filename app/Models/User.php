@@ -27,6 +27,9 @@ class User extends Authenticatable
         'trial_ends_at',
         'is_admin',
         'is_blocked',
+        'service_type',
+        'daily_usage',
+        'last_quota_reset',
     ];
 
     /**

@@ -16,7 +16,12 @@ class AdminMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->user() && $request->user()->isAdmin()) {
-            return $next($request);
+            $host = $request->getHost();
+            $service = str_contains($host, 'zillow') ? 'zillow' : 'youtube';
+            
+            if ($request->user()->service_type === $service) {
+                return $next($request);
+            }
         }
 
         abort(403, 'Unauthorized access.');
