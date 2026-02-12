@@ -1,7 +1,14 @@
-FROM serversideup/php:8.2-fpm-nginx
+FROM serversideup/php:8.4-fpm-nginx
 
 # Switch to root to perform installations and file copying
 USER root
+
+# Install dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    php8.4-bcmath \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js for frontend build
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - \
