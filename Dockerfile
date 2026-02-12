@@ -4,30 +4,31 @@ FROM serversideup/php:8.4-fpm-nginx
 USER root
 
 # Install dependencies
-RUN install-php-extensions bcmath
+RUN install-php-extensions bcmath gd zip intl
 
 # Install Node.js for frontend build
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
+    && apt-get update && apt-get install -y nodejs \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /var/www/html
-
-# Copy composer files and install dependencies
-COPY composer.json composer.lock ./
+# Copy composer files first (for better caching)
+COPY --chown=webuser:webgroup composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
 # Copy package files and install node dependencies
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY --chown=webuser:webgroup package.json package-lock.json ./
+RUN npm ci --legacy-peer-deps
 
-# Copy the rest of the application source code
-COPY . .
+# Copy the rest of the application
+COPY --chown=webuser:webgroup . .
 
-# Build frontend assets
-RUN npm run build
+# Build assets and run Laravel optimizations
+RUN npm run build && \
+    php artisan storage:link && \
+    php artisan view:cache
 
-# Fix permissions for the webuser (standard user in serversideup images)
-RUN chown -R webuser:webgroup /var/www/html
+# Set permissions for storage and cache
+RUN chmod -R 775 storage bootstrap/cache
 
 # Switch back to the non-root user for security
 USER webuser
