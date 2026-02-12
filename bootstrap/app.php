@@ -25,7 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'not.blocked' => \App\Http\Middleware\EnsureUserIsNotBlocked::class,
         ]);
 
-        //
+        if (!app()->isLocal()) {
+            $middleware->trustProxies(at: '*');
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
