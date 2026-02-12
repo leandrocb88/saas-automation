@@ -16,21 +16,24 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // YouTube Admin User
-        User::create([
-            'name' => 'YouTube Admin',
-            'email' => 'youtube@admin.com',
-            'service_type' => 'youtube',
-            'password' => \Illuminate\Support\Facades\Hash::make('password'),
-            'is_admin' => true,
-        ]);
+        // YouTube Admin User
+        User::firstOrCreate(
+            ['email' => 'youtube@admin.com', 'service_type' => 'youtube'],
+            [
+                'name' => 'YouTube Admin',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'is_admin' => true,
+            ]
+        );
 
         // Zillow Admin User
-        User::create([
-            'name' => 'Zillow Admin',
-            'email' => 'zillow@admin.com',
-            'service_type' => 'zillow',
-            'password' => \Illuminate\Support\Facades\Hash::make('password'),
-            'is_admin' => true,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'zillow@admin.com', 'service_type' => 'zillow'],
+            [
+                'name' => 'Zillow Admin',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'is_admin' => true,
+            ]
+        );
     }
 }
