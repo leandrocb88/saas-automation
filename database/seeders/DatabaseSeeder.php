@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'youtube@test.com',
             'service_type' => 'youtube',
             'password' => 'password',
+            'is_admin' => true,
         ]);
 
         // Zillow Test User

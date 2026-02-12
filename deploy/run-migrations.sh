@@ -10,4 +10,10 @@ fi
 if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Running migrations..."
     php artisan migrate --force
+    
+    # Optional seeding
+    if [ "$RUN_SEEDER" = "true" ]; then
+        echo "Running seeders..."
+        php artisan db:seed --force
+    fi
 fi
