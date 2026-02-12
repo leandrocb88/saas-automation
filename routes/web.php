@@ -10,11 +10,17 @@ use App\Services\QuotaManager;
 Route::middleware('web')->group(function () {
     $host = request()->getHost();
 
-    if (str_contains($host, 'youtube') || app()->runningInConsole()) {
+    // Zillow Domain Logic
+    if (str_contains($host, 'zillow')) {
+        Route::get('/', [App\Http\Controllers\ZillowController::class, 'index'])->name('zillow.home');
+        Route::post('/process', [App\Http\Controllers\ZillowController::class, 'process'])->name('zillow.process');
+    }
+    // Default / YouTube Domain Logic (including Railway)
+    else {
         Route::get('/', [App\Http\Controllers\YouTubeController::class, 'index'])->name('youtube.home');
         Route::get('/process', function () { return redirect()->route('youtube.home'); });
         Route::post('/process', [App\Http\Controllers\YouTubeController::class, 'process'])->name('youtube.process');
-        
+
         Route::get('/history', [App\Http\Controllers\YouTubeController::class, 'history'])->name('youtube.history');
         Route::delete('/history', [App\Http\Controllers\YouTubeController::class, 'clearHistory'])->name('youtube.clear');
         Route::get('/history/{video}', [App\Http\Controllers\YouTubeController::class, 'show'])->name('youtube.show');
@@ -24,8 +30,6 @@ Route::middleware('web')->group(function () {
         Route::get('/channels', [App\Http\Controllers\YouTubeController::class, 'channel'])->name('youtube.channel');
         Route::post('/channels/process', [App\Http\Controllers\YouTubeController::class, 'processChannel'])->name('youtube.channel.process');
 
-
-
         Route::middleware(['auth', 'not.blocked'])->group(function() {
             Route::get('/subscriptions', [App\Http\Controllers\YouTubeController::class, 'subscriptions'])->name('youtube.subscriptions');
             Route::post('/subscriptions', [App\Http\Controllers\YouTubeController::class, 'storeSubscription'])->name('youtube.subscriptions.store');
@@ -33,24 +37,17 @@ Route::middleware('web')->group(function () {
             Route::post('/schedule', [App\Http\Controllers\YouTubeController::class, 'updateSchedule'])->name('youtube.schedule.update');
             Route::get('/digest', [App\Http\Controllers\YouTubeController::class, 'digest'])->name('youtube.digest');
             Route::get('/digest/{token}', [App\Http\Controllers\YouTubeController::class, 'showDigestRun'])->name('youtube.digest.show');
-
         });
-    }
-    // Zillow Domain Logic
-    elseif (str_contains($host, 'zillow')) {
-        Route::get('/', [App\Http\Controllers\ZillowController::class, 'index'])->name('zillow.home');
-        Route::post('/process', [App\Http\Controllers\ZillowController::class, 'process'])->name('zillow.process');
-    }
-    // Default / Dashboard Domain Logic
-    else {
-        Route::get('/', function () {
+
+        // Keep Welcome page accessible at /welcome if desired
+        Route::get('/welcome', function () {
             return Inertia::render('Welcome', [
                 'canLogin' => Route::has('login'),
                 'canRegister' => Route::has('register'),
                 'laravelVersion' => Application::VERSION,
                 'phpVersion' => PHP_VERSION,
             ]);
-        });
+        })->name('welcome');
     }
 
     Route::get('/plans', function () {
