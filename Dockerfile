@@ -4,7 +4,7 @@ FROM serversideup/php:8.4-fpm-nginx
 USER root
 
 # Install dependencies
-RUN install-php-extensions bcmath gd zip intl
+RUN install-php-extensions bcmath gd zip intl pdo_mysql pdo_pgsql
 
 # Install Node.js for frontend build
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - \
@@ -31,8 +31,8 @@ RUN npm run build && \
     php artisan storage:link && \
     php artisan view:cache
 
-# Set permissions for storage and cache
-RUN chmod -R 775 storage bootstrap/cache
+# Set permissions for storage, cache, and database
+RUN chmod -R 775 storage bootstrap/cache database
 
 # Switch back to the non-root user for security
 USER www-data
