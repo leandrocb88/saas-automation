@@ -1,11 +1,11 @@
 FROM serversideup/php:8.2-fpm-nginx
 
+# Switch to root to perform installations and file copying
+USER root
+
 # Install Node.js for frontend build
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
-
-# Switch to root to perform installations and file copying
-USER root
 
 WORKDIR /var/www/html
 
