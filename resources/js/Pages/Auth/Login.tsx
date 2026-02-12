@@ -10,9 +10,11 @@ import { FormEventHandler } from 'react';
 export default function Login({
     status,
     canResetPassword,
+    settings,
 }: {
     status?: string;
     canResetPassword: boolean;
+    settings?: { sign_up_enabled: boolean; admin_only_access: boolean };
 }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
@@ -133,13 +135,17 @@ export default function Login({
                             </Link>
 
                             <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                Don't have an account?{' '}
-                                <Link
-                                    href={route('register')}
-                                    className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-                                >
-                                    Sign up
-                                </Link>
+                                {settings?.sign_up_enabled !== false && !settings?.admin_only_access && (
+                                    <>
+                                        Don't have an account?{' '}
+                                        <Link
+                                            href={route('register')}
+                                            className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                        >
+                                            Sign up
+                                        </Link>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}

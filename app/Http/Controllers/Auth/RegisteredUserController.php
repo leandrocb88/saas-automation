@@ -18,8 +18,15 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): Response
+    public function create()
     {
+        $signUpEnabled = \App\Models\Setting::where('key', 'sign_up_enabled')->value('value');
+        $adminOnly = \App\Models\Setting::where('key', 'admin_only_access')->value('value');
+
+        if ($signUpEnabled === 'false' || $adminOnly === 'true') {
+             return redirect()->route('login')->withErrors(['email' => 'New registrations are currently disabled.']);
+        }
+
         return Inertia::render('Auth/Register');
     }
 
@@ -30,6 +37,13 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $signUpEnabled = \App\Models\Setting::where('key', 'sign_up_enabled')->value('value');
+        $adminOnly = \App\Models\Setting::where('key', 'admin_only_access')->value('value');
+
+        if ($signUpEnabled === 'false' || $adminOnly === 'true') {
+             return back()->withErrors(['email' => 'New registrations are currently disabled.']);
+        }
+
         $host = $request->getHost();
         $service = str_contains($host, 'zillow') ? 'zillow' : 'youtube';
 

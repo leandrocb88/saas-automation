@@ -43,6 +43,7 @@ class YouTubeController extends Controller
         return Inertia::render('YouTube/Home');
     }
 
+
     public function channel(Request $request)
     {
         $user = $request->user();

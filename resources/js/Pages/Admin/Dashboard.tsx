@@ -1,11 +1,20 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { useState, FormEventHandler } from 'react';
+import Modal from '@/Components/Modal';
+import TextInput from '@/Components/TextInput';
+import InputLabel from '@/Components/InputLabel';
+import InputError from '@/Components/InputError';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import DangerButton from '@/Components/DangerButton';
 
 interface User {
     id: number;
     name: string;
     email: string;
     is_blocked: boolean;
+    is_admin: boolean;
     channels_count: number;
     created_at: string;
 }
@@ -20,19 +29,77 @@ interface PaginatedUsers {
 }
 
 interface Stats {
+    service: string;
     totalUsers: number;
     totalCreditsConsumed: number;
     totalVideosProcessed: number;
+    guestAccess: boolean;
+    signUpEnabled: boolean;
+    adminOnly: boolean;
 }
 
 export default function AdminDashboard({ auth, users, stats }: { auth: any, users: PaginatedUsers, stats: Stats }) {
+    const [isAddingUser, setIsAddingUser] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [confirmingUserDeletion, setConfirmingUserDeletion] = useState<number | null>(null);
+
+    const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
+        name: '',
+        email: '',
+        password: '',
+        is_admin: false,
+    });
+
+    const handleEditUser = (user: User) => {
+        setEditingUser(user);
+        setData({
+            name: user.name,
+            email: user.email,
+            password: '',
+            is_admin: (user as any).is_admin || false, // Assuming is_admin comes from backend, though type def above didn't have it. It should.
+        });
+        setIsAddingUser(true); // Reusing the modal for simplicity, or we can make a separate one. Let's make separate to be clean or just adapt the title.
+        // Actually adhering to the plan: "Add Edit User modal" implies a separate one or adapted one.
+        // Let's use a separate state `isEditingMode`? 
+    };
+
     const handleToggleBlock = (userId: number) => {
         router.post(route('admin.users.block', userId));
     };
 
+    const handleDeleteUser = (userId: number) => {
+        router.delete(route('admin.users.destroy', userId), {
+            onSuccess: () => setConfirmingUserDeletion(null),
+        });
+    };
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        if (editingUser) {
+            put(route('admin.users.update', editingUser.id), {
+                onSuccess: () => {
+                    closeModal();
+                },
+            });
+        } else {
+            post(route('admin.users.store'), {
+                onSuccess: () => {
+                    closeModal();
+                },
+            });
+        }
+    };
+
+    const closeModal = () => {
+        setIsAddingUser(false);
+        setEditingUser(null);
+        reset();
+        clearErrors();
+    };
+
     return (
         <AuthenticatedLayout>
-            <Head title="Admin Dashboard" />
+            <Head title={`${stats.service} Admin Dashboard`} />
 
             {/* Hero */}
             <div className="relative overflow-hidden">
@@ -48,10 +115,67 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
                                     <svg className="w-3 h-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
-                                    Admin Only
+                                    {stats.service} Admin Only
                                 </div>
-                                <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
+                                <h1 className="text-2xl font-bold text-white mb-2">{stats.service} Admin Dashboard</h1>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    {/* Guest Mode */}
+                                    <div className="flex items-center gap-2">
+                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.guestAccess ? 'bg-green-500/20 text-green-300 ring-1 ring-green-500/50' : 'bg-yellow-500/20 text-yellow-300 ring-1 ring-yellow-500/50'}`}>
+                                            Guest: {stats.guestAccess ? 'On' : 'Off'}
+                                        </div>
+                                        <button
+                                            onClick={() => router.post(route('admin.settings.guest_access'))}
+                                            className="text-xs hover:underline text-indigo-300"
+                                            title="Toggle Guest Access"
+                                        >
+                                            Toggle
+                                        </button>
+                                    </div>
+
+                                    <div className="w-px h-3 bg-white/20 mx-1"></div>
+
+                                    {/* Sign Ups */}
+                                    <div className="flex items-center gap-2">
+                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.signUpEnabled ? 'bg-green-500/20 text-green-300 ring-1 ring-green-500/50' : 'bg-red-500/20 text-red-300 ring-1 ring-red-500/50'}`}>
+                                            Sign-ups: {stats.signUpEnabled ? 'On' : 'Off'}
+                                        </div>
+                                        <button
+                                            onClick={() => router.post(route('admin.settings.sign_up'))}
+                                            className="text-xs hover:underline text-indigo-300"
+                                            title="Toggle New Sign-ups"
+                                        >
+                                            Toggle
+                                        </button>
+                                    </div>
+
+                                    <div className="w-px h-3 bg-white/20 mx-1"></div>
+
+                                    {/* Admin Only */}
+                                    <div className="flex items-center gap-2">
+                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.adminOnly ? 'bg-red-500/20 text-red-300 ring-1 ring-red-500/50' : 'bg-green-500/20 text-green-300 ring-1 ring-green-500/50'}`}>
+                                            Maintenance: {stats.adminOnly ? 'On' : 'Off'}
+                                        </div>
+                                        <button
+                                            onClick={() => router.post(route('admin.settings.admin_only'))}
+                                            className="text-xs hover:underline text-indigo-300"
+                                            title="Toggle Maintenance Mode (Admin Only Access)"
+                                        >
+                                            Toggle
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
+
+                            <button
+                                onClick={() => setIsAddingUser(true)}
+                                className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg shadow-indigo-500/20"
+                            >
+                                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Add New User
+                            </button>
                         </div>
 
                         {/* Stats Grid */}
@@ -113,7 +237,9 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
                                 <thead className="bg-gray-50/80 dark:bg-gray-700/50">
                                     <tr>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Channels</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usage</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Joined</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                         <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
@@ -133,8 +259,18 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
                                                     </div>
                                                 </div>
                                             </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.is_admin ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                                    {user.is_admin ? 'Admin' : 'User'}
+                                                </span>
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 font-medium">
                                                 {user.channels_count}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                    {(user as any).daily_usage || 0} credits
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {new Date(user.created_at).toLocaleDateString()}
@@ -146,16 +282,54 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                {user.id !== auth.user.id ? (
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {user.id !== auth.user.id && (
+                                                        <button
+                                                            onClick={() => handleToggleBlock(user.id)}
+                                                            className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${user.is_blocked ? 'text-green-700 bg-green-50 hover:bg-green-100 dark:text-green-300 dark:bg-green-900/20 dark:hover:bg-green-900/30 ring-1 ring-green-200 dark:ring-green-800' : 'text-red-700 bg-red-50 hover:bg-red-100 dark:text-red-300 dark:bg-red-900/20 dark:hover:bg-red-900/30 ring-1 ring-red-200 dark:ring-red-800'}`}
+                                                        >
+                                                            {user.is_blocked ? 'Unblock' : 'Block'}
+                                                        </button>
+                                                    )}
+
                                                     <button
-                                                        onClick={() => handleToggleBlock(user.id)}
-                                                        className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${user.is_blocked ? 'text-green-700 bg-green-50 hover:bg-green-100 dark:text-green-300 dark:bg-green-900/20 dark:hover:bg-green-900/30 ring-1 ring-green-200 dark:ring-green-800' : 'text-red-700 bg-red-50 hover:bg-red-100 dark:text-red-300 dark:bg-red-900/20 dark:hover:bg-red-900/30 ring-1 ring-red-200 dark:ring-red-800'}`}
+                                                        onClick={() => {
+                                                            setEditingUser(user);
+                                                            setData({
+                                                                name: user.name,
+                                                                email: user.email,
+                                                                password: '',
+                                                                is_admin: (user as any).is_admin || false,
+                                                            });
+                                                            setIsAddingUser(true);
+                                                        }}
+                                                        className="text-xs font-medium px-3 py-1.5 rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 ring-1 ring-gray-200 dark:ring-gray-700 transition-all"
                                                     >
-                                                        {user.is_blocked ? 'Unblock' : 'Block'}
+                                                        Edit
                                                     </button>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400 italic">You</span>
-                                                )}
+
+                                                    <button
+                                                        onClick={() => router.post(route('admin.users.reset_credits', user.id))}
+                                                        className="text-xs font-medium px-3 py-1.5 rounded-lg text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 ring-1 ring-indigo-200 dark:ring-indigo-800 transition-all"
+                                                        title="Reset Credits to 0"
+                                                    >
+                                                        Reset Credits
+                                                    </button>
+
+                                                    {user.id !== auth.user.id ? (
+                                                        <button
+                                                            onClick={() => setConfirmingUserDeletion(user.id)}
+                                                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                                                            title="Delete User"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400 italic ml-2">You</span>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -180,6 +354,99 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
                     </div>
                 </div>
             </div>
+
+            {/* Add User Modal */}
+            <Modal show={isAddingUser} onClose={closeModal}>
+                <form onSubmit={submit} className="p-6">
+                    <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                        {editingUser ? 'Edit' : 'Add New'} {stats.service} User
+                    </h2>
+
+                    <div className="mt-6">
+                        <InputLabel htmlFor="name" value="Name" />
+                        <TextInput
+                            id="name"
+                            type="text"
+                            name="name"
+                            value={data.name}
+                            className="mt-1 block w-full"
+                            isFocused
+                            onChange={(e) => setData('name', e.target.value)}
+                            required
+                        />
+                        <InputError message={errors.name} className="mt-2" />
+                    </div>
+
+                    <div className="mt-4">
+                        <InputLabel htmlFor="email" value="Email" />
+                        <TextInput
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={data.email}
+                            className="mt-1 block w-full"
+                            onChange={(e) => setData('email', e.target.value)}
+                            required
+                        />
+                        <InputError message={errors.email} className="mt-2" />
+                    </div>
+
+                    <div className="mt-4">
+                        <InputLabel htmlFor="password" value="Password" />
+                        <TextInput
+                            id="password"
+                            type="password"
+                            name="password"
+                            value={data.password}
+                            className="mt-1 block w-full"
+                            onChange={(e) => setData('password', e.target.value)}
+                            required={!editingUser}
+                        />
+                        <InputError message={errors.password} className="mt-2" />
+                    </div>
+
+                    <div className="mt-4 flex items-center">
+                        <label className="flex items-center">
+                            <input
+                                type="checkbox"
+                                name="is_admin"
+                                checked={data.is_admin}
+                                onChange={(e) => setData('is_admin', e.target.checked)}
+                                className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                            />
+                            <span className="ms-2 text-sm text-gray-600 dark:text-gray-400">Is Admin</span>
+                        </label>
+                    </div>
+
+                    <div className="mt-6 flex justify-end">
+                        <SecondaryButton onClick={closeModal}>Cancel</SecondaryButton>
+                        <PrimaryButton className="ms-3" disabled={processing}>
+                            {editingUser ? 'Update User' : 'Create User'}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal show={!!confirmingUserDeletion} onClose={() => setConfirmingUserDeletion(null)}>
+                <div className="p-6">
+                    <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                        Are you sure you want to delete this user?
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        Once this account is deleted, all of its resources and data will be permanently deleted.
+                    </p>
+                    <div className="mt-6 flex justify-end">
+                        <SecondaryButton onClick={() => setConfirmingUserDeletion(null)}>Cancel</SecondaryButton>
+                        <DangerButton
+                            className="ms-3"
+                            onClick={() => confirmingUserDeletion && handleDeleteUser(confirmingUserDeletion)}
+                        >
+                            Delete Account
+                        </DangerButton>
+                    </div>
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }

@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'not.blocked' => \App\Http\Middleware\EnsureUserIsNotBlocked::class,
+            'guest.access' => \App\Http\Middleware\EnsureGuestAccessEnabled::class,
         ]);
 
         if (env('APP_ENV') !== 'local') {

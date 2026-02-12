@@ -33,6 +33,16 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Admin Only Check
+        $adminOnly = \App\Models\Setting::where('key', 'admin_only_access')->value('value');
+        if ($adminOnly === 'true' && !$request->user()->is_admin) {
+             Auth::guard('web')->logout();
+             $request->session()->invalidate();
+             $request->session()->regenerateToken();
+             
+             return back()->withErrors(['email' => 'Maintenance Mode: Access is currently restricted to administrators only.']);
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

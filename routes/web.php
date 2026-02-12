@@ -19,16 +19,16 @@ Route::middleware('web')->group(function () {
     else {
         Route::get('/', [App\Http\Controllers\YouTubeController::class, 'index'])->name('youtube.home');
         Route::get('/process', function () { return redirect()->route('youtube.home'); });
-        Route::post('/process', [App\Http\Controllers\YouTubeController::class, 'process'])->name('youtube.process');
-
-        Route::get('/history', [App\Http\Controllers\YouTubeController::class, 'history'])->name('youtube.history');
-        Route::delete('/history', [App\Http\Controllers\YouTubeController::class, 'clearHistory'])->name('youtube.clear');
-        Route::get('/history/{video}', [App\Http\Controllers\YouTubeController::class, 'show'])->name('youtube.show');
-        Route::delete('/history/{video}', [App\Http\Controllers\YouTubeController::class, 'destroy'])->name('youtube.destroy');
-        Route::post('/summary/{video}', [App\Http\Controllers\YouTubeController::class, 'generateSummary'])->name('youtube.summary.generate');
-
-        Route::get('/channels', [App\Http\Controllers\YouTubeController::class, 'channel'])->name('youtube.channel');
-        Route::post('/channels/process', [App\Http\Controllers\YouTubeController::class, 'processChannel'])->name('youtube.channel.process');
+        Route::middleware(['guest.access'])->group(function() {
+            Route::post('/process', [App\Http\Controllers\YouTubeController::class, 'process'])->name('youtube.process');
+            Route::post('/summary/{video}', [App\Http\Controllers\YouTubeController::class, 'generateSummary'])->name('youtube.summary.generate');
+            Route::get('/channels', [App\Http\Controllers\YouTubeController::class, 'channel'])->name('youtube.channel');
+            Route::post('/channels/process', [App\Http\Controllers\YouTubeController::class, 'processChannel'])->name('youtube.channel.process');
+            Route::get('/history', [App\Http\Controllers\YouTubeController::class, 'history'])->name('youtube.history');
+            Route::delete('/history/clear', [App\Http\Controllers\YouTubeController::class, 'clearHistory'])->name('youtube.clear');
+            Route::get('/video/{video}', [App\Http\Controllers\YouTubeController::class, 'show'])->name('youtube.show');
+            Route::delete('/video/{video}', [App\Http\Controllers\YouTubeController::class, 'destroy'])->name('youtube.destroy');
+        });
 
         Route::middleware(['auth', 'not.blocked'])->group(function() {
             Route::get('/subscriptions', [App\Http\Controllers\YouTubeController::class, 'subscriptions'])->name('youtube.subscriptions');
@@ -39,15 +39,10 @@ Route::middleware('web')->group(function () {
             Route::get('/digest/{token}', [App\Http\Controllers\YouTubeController::class, 'showDigestRun'])->name('youtube.digest.show');
         });
 
-        // Keep Welcome page accessible at /welcome if desired
+        // Redirect /welcome to /
         Route::get('/welcome', function () {
-            return Inertia::render('Welcome', [
-                'canLogin' => Route::has('login'),
-                'canRegister' => Route::has('register'),
-                'laravelVersion' => Application::VERSION,
-                'phpVersion' => PHP_VERSION,
-            ]);
-        })->name('welcome');
+            return redirect()->route('youtube.home');
+        });
     }
 
     Route::get('/plans', function () {
@@ -187,5 +182,12 @@ require __DIR__.'/auth.php';
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::post('/admin/users', [AdminController::class, 'store'])->name('admin.users.store');
     Route::post('/admin/users/{user}/block', [AdminController::class, 'toggleBlock'])->name('admin.users.block');
+    Route::post('/admin/users/{user}/reset-credits', [AdminController::class, 'resetCredits'])->name('admin.users.reset_credits');
+    Route::put('/admin/users/{user}', [AdminController::class, 'update'])->name('admin.users.update');
+    Route::delete('/admin/users/{user}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
+    Route::post('/admin/settings/guest-access', [AdminController::class, 'toggleGuestAccess'])->name('admin.settings.guest_access');
+    Route::post('/admin/settings/sign-up', [AdminController::class, 'toggleRegistration'])->name('admin.settings.sign_up');
+    Route::post('/admin/settings/admin-only', [AdminController::class, 'toggleAdminOnly'])->name('admin.settings.admin_only');
 });

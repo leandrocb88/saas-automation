@@ -4,6 +4,7 @@ import './bootstrap';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot, hydrateRoot } from 'react-dom/client';
+import { route } from '../../vendor/tightenco/ziggy';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -15,6 +16,12 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.tsx'),
         ),
     setup({ el, App, props }) {
+        /* eslint-disable */
+        // @ts-expect-error
+        window.route = (name, params, absolute) =>
+            route(name, params, absolute, props.initialPage.props.ziggy);
+        /* eslint-enable */
+
         if (import.meta.env.SSR) {
             hydrateRoot(el, <App {...props} />);
             return;

@@ -114,14 +114,19 @@ class HandleInertiaRequests extends Middleware
                     ]
                 ] : null,
             ],
+            'settings' => [
+                'sign_up_enabled' => \App\Models\Setting::where('key', 'sign_up_enabled')->value('value') !== 'false',
+                'admin_only_access' => \App\Models\Setting::where('key', 'admin_only_access')->value('value') === 'true',
+            ],
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
             ],
-            'ziggy' => fn () => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(),
-            ],
+            'ziggy' => function () use ($request) {
+                return array_merge((new Ziggy)->toArray(), [
+                    'location' => $request->url(),
+                ]);
+            },
         ];
     }
 }

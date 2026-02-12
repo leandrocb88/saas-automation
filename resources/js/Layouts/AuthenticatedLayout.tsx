@@ -29,6 +29,13 @@ export default function Authenticated({
         };
     }
 
+    interface Settings {
+        sign_up_enabled: boolean;
+        admin_only_access: boolean;
+    }
+
+    const { settings } = usePage().props as unknown as { settings: Settings };
+
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
 
@@ -63,8 +70,8 @@ export default function Authenticated({
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
             <nav
                 className={`sticky top-0 z-50 border-b transition-colors duration-200 ${showingNavigationDropdown
-                        ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-                        : 'bg-white/80 backdrop-blur-xl border-gray-200/60 dark:bg-gray-800/80 dark:border-gray-700/60'
+                    ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                    : 'bg-white/80 backdrop-blur-xl border-gray-200/60 dark:bg-gray-800/80 dark:border-gray-700/60'
                     }`}
             >
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -179,10 +186,10 @@ export default function Authenticated({
                                                         <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
                                                             <div
                                                                 className={`h-full rounded-full transition-all ${(quota.remaining / quota.limit) * 100 > 50
-                                                                        ? 'bg-emerald-500'
-                                                                        : (quota.remaining / quota.limit) * 100 > 20
-                                                                            ? 'bg-amber-500'
-                                                                            : 'bg-red-500'
+                                                                    ? 'bg-emerald-500'
+                                                                    : (quota.remaining / quota.limit) * 100 > 20
+                                                                        ? 'bg-amber-500'
+                                                                        : 'bg-red-500'
                                                                     }`}
                                                                 style={{ width: `${Math.min(100, (quota.remaining / quota.limit) * 100)}%` }}
                                                             />
@@ -212,12 +219,14 @@ export default function Authenticated({
                                         >
                                             Log in
                                         </Link>
-                                        <Link
-                                            href={route('register')}
-                                            className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all"
-                                        >
-                                            Get Started
-                                        </Link>
+                                        {settings?.sign_up_enabled !== false && settings?.admin_only_access !== true && (
+                                            <Link
+                                                href={route('register')}
+                                                className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all"
+                                            >
+                                                Get Started
+                                            </Link>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -334,12 +343,14 @@ export default function Authenticated({
                                 >
                                     Log in
                                 </Link>
-                                <Link
-                                    href={route('register')}
-                                    className="block text-base font-medium text-gray-800 dark:text-gray-200"
-                                >
-                                    Register
-                                </Link>
+                                {settings?.sign_up_enabled !== false && settings?.admin_only_access !== true && (
+                                    <Link
+                                        href={route('register')}
+                                        className="block text-base font-medium text-gray-800 dark:text-gray-200"
+                                    >
+                                        Register
+                                    </Link>
+                                )}
                             </div>
                         )}
 

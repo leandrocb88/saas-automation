@@ -25,8 +25,13 @@ export type PageProps<
                 used: number;
                 limit: number;
                 remaining: number;
+                plan: string;
             };
         };
+    };
+    settings?: {
+        sign_up_enabled: boolean;
+        admin_only_access: boolean;
     };
     ziggy: Config & { location: string };
 };
