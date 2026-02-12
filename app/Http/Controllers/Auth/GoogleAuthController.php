@@ -22,9 +22,16 @@ class GoogleAuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
 
+            $signUpEnabled = \App\Models\Setting::where('key', 'sign_up_enabled')->value('value');
+            $adminOnly = \App\Models\Setting::where('key', 'admin_only_access')->value('value');
+
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if (!$user) {
+                if ($signUpEnabled === 'false' || $adminOnly === 'true') {
+                     return redirect()->route('login')->withErrors(['email' => 'New registrations are currently disabled.']);
+                }
+
                 // Determine service type based on domain/subdomain context if possible, 
                 // or default to first available service or generic.
                 // For now, we default to 'youtube' as it's the main app focus, 
@@ -40,6 +47,9 @@ class GoogleAuthController extends Controller
                     'service_type' => 'youtube', // Default
                 ]);
             } else {
+                if ($adminOnly === 'true' && !$user->is_admin) {
+                     return redirect()->route('login')->withErrors(['email' => 'Maintenance mode is active. Administrators only.']);
+                }
                 // Update Google ID if not set
                 if (!$user->google_id) {
                     $user->update([
