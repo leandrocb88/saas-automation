@@ -25,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'not.blocked' => \App\Http\Middleware\EnsureUserIsNotBlocked::class,
         ]);
 
-        if (!app()->isLocal()) {
+        if (env('APP_ENV') !== 'local') {
             $middleware->trustProxies(at: '*');
         }
     })
