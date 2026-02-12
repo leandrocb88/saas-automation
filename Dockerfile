@@ -22,6 +22,10 @@ RUN npm ci --legacy-peer-deps
 # Copy the rest of the application
 COPY --chown=www-data:www-data . .
 
+# Add automatic migration script
+COPY --chown=www-data:www-data deploy/run-migrations.sh /etc/entrypoint.d/run-migrations.sh
+RUN chmod +x /etc/entrypoint.d/run-migrations.sh
+
 # Build assets and run Laravel optimizations
 RUN npm run build && \
     php artisan storage:link && \
