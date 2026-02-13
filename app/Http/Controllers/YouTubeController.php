@@ -120,6 +120,17 @@ class YouTubeController extends Controller
         return back()->with('success', 'Schedule updated.');
     }
 
+    public function toggleSubscriptionStatus(Request $request, Channel $channel)
+    {
+        if ($request->user()->id !== $channel->user_id) abort(403);
+        
+        $channel->update([
+            'is_paused' => !$channel->is_paused
+        ]);
+
+        return back()->with('success', $channel->is_paused ? 'Channel paused.' : 'Channel resumed.');
+    }
+
     public function digest(Request $request)
     {
         $user = $request->user();

@@ -34,6 +34,7 @@ Route::middleware('web')->group(function () {
             Route::get('/subscriptions', [App\Http\Controllers\YouTubeController::class, 'subscriptions'])->name('youtube.subscriptions');
             Route::post('/subscriptions', [App\Http\Controllers\YouTubeController::class, 'storeSubscription'])->name('youtube.subscriptions.store');
             Route::delete('/subscriptions/{channel}', [App\Http\Controllers\YouTubeController::class, 'destroySubscription'])->name('youtube.subscriptions.destroy');
+            Route::post('/subscriptions/{channel}/toggle', [App\Http\Controllers\YouTubeController::class, 'toggleSubscriptionStatus'])->name('youtube.subscriptions.toggle');
             Route::post('/schedule', [App\Http\Controllers\YouTubeController::class, 'updateSchedule'])->name('youtube.schedule.update');
             Route::get('/digest', [App\Http\Controllers\YouTubeController::class, 'digest'])->name('youtube.digest');
             Route::get('/digest/{token}', [App\Http\Controllers\YouTubeController::class, 'showDigestRun'])->name('youtube.digest.show');

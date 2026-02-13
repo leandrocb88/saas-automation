@@ -15,6 +15,7 @@ class Channel extends Model
         'youtube_channel_id',
         'name',
         'thumbnail_url',
+        'is_paused',
         'subscriber_count',
     ];
 

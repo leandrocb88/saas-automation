@@ -35,7 +35,9 @@ class ProcessDailyDigests extends Command
             if (!$force) {
                 $q->where('preferred_time', 'like', "{$currentHour}:%");
             }
-        })->with(['channels', 'digestSchedule'])->get();
+        })->with(['channels' => function($q) {
+            $q->where('is_paused', false);
+        }, 'digestSchedule'])->get();
 
         if ($users->isEmpty()) {
              $this->info($force ? 'No active users found.' : 'No users scheduled for this hour.');

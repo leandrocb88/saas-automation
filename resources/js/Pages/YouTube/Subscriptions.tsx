@@ -10,6 +10,7 @@ interface Channel {
     name: string;
     thumbnail_url?: string;
     subscriber_count?: string;
+    is_paused: boolean;
 }
 
 interface Schedule {
@@ -37,6 +38,12 @@ export default function Subscriptions({ auth, channels, schedule }: Props) {
         router.delete(route('youtube.subscriptions.destroy', channelToUnsubscribe), {
             preserveScroll: true,
             onFinish: () => setChannelToUnsubscribe(null),
+        });
+    };
+
+    const handleTogglePause = (channel: Channel) => {
+        router.post(route('youtube.subscriptions.toggle', channel.id), {}, {
+            preserveScroll: true,
         });
     };
 
@@ -117,22 +124,22 @@ export default function Subscriptions({ auth, channels, schedule }: Props) {
 
                     {/* Schedule Panel — slides down */}
                     {showSchedulePanel && (
-                        <div className="mt-6 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 animate-in slide-in-from-top">
+                        <div className="mt-6 bg-white/50 dark:bg-white/10 backdrop-blur-md border border-indigo-200/50 dark:border-white/20 rounded-2xl p-6 animate-in slide-in-from-top shadow-sm">
                             <form onSubmit={updateSchedule} className="flex flex-col sm:flex-row items-end gap-4">
                                 <div className="w-full sm:w-auto">
-                                    <label className="block text-xs font-medium text-indigo-200 mb-1.5">Time</label>
+                                    <label className="block text-xs font-medium text-indigo-900 dark:text-indigo-200 mb-1.5">Time</label>
                                     <input
                                         type="time"
-                                        className="w-full sm:w-40 rounded-xl border-0 bg-white/10 text-white placeholder-white/40 px-4 py-2.5 text-sm focus:ring-2 focus:ring-white/30"
+                                        className="w-full sm:w-40 rounded-xl border-0 bg-white dark:bg-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 px-4 py-2.5 text-sm ring-1 ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white/30"
                                         value={scheduleForm.data.preferred_time}
                                         onChange={(e) => scheduleForm.setData('preferred_time', e.target.value)}
                                         required
                                     />
                                 </div>
                                 <div className="w-full sm:flex-1">
-                                    <label className="block text-xs font-medium text-indigo-200 mb-1.5">Timezone</label>
+                                    <label className="block text-xs font-medium text-indigo-900 dark:text-indigo-200 mb-1.5">Timezone</label>
                                     <select
-                                        className="w-full rounded-xl border-0 bg-white/10 text-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-white/30 [&>option]:text-gray-900"
+                                        className="w-full rounded-xl border-0 bg-white dark:bg-white/10 text-gray-900 dark:text-white px-4 py-2.5 text-sm ring-1 ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white/30 [&>option]:text-gray-900"
                                         value={scheduleForm.data.timezone}
                                         onChange={(e) => scheduleForm.setData('timezone', e.target.value)}
                                         required
@@ -150,15 +157,15 @@ export default function Subscriptions({ auth, channels, schedule }: Props) {
                                             checked={scheduleForm.data.is_active}
                                             onChange={(e) => scheduleForm.setData('is_active', e.target.checked)}
                                         />
-                                        <div className="w-10 h-5 bg-white/20 rounded-full peer peer-checked:bg-emerald-500 transition-colors" />
+                                        <div className="w-10 h-5 bg-gray-200 dark:bg-white/20 rounded-full peer peer-checked:bg-emerald-500 transition-colors" />
                                         <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-5" />
                                     </div>
-                                    <span className="text-sm font-medium text-white">Active</span>
+                                    <span className="text-sm font-medium text-gray-900 dark:text-white">Active</span>
                                 </label>
                                 <button
                                     type="submit"
                                     disabled={scheduleForm.processing}
-                                    className="w-full sm:w-auto rounded-xl bg-white px-6 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 transition-colors disabled:opacity-50 shadow-sm"
+                                    className="w-full sm:w-auto rounded-xl bg-indigo-600 dark:bg-white px-6 py-2.5 text-sm font-semibold text-white dark:text-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-50 transition-colors disabled:opacity-50 shadow-sm"
                                 >
                                     {scheduleForm.processing ? 'Saving…' : 'Save'}
                                 </button>
@@ -239,7 +246,7 @@ export default function Subscriptions({ auth, channels, schedule }: Props) {
                                     <div className="p-6 flex flex-col items-center text-center">
                                         {/* Channel Avatar */}
                                         <div className="relative mb-4">
-                                            <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-gray-50 dark:ring-gray-700 shadow-md group-hover:ring-indigo-100 dark:group-hover:ring-indigo-900/50 transition-all">
+                                            <div className={`w-20 h-20 rounded-full overflow-hidden ring-4 shadow-md transition-all ${channel.is_paused ? 'ring-gray-200 dark:ring-gray-700 grayscale opacity-70' : 'ring-gray-50 dark:ring-gray-700 group-hover:ring-indigo-100 dark:group-hover:ring-indigo-900/50'}`}>
                                                 {channel.thumbnail_url ? (
                                                     <img
                                                         src={channel.thumbnail_url}
@@ -252,9 +259,9 @@ export default function Subscriptions({ auth, channels, schedule }: Props) {
                                                     </div>
                                                 )}
                                             </div>
-                                            {/* Online indicator */}
+                                            {/* Status indicator */}
                                             <div className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
-                                                <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                                                <div className={`h-3 w-3 rounded-full ${channel.is_paused ? 'bg-gray-400' : 'bg-emerald-500'}`} />
                                             </div>
                                         </div>
 
@@ -287,12 +294,24 @@ export default function Subscriptions({ auth, channels, schedule }: Props) {
                                         </a>
 
                                         {/* Unsubscribe */}
-                                        <button
-                                            onClick={() => confirmUnsubscribe(channel.id)}
-                                            className="w-full rounded-xl border border-gray-200 dark:border-gray-600 px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:text-red-400 dark:hover:border-red-800 dark:hover:bg-red-900/10 transition-all"
-                                        >
-                                            Unsubscribe
-                                        </button>
+                                        {/* Actions */}
+                                        <div className="w-full grid grid-cols-2 gap-2">
+                                            <button
+                                                onClick={() => handleTogglePause(channel)}
+                                                className={`w-full rounded-xl border px-2 py-2 text-xs font-medium transition-all ${channel.is_paused
+                                                        ? 'border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                                                        : 'border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                                    }`}
+                                            >
+                                                {channel.is_paused ? 'Resume' : 'Pause'}
+                                            </button>
+                                            <button
+                                                onClick={() => confirmUnsubscribe(channel.id)}
+                                                className="w-full rounded-xl border border-gray-200 dark:border-gray-600 px-2 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:text-red-400 dark:hover:border-red-800 dark:hover:bg-red-900/10 transition-all"
+                                            >
+                                                Unsubscribe
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}

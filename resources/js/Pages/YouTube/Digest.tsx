@@ -195,7 +195,7 @@ export default function Digest({ auth, digests }: Props) {
                                                     </svg>
                                                     {batch.time}
                                                 </span>
-                                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                                <span className="text-sm text-gray-600 dark:text-gray-400">
                                                     {batch.channels.reduce((acc, ch) => acc + ch.videos.length, 0)} videos across {batch.channels.length} {batch.channels.length === 1 ? 'channel' : 'channels'}
                                                 </span>
                                             </div>
