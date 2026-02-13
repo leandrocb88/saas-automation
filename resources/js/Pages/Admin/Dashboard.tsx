@@ -8,6 +8,7 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
+import Toggle from '@/Components/Toggle';
 
 interface User {
     id: number;
@@ -120,49 +121,45 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
                                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{stats.service} Admin Dashboard</h1>
                                 <div className="flex flex-wrap items-center gap-3">
                                     {/* Guest Mode */}
-                                    <div className="flex items-center gap-2">
-                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.guestAccess ? 'bg-green-500/20 text-green-700 dark:text-green-300 ring-1 ring-green-500/50' : 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 ring-1 ring-yellow-500/50'}`}>
-                                            Guest: {stats.guestAccess ? 'On' : 'Off'}
+                                    <div className="flex items-center gap-3 bg-white/50 dark:bg-white/5 backdrop-blur-sm px-4 py-2 rounded-xl ring-1 ring-gray-200 dark:ring-white/10">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Guest Access</span>
+                                            <span className={`text-sm font-bold ${stats.guestAccess ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                                                {stats.guestAccess ? 'Enabled' : 'Disabled'}
+                                            </span>
                                         </div>
-                                        <button
-                                            onClick={() => router.post(route('admin.settings.guest_access'))}
-                                            className="text-xs hover:underline text-indigo-500 dark:text-indigo-300"
-                                            title="Toggle Guest Access"
-                                        >
-                                            Toggle
-                                        </button>
+                                        <Toggle
+                                            checked={stats.guestAccess}
+                                            onChange={() => router.post(route('admin.settings.guest_access'))}
+                                        />
                                     </div>
-
-                                    <div className="w-px h-3 bg-gray-300 dark:bg-white/20 mx-1"></div>
 
                                     {/* Sign Ups */}
-                                    <div className="flex items-center gap-2">
-                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.signUpEnabled ? 'bg-green-500/20 text-green-700 dark:text-green-300 ring-1 ring-green-500/50' : 'bg-red-500/20 text-red-700 dark:text-red-300 ring-1 ring-red-500/50'}`}>
-                                            Sign-ups: {stats.signUpEnabled ? 'On' : 'Off'}
+                                    <div className="flex items-center gap-3 bg-white/50 dark:bg-white/5 backdrop-blur-sm px-4 py-2 rounded-xl ring-1 ring-gray-200 dark:ring-white/10">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sign-ups</span>
+                                            <span className={`text-sm font-bold ${stats.signUpEnabled ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                                                {stats.signUpEnabled ? 'Open' : 'Closed'}
+                                            </span>
                                         </div>
-                                        <button
-                                            onClick={() => router.post(route('admin.settings.sign_up'))}
-                                            className="text-xs hover:underline text-indigo-500 dark:text-indigo-300"
-                                            title="Toggle New Sign-ups"
-                                        >
-                                            Toggle
-                                        </button>
+                                        <Toggle
+                                            checked={stats.signUpEnabled}
+                                            onChange={() => router.post(route('admin.settings.sign_up'))}
+                                        />
                                     </div>
 
-                                    <div className="w-px h-3 bg-gray-300 dark:bg-white/20 mx-1"></div>
-
                                     {/* Admin Only */}
-                                    <div className="flex items-center gap-2">
-                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.adminOnly ? 'bg-red-500/20 text-red-700 dark:text-red-300 ring-1 ring-red-500/50' : 'bg-green-500/20 text-green-700 dark:text-green-300 ring-1 ring-green-500/50'}`}>
-                                            Maintenance: {stats.adminOnly ? 'On' : 'Off'}
+                                    <div className="flex items-center gap-3 bg-white/50 dark:bg-white/5 backdrop-blur-sm px-4 py-2 rounded-xl ring-1 ring-gray-200 dark:ring-white/10">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Maintenance</span>
+                                            <span className={`text-sm font-bold ${stats.adminOnly ? 'text-red-500 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                {stats.adminOnly ? 'Active' : 'Inactive'}
+                                            </span>
                                         </div>
-                                        <button
-                                            onClick={() => router.post(route('admin.settings.admin_only'))}
-                                            className="text-xs hover:underline text-indigo-500 dark:text-indigo-300"
-                                            title="Toggle Maintenance Mode (Admin Only Access)"
-                                        >
-                                            Toggle
-                                        </button>
+                                        <Toggle
+                                            checked={stats.adminOnly}
+                                            onChange={() => router.post(route('admin.settings.admin_only'))}
+                                        />
                                     </div>
                                 </div>
                             </div>
