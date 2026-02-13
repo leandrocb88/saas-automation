@@ -226,9 +226,9 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                 <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl ring-1 ring-gray-200/50 dark:ring-gray-700/50 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
                                     {/* Collapsed Header */}
                                     <div className="p-6">
-                                        <div className="flex gap-5 items-start">
+                                        <div className="flex gap-5">
                                             {video.thumbnail && (
-                                                <div className="relative w-36 h-24 rounded-xl overflow-hidden flex-shrink-0 group">
+                                                <div className="relative w-48 rounded-xl overflow-hidden flex-shrink-0 group">
                                                     <img
                                                         src={video.thumbnail}
                                                         alt={video.title}
@@ -257,15 +257,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                         {video.channel_title}
                                                     </p>
                                                 )}
-                                                <a
-                                                    href={video.videoUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 truncate block mt-1 transition-colors"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    {video.videoUrl}
-                                                </a>
+
                                                 {/* Metadata Row */}
                                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
                                                     {video.duration && (
