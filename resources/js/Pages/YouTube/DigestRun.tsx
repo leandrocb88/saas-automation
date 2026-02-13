@@ -8,6 +8,7 @@ interface Video {
     thumbnail: string;
     videoUrl: string;
     summary_short?: string;
+    duration_timestamp?: string;
 }
 
 interface ChannelGroup {
@@ -24,10 +25,16 @@ interface Props {
     digestTime: string;
     channels: ChannelGroup[];
     shareToken: string;
+    summaryMetrics?: {
+        total_videos: number;
+        total_duration: string;
+        read_time: string;
+        time_saved: string;
+    };
 }
 
-export default function DigestRun({ auth, digestDate, digestTime, channels, shareToken }: Props) {
-    const totalVideos = channels.reduce((acc, channel) => acc + channel.videos.length, 0);
+export default function DigestRun({ auth, digestDate, digestTime, channels, shareToken, summaryMetrics }: Props) {
+    const totalVideos = summaryMetrics?.total_videos ?? channels.reduce((acc, channel) => acc + channel.videos.length, 0);
 
     const [collapsedChannels, setCollapsedChannels] = useState<Set<number>>(new Set());
 
@@ -104,6 +111,38 @@ export default function DigestRun({ auth, digestDate, digestTime, channels, shar
                 </div>
             </div>
 
+            {/* Summary Metrics Section */}
+            <div className="bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+                            <div className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Total Videos</div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                {summaryMetrics?.total_videos ?? channels.reduce((acc, c) => acc + c.videos.length, 0)}
+                            </div>
+                        </div>
+                        <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800/50">
+                            <div className="text-sm text-indigo-600 dark:text-indigo-300 font-medium mb-1">Watch Time</div>
+                            <div className="text-2xl font-bold text-indigo-700 dark:text-indigo-200">
+                                {summaryMetrics?.total_duration ?? '0s'}
+                            </div>
+                        </div>
+                        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-100 dark:border-amber-800/50">
+                            <div className="text-sm text-amber-600 dark:text-amber-300 font-medium mb-1">Read Time</div>
+                            <div className="text-2xl font-bold text-amber-700 dark:text-amber-200">
+                                {summaryMetrics?.read_time ?? '0s'}
+                            </div>
+                        </div>
+                        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 border border-emerald-100 dark:border-emerald-800/50">
+                            <div className="text-sm text-emerald-600 dark:text-emerald-300 font-medium mb-1">Time Saved</div>
+                            <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-200">
+                                {summaryMetrics?.time_saved ?? '0s'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Content */}
             <div className="py-10 bg-gray-50 dark:bg-gray-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -153,6 +192,11 @@ export default function DigestRun({ auth, digestDate, digestTime, channels, shar
                                                                 </svg>
                                                             </div>
                                                         </div>
+                                                        {video.duration_timestamp && (
+                                                            <div className="absolute bottom-2 right-2 z-10 bg-black/80 text-white text-xs font-bold px-2 py-1 rounded-[4px] pointer-events-none">
+                                                                {video.duration_timestamp}
+                                                            </div>
+                                                        )}
                                                     </a>
                                                     <div className="p-4 flex-1 flex flex-col">
                                                         <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 leading-snug text-sm" title={video.title}>

@@ -182,9 +182,23 @@ class YouTubeController extends Controller
                      return strcmp($a['name'], $b['name']);
                  });
 
+                 // Calculate Batch Metrics
+                 $totalDurationSeconds = $videosByBatch->sum('duration') ?? 0;
+                 $totalWords = $videosByBatch->sum(function($video) {
+                     return str_word_count(strip_tags($video->summary_detailed ?? ''));
+                 });
+                 $readTimeSeconds = ceil(($totalWords / 200) * 60);
+                 $timeSavedSeconds = max(0, $totalDurationSeconds - $readTimeSeconds);
+
                  $formattedBatches[] = [
                      'time' => $timeStr,
                      'channels' => $formattedChannels,
+                     'summaryMetrics' => [
+                        'total_videos' => $videosByBatch->count(),
+                        'total_duration' => $this->formatDuration($totalDurationSeconds) ?? '0s',
+                        'read_time' => $this->formatDuration($readTimeSeconds) ?? '0s',
+                        'time_saved' => $this->formatDuration($timeSavedSeconds) ?? '0s',
+                     ],
                  ];
              }
              
@@ -250,16 +264,35 @@ class YouTubeController extends Controller
             ];
         }
 
-        // Sort channels by name
         usort($formattedChannels, function($a, $b) {
             return strcmp($a['name'], $b['name']);
         });
 
+        // Calculate Summary Metrics
+        $totalVideos = $videos->count();
+        $totalDurationSeconds = $videos->sum('duration') ?? 0;
+        
+        $totalWords = $videos->sum(function($video) {
+            return str_word_count(strip_tags($video->summary_detailed ?? ''));
+        });
+        
+        $readTimeSeconds = ceil(($totalWords / 200) * 60);
+        $timeSavedSeconds = max(0, $totalDurationSeconds - $readTimeSeconds);
+
+        $summaryMetrics = [
+            'total_videos' => $totalVideos,
+            'total_duration' => $this->formatDuration($totalDurationSeconds) ?? '0s',
+            'read_time' => $this->formatDuration($readTimeSeconds) ?? '0s',
+            'time_saved' => $this->formatDuration($timeSavedSeconds) ?? '0s',
+        ];
+
         return Inertia::render('YouTube/DigestRun', [
             'digestDate' => $digestDate,
             'digestTime' => $digestTime,
+            'digestTime' => $digestTime,
             'channels' => $formattedChannels,
             'shareToken' => $token,
+            'summaryMetrics' => $summaryMetrics,
         ]);
     }
 
@@ -731,6 +764,7 @@ class YouTubeController extends Controller
                 'channel_title' => $result['channel_title'] ?? null,
                 'thumbnail_url' => $result['thumbnail'],
                 'transcript' => $result['transcript'],
+                'duration' => $result['duration'] ?? 0,
             ]);
 
             // --- Auto-Generate Summary (Detailed Only) ---
@@ -856,7 +890,7 @@ class YouTubeController extends Controller
         }
 
         $videos = $query->latest()
-            ->select('id', 'video_id', 'title', 'channel_title', 'thumbnail_url', 'created_at') // Lightweight select
+            ->select('id', 'video_id', 'title', 'channel_title', 'thumbnail_url', 'created_at', 'duration') // Lightweight select
             ->paginate($perPage)
             ->through(function ($video) {
                 $thumbnail = $video->thumbnail_url;
@@ -869,6 +903,7 @@ class YouTubeController extends Controller
                     'channel' => $video->channel_title,
                     'thumbnail' => $thumbnail,
                     'date' => $video->created_at->format('M d, Y'),
+                    'duration_timestamp' => $this->formatDurationTimestamp($video->duration ?? 0),
                      // 'relative_date' => $video->created_at->diffForHumans(),
                 ];
             });
@@ -886,9 +921,15 @@ class YouTubeController extends Controller
         $user = $request->user();
 
         // Policy Check
-        if ($user) {
+        // Policy Check
+        if ($video->user_id) {
+            // Owned by a registered user
+            if (!$user) {
+                return redirect()->route('login');
+            }
             if ($user->id !== $video->user_id) abort(403);
         } else {
+            // Guest video
             if ($video->session_id !== $this->getGuestId($request)) abort(403);
         }
 
@@ -991,6 +1032,24 @@ class YouTubeController extends Controller
              $transcript = [['text'=>$videoData['fullText'], 'start'=>0, 'duration'=>0]];
         }
         
+        // Duration Fallback
+        $duration = $videoData['duration'] ?? $videoData['lengthSeconds'] ?? 0;
+        
+        // Handle "MM:SS" or "HH:MM:SS" strings
+        if (is_string($duration) && str_contains($duration, ':')) {
+            $parts = array_reverse(explode(':', $duration));
+            $seconds = 0;
+            foreach ($parts as $index => $part) {
+                $seconds += (int)$part * pow(60, $index);
+            }
+            $duration = $seconds;
+        }
+
+        if (!$duration && !empty($transcript)) {
+             $last = end($transcript);
+             $duration = ($last['start'] ?? 0) + ($last['duration'] ?? 0);
+        }
+        
         $videoUrl = $videoData['url'] ?? '';
         $videoId = $this->extractVideoId($videoUrl);
 
@@ -1005,6 +1064,7 @@ class YouTubeController extends Controller
             'channel_title' => $videoData['channel'] ?? $videoData['channelName'] ?? $videoData['author'] ?? 'Unknown Channel',
             'thumbnail' => $thumbnail ?? '',
             'transcript' => $transcript,
+            'duration' => $duration,
         ];
     }
 
@@ -1026,6 +1086,28 @@ class YouTubeController extends Controller
              $thumbnail = "https://img.youtube.com/vi/{$video->video_id}/mqdefault.jpg";
         }
 
+        // Calculate Transcript Read Time
+        $fullText = '';
+        if (is_array($video->transcript)) {
+            $video->transcript = array_values($video->transcript); // Ensure indexed array
+            $fullText = collect($video->transcript)->pluck('text')->join(' ');
+        }
+        
+        $transcriptReadTime = null;
+        if (!empty($fullText)) {
+            $wordCount = str_word_count(strip_tags($fullText));
+            $minutes = ceil($wordCount / 200);
+            $transcriptReadTime = $minutes . ' min read';
+        }
+
+        // Calculate Summary Read Time
+        $summaryReadTime = null;
+        if (!empty($video->summary_detailed)) {
+            $wordCount = str_word_count(strip_tags($video->summary_detailed));
+            $minutes = ceil($wordCount / 200);
+            $summaryReadTime = $minutes . ' min read';
+        }
+
         return [
             'id' => $video->id,
             'videoUrl' => "https://www.youtube.com/watch?v={$video->video_id}",
@@ -1033,9 +1115,44 @@ class YouTubeController extends Controller
             'channel_title' => $video->channel_title,
             'thumbnail' => $thumbnail,
             'transcript' => $video->transcript,
-            'summary' => $video->summary_detailed, // Backwards compat for initial render check
+            'summary' => $video->summary_detailed, // Backwards compat
             'summary_short' => $video->summary_short,
             'summary_detailed' => $video->summary_detailed,
+            'duration' => $this->formatDuration($video->duration ?? 0),
+            'published_at' => $video->created_at ? $video->created_at->format('M d, Y') : null,
+            'transcript_read_time' => $transcriptReadTime,
+            'summary_read_time' => $summaryReadTime,
+            'duration_timestamp' => $this->formatDurationTimestamp($video->duration ?? 0),
         ];
+    }
+
+    private function formatDurationTimestamp($seconds)
+    {
+        if (!$seconds) return null;
+        
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        $secs = $seconds % 60;
+        
+        if ($hours > 0) {
+            return sprintf('%d:%02d:%02d', $hours, $minutes, $secs);
+        }
+        
+        return sprintf('%d:%02d', $minutes, $secs);
+    }
+
+    private function formatDuration($seconds)
+    {
+        if (!$seconds) return null;
+        if ($seconds < 60) return "{$seconds}s";
+        
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        
+        if ($hours > 0) {
+            return "{$hours}h {$minutes}m";
+        }
+        
+        return "{$minutes}m";
     }
 }

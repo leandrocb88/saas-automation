@@ -10,6 +10,7 @@ interface Video {
     thumbnail: string | null;
     date: string;
     channel?: string;
+    duration_timestamp?: string;
 }
 
 interface PaginatedVideos {
@@ -237,6 +238,12 @@ export default function History({ auth, videos, canViewHistory, retentionDays, q
                                                     </svg>
                                                 </div>
                                             </div>
+
+                                            {video.duration_timestamp && (
+                                                <div className="absolute bottom-2 right-2 z-10 bg-black/80 text-white text-xs font-bold px-2 py-1 rounded-[4px] pointer-events-none">
+                                                    {video.duration_timestamp}
+                                                </div>
+                                            )}
                                         </Link>
                                     </div>
 

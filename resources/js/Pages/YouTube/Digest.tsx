@@ -8,6 +8,7 @@ interface Video {
     thumbnail: string;
     videoUrl: string;
     summary_short?: string;
+    duration_timestamp?: string;
 }
 
 interface ChannelGroup {
@@ -21,6 +22,12 @@ interface ChannelGroup {
 interface BatchGroup {
     time: string;
     channels: ChannelGroup[];
+    summaryMetrics?: {
+        total_videos: number;
+        total_duration: string;
+        read_time: string;
+        time_saved: string;
+    };
 }
 
 interface DigestGroup {
@@ -200,6 +207,21 @@ export default function Digest({ auth, digests }: Props) {
                                                 </span>
                                             </div>
 
+                                            {/* Batch Metrics */}
+                                            {batch.summaryMetrics && (
+                                                <div className="flex flex-wrap items-center gap-3 mb-6 ml-1">
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 text-xs font-medium border border-indigo-100 dark:border-indigo-800/30">
+                                                        <span className="opacity-70">Watch:</span> {batch.summaryMetrics.total_duration}
+                                                    </span>
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-xs font-medium border border-amber-100 dark:border-amber-800/30">
+                                                        <span className="opacity-70">Read:</span> {batch.summaryMetrics.read_time}
+                                                    </span>
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-xs font-medium border border-emerald-100 dark:border-emerald-800/30">
+                                                        <span className="opacity-70">Saved:</span> {batch.summaryMetrics.time_saved}
+                                                    </span>
+                                                </div>
+                                            )}
+
                                             <div className="space-y-5">
                                                 {batch.channels.map((channel) => {
                                                     const channelKey = `${dateGroup.date}-${batch.time}-${channel.id}`;
@@ -257,6 +279,11 @@ export default function Digest({ auth, digests }: Props) {
                                                                                             </svg>
                                                                                         </div>
                                                                                     </div>
+                                                                                    {video.duration_timestamp && (
+                                                                                        <div className="absolute bottom-2 right-2 z-10 bg-black/80 text-white text-xs font-bold px-2 py-1 rounded-[4px] pointer-events-none">
+                                                                                            {video.duration_timestamp}
+                                                                                        </div>
+                                                                                    )}
                                                                                 </a>
                                                                                 <div className="p-3.5 flex flex-col flex-1">
                                                                                     <div className="flex-1">

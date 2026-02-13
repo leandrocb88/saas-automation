@@ -17,6 +17,11 @@ interface VideoResult {
     summary?: string | null;
     summary_detailed?: string | null;
     channel_title?: string;
+    duration?: string;
+    published_at?: string;
+    transcript_read_time?: string;
+    summary_read_time?: string;
+    duration_timestamp?: string;
 }
 
 interface BatchSummaryProps {
@@ -236,6 +241,11 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                             </svg>
                                                         </div>
                                                     </a>
+                                                    {video.duration_timestamp && (
+                                                        <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] pointer-events-none">
+                                                            {video.duration_timestamp}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                             <div className="flex-1 min-w-0">
@@ -256,7 +266,43 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                 >
                                                     {video.videoUrl}
                                                 </a>
-                                                <div className="mt-2.5 flex items-center gap-3">
+                                                {/* Metadata Row */}
+                                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                    {video.duration && (
+                                                        <div className="flex items-center gap-1">
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            {video.duration}
+                                                        </div>
+                                                    )}
+                                                    {video.published_at && (
+                                                        <div className="flex items-center gap-1">
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                            </svg>
+                                                            {video.published_at}
+                                                        </div>
+                                                    )}
+                                                    {video.transcript_read_time && (
+                                                        <div className="flex items-center gap-1" title="Estimated time to read transcript">
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                                            </svg>
+                                                            Transcript: {video.transcript_read_time}
+                                                        </div>
+                                                    )}
+                                                    {video.summary_read_time && (
+                                                        <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium" title="Estimated time to read summary">
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                            </svg>
+                                                            Summary: {video.summary_read_time}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="mt-3 flex items-center gap-3">
                                                     <span className="inline-flex items-center gap-1 rounded-full bg-green-50 dark:bg-green-900/20 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-300 ring-1 ring-inset ring-green-600/20 dark:ring-green-500/20">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                                                         Success

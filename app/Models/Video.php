@@ -19,6 +19,7 @@ class Video extends Model
         'channel_id',
         'digest_date',
         'source',
+        'duration',
     ];
 
     protected $casts = [

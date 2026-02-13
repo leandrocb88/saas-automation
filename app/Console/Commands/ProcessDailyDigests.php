@@ -128,7 +128,28 @@ class ProcessDailyDigests extends Command
                 // Update metadata
                 $video->title = $item['title'] ?? 'Unknown Title';
                 $video->thumbnail_url = $item['thumbnailUrl'] ?? $item['thumbnail'] ?? "https://img.youtube.com/vi/{$videoId}/mqdefault.jpg";
+                $video->duration = $item['duration'] ?? $item['lengthSeconds'] ?? null;
+                
+                // Handle "MM:SS" or "HH:MM:SS" strings for Duration
+                if (is_string($video->duration) && str_contains($video->duration, ':')) {
+                    $parts = array_reverse(explode(':', $video->duration));
+                    $seconds = 0;
+                    foreach ($parts as $index => $part) {
+                        $seconds += (int)$part * pow(60, $index);
+                    }
+                    $video->duration = $seconds;
+                }
+
                 $video->transcript = $this->parseTranscript($item);
+
+                // If duration is missing, try to infer from transcript
+                if (!$video->duration && !empty($video->transcript)) {
+                    $transcript = $video->transcript;
+                    $lastSegment = end($transcript);
+                    if ($lastSegment) {
+                        $video->duration = (int) ceil(($lastSegment['start'] ?? 0) + ($lastSegment['duration'] ?? 0));
+                    }
+                }
                 
                 // Tagging
                 $video->source = 'digest';
@@ -232,11 +253,15 @@ class ProcessDailyDigests extends Command
             // Format for Email
             foreach ($videosToSend as $video) {
                  $processedVideos[] = [
-                    'title' => $video->title,
+                     'title' => $video->title,
                     'videoUrl' => "https://www.youtube.com/watch?v={$video->video_id}",
-                    'thumbnail' => $video->thumbnail_url,
+                    'thumbnail' => $video->thumbnail_url, // Ensure this exists or fallback
                     'summary' => $video->summary_detailed,
                     'appUrl' => route('youtube.show', $video),
+                    'channel_name' => $video->channel ? $video->channel->name : $video->channel_title,
+                    'channel_thumbnail' => $video->channel ? $video->channel->thumbnail_url : null,
+                    'channel_url' => $video->channel ? $video->channel->url : null,
+                    'published_at' => $video->created_at ? $video->created_at->format('M d, Y') : null,
                  ];
             }
 
@@ -251,7 +276,27 @@ class ProcessDailyDigests extends Command
             // 4. Send Email
             if (!empty($processedVideos)) {
                 $this->info("Sending email with " . count($processedVideos) . " videos.");
-                Mail::to($user)->send(new DailyDigest($user, $processedVideos, now()->format('F j, Y'), $shareToken));
+
+                // Calculate Metrics
+                $totalVideos = count($processedVideos);
+                $totalDurationSeconds = collect($videosToSend)->sum('duration');
+                
+                // Estimate Read Time (approx 200 words per minute)
+                $totalWords = collect($processedVideos)->sum(fn($v) => str_word_count(strip_tags($v['summary'] ?? '')));
+                $readTimeSeconds = ceil(($totalWords / 200) * 60); // 200 wpm
+                
+                // Time Saved
+                $timeSavedSeconds = max(0, $totalDurationSeconds - $readTimeSeconds);
+
+                // Format times for display
+                $summaryMetrics = [
+                    'total_videos' => $totalVideos,
+                    'total_duration' => $this->formatDuration($totalDurationSeconds),
+                    'read_time' => $this->formatDuration($readTimeSeconds),
+                    'time_saved' => $this->formatDuration($timeSavedSeconds),
+                ];
+
+                Mail::to($user->email)->send(new DailyDigest($user, $processedVideos, now()->format('F j, Y'), $shareToken, $summaryMetrics));
             }
         }
 
@@ -287,5 +332,21 @@ class ProcessDailyDigests extends Command
              }
         }
         return $transcript;
+    }
+
+    private function formatDuration($seconds)
+    {
+        if ($seconds < 60) {
+            return "{$seconds}s";
+        }
+        
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        
+        if ($hours > 0) {
+            return "{$hours}h {$minutes}m";
+        }
+        
+        return "{$minutes}m";
     }
 }

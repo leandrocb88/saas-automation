@@ -21,7 +21,8 @@ class DailyDigest extends Mailable
         public User $user,
         public array $videos,
         public string $date,
-        public string $shareToken
+        public string $shareToken,
+        public array $summaryMetrics = []
     ) {}
 
     /**
@@ -46,6 +47,7 @@ class DailyDigest extends Mailable
                 'videos' => $this->videos,
                 'date' => $this->date,
                 'shareToken' => $this->shareToken,
+                'summaryMetrics' => $this->summaryMetrics,
             ],
         );
     }
