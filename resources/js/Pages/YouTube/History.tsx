@@ -82,32 +82,32 @@ export default function History({ auth, videos, canViewHistory, retentionDays, q
             <Head title="History" />
 
             {/* Hero Header */}
-            <div className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-gray-900 overflow-hidden">
+            <div className="relative bg-gradient-to-br from-slate-50 via-slate-100 to-gray-200 dark:from-slate-800 dark:via-slate-900 dark:to-gray-900 overflow-hidden">
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl" />
-                    <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-purple-500/10 blur-3xl" />
+                    <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-indigo-500/5 dark:bg-indigo-500/10 blur-3xl" />
+                    <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-purple-500/5 dark:bg-purple-500/10 blur-3xl" />
                 </div>
 
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
                     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
                         <div>
-                            <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
                                 History
                             </h1>
-                            <p className="mt-2 text-gray-400 text-lg">
+                            <p className="mt-2 text-gray-600 dark:text-gray-400 text-lg">
                                 Your processed videos from the last {retentionDays} days.
                             </p>
                         </div>
 
                         {canViewHistory && videos.total > 0 && (
                             <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2.5 border border-white/10">
-                                    <label htmlFor="per_page" className="text-xs text-gray-400 whitespace-nowrap">Show</label>
+                                <div className="flex items-center gap-2 bg-white/50 dark:bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2.5 border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none">
+                                    <label htmlFor="per_page" className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">Show</label>
                                     <select
                                         id="per_page"
                                         value={videos.per_page}
                                         onChange={handlePerPageChange}
-                                        className="bg-transparent border-0 text-sm text-white focus:ring-0 py-0 pl-1 pr-6 cursor-pointer [&>option]:text-gray-900"
+                                        className="bg-transparent border-0 text-sm text-gray-900 dark:text-white focus:ring-0 py-0 pl-1 pr-6 cursor-pointer [&>option]:text-gray-900"
                                     >
                                         <option value="20">20</option>
                                         <option value="40">40</option>
@@ -134,11 +134,11 @@ export default function History({ auth, videos, canViewHistory, retentionDays, q
                         <div className="mt-6 flex items-center gap-6">
                             <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-emerald-400" />
-                                <span className="text-sm text-gray-300">
-                                    <span className="font-semibold text-white">{videos.total}</span> videos total
+                                <span className="text-sm text-gray-600 dark:text-gray-300">
+                                    <span className="font-semibold text-gray-900 dark:text-white">{videos.total}</span> videos total
                                 </span>
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-600 dark:text-gray-500">
                                 Showing {videos.from}–{videos.to}
                             </div>
                         </div>

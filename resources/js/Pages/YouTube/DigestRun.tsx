@@ -52,46 +52,46 @@ export default function DigestRun({ auth, digestDate, digestTime, channels, shar
 
             {/* Hero */}
             <div className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-950 via-orange-950 to-red-950" />
-                <div className="absolute top-10 left-20 w-72 h-72 bg-amber-500/20 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute bottom-0 right-10 w-96 h-96 bg-red-500/10 rounded-full blur-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-amber-950 dark:via-orange-950 dark:to-red-950" />
+                <div className="absolute top-10 left-20 w-72 h-72 bg-amber-500/10 dark:bg-amber-500/20 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute bottom-0 right-10 w-96 h-96 bg-red-500/5 dark:bg-red-500/10 rounded-full blur-3xl" />
 
                 <div className="relative py-10 lg:py-14">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
-                                <div className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 backdrop-blur-sm px-3 py-1 text-xs font-medium text-amber-300 mb-3">
+                                <div className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 backdrop-blur-sm px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300 mb-3">
                                     <svg className="w-3 h-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                     Daily Digest
                                 </div>
-                                <h1 className="text-2xl font-bold text-white mb-1">{digestDate}</h1>
-                                <p className="text-sm text-amber-300/60">Run at {digestTime}</p>
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{digestDate}</h1>
+                                <p className="text-sm text-gray-700 dark:text-amber-300/60">Run at {digestTime}</p>
                             </div>
                             <div className="flex items-center gap-3">
                                 {channels.length > 0 && (
                                     <div className="flex gap-2">
                                         <button
                                             onClick={expandAll}
-                                            className="text-xs px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/80 rounded-lg ring-1 ring-white/10 backdrop-blur-sm transition-all"
+                                            className="text-xs px-3 py-1.5 bg-white/50 dark:bg-white/10 hover:bg-white/70 dark:hover:bg-white/20 text-orange-900 dark:text-white/80 rounded-lg ring-1 ring-orange-200/50 dark:ring-white/10 backdrop-blur-sm transition-all shadow-sm"
                                         >
                                             Expand All
                                         </button>
                                         <button
                                             onClick={collapseAll}
-                                            className="text-xs px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/80 rounded-lg ring-1 ring-white/10 backdrop-blur-sm transition-all"
+                                            className="text-xs px-3 py-1.5 bg-white/50 dark:bg-white/10 hover:bg-white/70 dark:hover:bg-white/20 text-orange-900 dark:text-white/80 rounded-lg ring-1 ring-orange-200/50 dark:ring-white/10 backdrop-blur-sm transition-all shadow-sm"
                                         >
                                             Collapse All
                                         </button>
                                     </div>
                                 )}
-                                <span className="text-sm text-amber-200 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg ring-1 ring-white/10 font-medium">
+                                <span className="text-sm text-amber-700 dark:text-amber-200 bg-white/50 dark:bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg ring-1 ring-gray-200 dark:ring-white/10 font-medium">
                                     {totalVideos} Videos
                                 </span>
                                 <Link
                                     href={route('youtube.digest')}
-                                    className="flex items-center gap-1.5 text-sm font-medium text-white/70 hover:text-white bg-white/10 backdrop-blur-sm rounded-lg px-4 py-1.5 ring-1 ring-white/10 hover:ring-white/20 transition-all"
+                                    className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white bg-white/50 dark:bg-white/10 backdrop-blur-sm rounded-lg px-4 py-1.5 ring-1 ring-gray-200 dark:ring-white/10 hover:ring-gray-300 dark:hover:ring-white/20 transition-all"
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -112,7 +112,7 @@ export default function DigestRun({ auth, digestDate, digestTime, channels, shar
                             const isCollapsed = collapsedChannels.has(channel.id);
 
                             return (
-                                <div key={channel.id} className="bg-white dark:bg-gray-800 rounded-2xl ring-1 ring-gray-200/50 dark:ring-gray-700/50 shadow-sm overflow-hidden">
+                                <div key={channel.id} className="bg-white dark:bg-gray-800 rounded-2xl ring-1 ring-gray-200 dark:ring-gray-700/50 shadow-sm overflow-hidden">
                                     <button
                                         onClick={() => toggleChannel(channel.id)}
                                         className="w-full px-6 py-4 bg-gray-50/50 dark:bg-gray-700/30 flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition cursor-pointer"
@@ -135,7 +135,7 @@ export default function DigestRun({ auth, digestDate, digestTime, channels, shar
                                         <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex-1 text-left">
                                             {channel.name}
                                         </h4>
-                                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 px-2.5 py-1 rounded-full flex-shrink-0">
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 px-2.5 py-1 rounded-full flex-shrink-0">
                                             {channel.videos.length} Videos
                                         </span>
                                     </button>
@@ -143,7 +143,7 @@ export default function DigestRun({ auth, digestDate, digestTime, channels, shar
                                     {!isCollapsed && (
                                         <div className="p-6 border-t border-gray-100 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                                             {channel.videos.map((video) => (
-                                                <div key={video.id} className="group rounded-xl overflow-hidden ring-1 ring-gray-200/50 dark:ring-gray-700/50 bg-white dark:bg-gray-800 hover:shadow-lg hover:ring-indigo-500/20 transition-all duration-300 flex flex-col">
+                                                <div key={video.id} className="group rounded-xl overflow-hidden ring-1 ring-gray-300 dark:ring-gray-700/50 bg-white dark:bg-gray-800 hover:shadow-lg hover:ring-indigo-500/20 transition-all duration-300 flex flex-col">
                                                     <a href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="block relative aspect-video overflow-hidden">
                                                         <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">

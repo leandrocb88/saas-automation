@@ -3,6 +3,7 @@ import Footer from '@/Components/Footer';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import ThemeToggle from '@/Components/ThemeToggle';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
 
@@ -129,6 +130,7 @@ export default function Authenticated({
 
                         <div className="hidden sm:ms-6 sm:flex sm:items-center">
                             <div className="relative ms-3 flex items-center gap-3">
+                                <ThemeToggle />
                                 {/* User Quota — color-coded credit pill */}
                                 {user && quota && (
                                     <Link
@@ -321,19 +323,22 @@ export default function Authenticated({
 
                     <div className="border-t border-gray-200 pb-1 pt-4 dark:border-gray-600">
                         {user ? (
-                            <div className="flex items-center gap-3 px-4">
-                                {/* Mobile avatar */}
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-bold text-white shadow-sm">
-                                    {getInitials(user.name)}
-                                </div>
-                                <div>
-                                    <div className="text-base font-medium text-gray-800 dark:text-gray-200">
-                                        {user.name}
+                            <div className="flex items-center justify-between px-4">
+                                <div className="flex items-center gap-3">
+                                    {/* Mobile avatar */}
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-bold text-white shadow-sm">
+                                        {getInitials(user.name)}
                                     </div>
-                                    <div className="text-sm font-medium text-gray-500">
-                                        {user.email}
+                                    <div>
+                                        <div className="text-base font-medium text-gray-800 dark:text-gray-200">
+                                            {user.name}
+                                        </div>
+                                        <div className="text-sm font-medium text-gray-500">
+                                            {user.email}
+                                        </div>
                                     </div>
                                 </div>
+                                <ThemeToggle />
                             </div>
                         ) : (
                             <div className="px-4 space-y-2">

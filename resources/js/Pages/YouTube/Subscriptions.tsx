@@ -75,20 +75,20 @@ export default function Subscriptions({ auth, channels, schedule }: Props) {
             <Head title="Subscriptions" />
 
             {/* Hero Header */}
-            <div className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 overflow-hidden">
+            <div className="relative bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-indigo-600 dark:via-purple-600 dark:to-indigo-800 overflow-hidden">
                 {/* Decorative blobs */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
-                    <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-purple-400/10 blur-3xl" />
+                    <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-indigo-500/5 dark:bg-white/5 blur-3xl" />
+                    <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-purple-500/5 dark:bg-purple-400/10 blur-3xl" />
                 </div>
 
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
                     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
                         <div>
-                            <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
                                 Subscriptions
                             </h1>
-                            <p className="mt-2 text-indigo-200 text-lg max-w-xl">
+                            <p className="mt-2 text-indigo-900 dark:text-indigo-100 text-lg max-w-xl">
                                 Get daily AI-powered summaries of your favorite YouTube channels delivered to your inbox.
                             </p>
                         </div>
@@ -97,18 +97,18 @@ export default function Subscriptions({ auth, channels, schedule }: Props) {
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setShowSchedulePanel(!showSchedulePanel)}
-                                className="group flex items-center gap-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 border border-white/20 rounded-2xl px-5 py-3 transition-all"
+                                className="group flex items-center gap-3 bg-white/50 dark:bg-white/10 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-white/20 border border-indigo-200/50 dark:border-white/20 rounded-2xl px-5 py-3 transition-all shadow-sm"
                             >
                                 <div className={`h-2.5 w-2.5 rounded-full ${schedule?.is_active ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-gray-400'}`} />
                                 <div className="text-left">
-                                    <div className="text-sm font-semibold text-white">
+                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
                                         {schedule?.is_active ? 'Digest Active' : 'Digest Paused'}
                                     </div>
-                                    <div className="text-xs text-indigo-200">
+                                    <div className="text-xs text-indigo-800 dark:text-indigo-200">
                                         {schedule ? `${schedule.preferred_time} · ${schedule.timezone.split('/').pop()?.replace('_', ' ')}` : 'Click to configure'}
                                     </div>
                                 </div>
-                                <svg className={`w-4 h-4 text-white/60 transition-transform ${showSchedulePanel ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <svg className={`w-4 h-4 text-gray-600 dark:text-white/60 transition-transform ${showSchedulePanel ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>

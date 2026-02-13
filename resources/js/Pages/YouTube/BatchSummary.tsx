@@ -167,28 +167,28 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
 
             {/* Hero */}
             <div className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900" />
-                <div className="absolute top-10 right-20 w-72 h-72 bg-indigo-500/15 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 left-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-slate-100 dark:from-slate-900 dark:via-indigo-950 dark:to-slate-900" />
+                <div className="absolute top-10 right-20 w-72 h-72 bg-indigo-500/10 dark:bg-indigo-500/15 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 left-10 w-80 h-80 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-3xl" />
 
                 <div className="relative py-10 lg:py-14">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
-                                <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-sm px-3 py-1 text-xs font-medium text-indigo-300 mb-3">
+                                <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-sm px-3 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300 mb-3">
                                     <svg className="w-3 h-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     {isHistoryView ? 'Video Detail' : 'Batch Complete'}
                                 </div>
-                                <h1 className="text-2xl font-bold text-white mb-1">
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                                     {isHistoryView ? results[0]?.title : `Processed ${results.length} Videos`}
                                 </h1>
                             </div>
                             {isHistoryView ? (
                                 <Link
                                     href={route('youtube.history')}
-                                    className="flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 ring-1 ring-white/10 hover:ring-white/20 transition-all"
+                                    className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white bg-white/50 dark:bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 ring-1 ring-gray-200 dark:ring-white/10 hover:ring-gray-300 dark:hover:ring-white/20 transition-all"
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -327,13 +327,13 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
 
                                                 {/* Transcript Column */}
                                                 <div className={`${maximizedSections[index] === 'summary' ? 'hidden' : ''} ${maximizedSections[index] === 'transcript' ? 'w-full' : ''}`}>
-                                                    <div className="rounded-2xl bg-white dark:bg-gray-800 ring-1 ring-gray-200/50 dark:ring-gray-700/50 shadow-sm overflow-hidden flex flex-col max-h-[600px]">
+                                                    <div className="rounded-2xl bg-white dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-700/50 shadow-sm overflow-hidden flex flex-col max-h-[600px]">
                                                         <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center shrink-0">
                                                             <div className="flex items-center gap-2">
                                                                 <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                                 </svg>
-                                                                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Full Transcript</span>
+                                                                <span className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Full Transcript</span>
                                                                 <button
                                                                     onClick={() => toggleMaximize(index, 'transcript')}
                                                                     className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-gray-400 hover:text-indigo-600 transition-colors"
@@ -364,7 +364,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                 </button>
                                                                 <button
                                                                     onClick={() => downloadText(`${video.title || 'transcript'}.txt`, getExportText(video, showTimestamps))}
-                                                                    className="text-xs font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg px-2.5 py-1.5 ring-1 ring-gray-200 dark:ring-gray-600 hover:ring-gray-300 dark:hover:ring-gray-500 transition-all shadow-sm"
+                                                                    className="text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 bg-white dark:bg-gray-800 rounded-lg px-2.5 py-1.5 ring-1 ring-gray-200 dark:ring-gray-600 hover:ring-indigo-300 dark:hover:ring-indigo-600 transition-all shadow-sm"
                                                                 >
                                                                     Download
                                                                 </button>
@@ -376,8 +376,8 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                     const text = segment.text;
                                                                     if (!searchTerm) {
                                                                         return (
-                                                                            <div key={i} className="group relative mb-3 text-gray-700 dark:text-gray-300 text-sm leading-relaxed hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-2 px-3 py-1 rounded-lg transition-colors pr-8">
-                                                                                <span className="font-mono text-xs text-indigo-500 select-none mr-3 opacity-70">
+                                                                            <div key={i} className="group relative mb-3 text-gray-900 dark:text-gray-100 text-sm leading-relaxed hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-2 px-3 py-1 rounded-lg transition-colors pr-8">
+                                                                                <span className="font-mono text-xs text-indigo-700 dark:text-indigo-400 select-none mr-3 font-semibold">
                                                                                     {new Date(segment.start * 1000).toISOString().substr(11, 8)}
                                                                                 </span>
                                                                                 {text}
@@ -401,8 +401,8 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                     }
                                                                     const parts = text.split(new RegExp(`(${searchTerm})`, 'gi'));
                                                                     return (
-                                                                        <div key={i} className="group relative mb-3 text-gray-700 dark:text-gray-300 text-sm leading-relaxed pr-8">
-                                                                            <span className="font-mono text-xs text-indigo-500 select-none mr-3 opacity-70">
+                                                                        <div key={i} className="group relative mb-3 text-gray-900 dark:text-gray-100 text-sm leading-relaxed pr-8">
+                                                                            <span className="font-mono text-xs text-indigo-700 dark:text-indigo-400 select-none mr-3 font-semibold">
                                                                                 {new Date(segment.start * 1000).toISOString().substr(11, 8)}
                                                                             </span>
                                                                             {parts.map((part, pIdx) =>
@@ -431,7 +431,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                     );
                                                                 })
                                                             ) : (
-                                                                <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+                                                                <div className="text-gray-900 dark:text-gray-100 text-sm leading-relaxed whitespace-pre-wrap">
                                                                     {!searchTerm ? fullText : fullText.split(new RegExp(`(${searchTerm})`, 'gi')).map((part, pIdx) =>
                                                                         part.toLowerCase() === searchTerm.toLowerCase() ? (
                                                                             <span key={pIdx} className="bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-100 rounded px-0.5 font-medium border-b-2 border-yellow-400">
@@ -442,7 +442,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        <div className="px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600 text-xs text-gray-400 font-mono text-center shrink-0">
+                                                        <div className="px-4 py-2.5 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600 text-xs text-gray-500 dark:text-gray-400 font-mono text-center shrink-0">
                                                             {fullText.split(/\s+/).filter(w => w.length > 0).length.toLocaleString()} words • {fullText.length.toLocaleString()} chars
                                                         </div>
                                                     </div>

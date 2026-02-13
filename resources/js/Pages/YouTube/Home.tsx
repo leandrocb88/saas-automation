@@ -23,34 +23,35 @@ export default function YouTubeHome({ auth, errors: propErrors, plan, user }: { 
             {/* Hero Section */}
             <div className="relative overflow-hidden">
                 {/* Gradient background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-red-950 to-slate-900" />
+                {/* Gradient background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-black" />
                 {/* Decorative orbs */}
-                <div className="absolute top-20 left-10 w-72 h-72 bg-red-500/20 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-3xl" />
+                <div className="absolute top-20 left-10 w-72 h-72 bg-red-500/10 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-3xl opacity-50" />
 
                 <div className="relative py-24 lg:py-36">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="text-center max-w-3xl mx-auto">
                             {/* Badge */}
-                            <div className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-red-300 mb-8">
+                            <div className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 mb-8">
                                 <span className="flex h-2 w-2 rounded-full bg-red-400 mr-2 animate-pulse" />
                                 AI-Powered Transcripts
                             </div>
 
-                            <h1 className="text-5xl font-bold tracking-tight text-white sm:text-7xl mb-6 leading-[1.1]">
+                            <h1 className="text-5xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-7xl mb-6 leading-[1.1]">
                                 Turn YouTube Videos into{' '}
                                 <span className="bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
                                     Insights
                                 </span>{' '}
                                 Instantly.
                             </h1>
-                            <p className="mt-4 text-xl text-gray-300/80 mb-12 max-w-2xl mx-auto">
+                            <p className="mt-4 text-xl text-gray-600 dark:text-gray-300/80 mb-12 max-w-2xl mx-auto">
                                 Paste a URL, get a full transcript and AI summary in seconds. Stop watching, start reading, save time.
                             </p>
 
                             {/* Input Card */}
-                            <div className="max-w-xl mx-auto bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-2xl">
+                            <div className="max-w-xl mx-auto bg-white/50 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10 p-6 shadow-2xl dark:shadow-none">
                                 <form onSubmit={submit}>
                                     {/* Batch Mode Toggle */}
                                     <div className="flex justify-end mb-3">
@@ -63,7 +64,7 @@ export default function YouTubeHome({ auth, errors: propErrors, plan, user }: { 
                                                 onChange={(e) => setBatchMode(e.target.checked)}
                                             />
                                             <div className={`
-                                                w-11 h-6 bg-white/10 rounded-full peer
+                                                w-11 h-6 bg-gray-200 dark:bg-white/10 rounded-full peer
                                                 peer-focus:ring-4 peer-focus:ring-red-500/20
                                                 peer-checked:after:translate-x-full
                                                 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px]
@@ -71,9 +72,9 @@ export default function YouTubeHome({ auth, errors: propErrors, plan, user }: { 
                                                 after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500
                                                 ${!isPaid ? 'opacity-50 cursor-not-allowed' : ''}
                                             `} />
-                                            <span className="ml-3 text-sm font-medium text-gray-300 flex items-center gap-2">
+                                            <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                                                 Batch Mode
-                                                {!isPaid && <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/20">Pro</span>}
+                                                {!isPaid && <span className="text-xs bg-amber-500/20 text-amber-600 dark:text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/20">Pro</span>}
                                             </span>
                                         </label>
                                     </div>
@@ -90,7 +91,7 @@ export default function YouTubeHome({ auth, errors: propErrors, plan, user }: { 
                                                 <input
                                                     type="url"
                                                     name="urls"
-                                                    className="block w-full rounded-xl border-0 bg-white/10 pl-12 pr-32 py-4 text-white placeholder-gray-400 ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-red-500 sm:text-lg backdrop-blur-sm"
+                                                    className="block w-full rounded-xl border-0 bg-white dark:bg-white/10 pl-12 pr-32 py-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ring-1 ring-inset ring-gray-300 dark:ring-white/10 focus:ring-2 focus:ring-red-500 sm:text-lg backdrop-blur-sm"
                                                     placeholder="https://www.youtube.com/watch?v=..."
                                                     value={data.urls}
                                                     onChange={(e) => setData('urls', e.target.value)}
@@ -109,7 +110,7 @@ export default function YouTubeHome({ auth, errors: propErrors, plan, user }: { 
                                                 <textarea
                                                     name="urls"
                                                     rows={5}
-                                                    className="block w-full rounded-xl border-0 bg-white/10 p-4 text-white placeholder-gray-400 ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-red-500 sm:text-lg backdrop-blur-sm"
+                                                    className="block w-full rounded-xl border-0 bg-white dark:bg-white/10 p-4 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ring-1 ring-inset ring-gray-300 dark:ring-white/10 focus:ring-2 focus:ring-red-500 sm:text-lg backdrop-blur-sm"
                                                     placeholder={'https://www.youtube.com/watch?v=...\nhttps://www.youtube.com/watch?v=...\n(Max 100 videos)'}
                                                     value={data.urls}
                                                     onChange={(e) => setData('urls', e.target.value)}

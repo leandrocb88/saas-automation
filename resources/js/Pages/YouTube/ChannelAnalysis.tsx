@@ -41,37 +41,37 @@ export default function ChannelAnalysis({ auth, canSubmit }: { auth: any, canSub
 
             {/* Hero Section */}
             <div className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-900" />
-                <div className="absolute top-20 right-20 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute bottom-10 left-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-black" />
+                <div className="absolute top-20 right-20 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute bottom-10 left-10 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
 
                 <div className="relative py-16 lg:py-24">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="text-center max-w-3xl mx-auto">
-                            <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-indigo-300 mb-8">
+                            <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-300 mb-8">
                                 <span className="flex h-2 w-2 rounded-full bg-indigo-400 mr-2 animate-pulse" />
                                 Deep Channel Insights
                             </div>
-                            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl mb-6 leading-[1.1]">
+                            <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl mb-6 leading-[1.1]">
                                 Analyze Entire{' '}
                                 <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                                     Channels
                                 </span>{' '}
                                 in One Go.
                             </h1>
-                            <p className="mt-4 text-xl text-gray-300/80 max-w-2xl mx-auto">
+                            <p className="mt-4 text-xl text-gray-600 dark:text-gray-300/80 max-w-2xl mx-auto">
                                 Extract transcripts, summaries, and insights from multiple videos at once.
                             </p>
 
                             {!canSubmit && (
                                 <div className="mt-8 bg-amber-500/10 backdrop-blur-sm border border-amber-500/20 rounded-xl p-4 text-left max-w-2xl mx-auto">
                                     <div className="flex items-start gap-3">
-                                        <svg className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                        <svg className="h-5 w-5 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                                         </svg>
-                                        <p className="text-sm text-amber-200">
+                                        <p className="text-sm text-amber-800 dark:text-amber-200">
                                             <span className="font-bold">Members Only Feature.</span> Using the Channel Analyzer requires an active subscription.{' '}
-                                            <Link href={route('plans')} className="font-medium text-amber-300 underline hover:text-amber-200">
+                                            <Link href={route('plans')} className="font-medium text-amber-700 underline hover:text-amber-600 dark:text-amber-300 dark:hover:text-amber-200">
                                                 Upgrade your plan
                                             </Link>
                                             {' '}to unlock this powerful tool.

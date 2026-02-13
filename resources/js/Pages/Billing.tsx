@@ -19,22 +19,22 @@ export default function Billing({ auth, service, usageStats, subscription_ends_a
 
             {/* Hero */}
             <div className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-900" />
-                <div className="absolute top-10 right-20 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 left-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-gray-100 to-slate-200 dark:from-slate-900 dark:via-gray-900 dark:to-slate-900" />
+                <div className="absolute top-10 right-20 w-72 h-72 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 left-10 w-80 h-80 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-3xl" />
 
                 <div className="relative py-10 lg:py-14">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center">
                             <div>
-                                <h1 className="text-2xl font-bold text-white mb-1">Billing & Subscription</h1>
-                                <p className="text-sm text-gray-400">Manage your plan and usage</p>
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Billing & Subscription</h1>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Manage your plan and usage</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className={`text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm ring-1 ${usageStats.is_pro ? 'bg-green-500/10 text-green-300 ring-green-500/20' : 'bg-gray-500/10 text-gray-300 ring-gray-500/20'}`}>
+                                <span className={`text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm ring-1 ${usageStats.is_pro ? 'bg-green-500/10 text-green-700 dark:text-green-300 ring-green-500/20' : 'bg-gray-500/10 text-gray-600 dark:text-gray-300 ring-gray-500/20'}`}>
                                     {usageStats.plan_name} Plan
                                 </span>
-                                <span className="text-xs text-gray-400 bg-white/5 px-3 py-1.5 rounded-full ring-1 ring-white/10">
+                                <span className="text-xs text-gray-500 dark:text-gray-400 bg-white/50 dark:bg-white/5 px-3 py-1.5 rounded-full ring-1 ring-gray-200 dark:ring-white/10">
                                     {usageStats.period}
                                 </span>
                             </div>

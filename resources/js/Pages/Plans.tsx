@@ -55,36 +55,36 @@ export default function Plans({ auth, service, plans, current_plan, current_peri
 
             {/* Hero */}
             <div className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-900" />
-                <div className="absolute top-10 left-20 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-slate-100 dark:from-indigo-950 dark:via-purple-950 dark:to-slate-900" />
+                <div className="absolute top-10 left-20 w-72 h-72 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 right-20 w-96 h-96 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-3xl" />
 
                 <div className="relative py-16 lg:py-20">
                     <div className="mx-auto max-w-7xl px-6 lg:px-8">
                         <div className="mx-auto max-w-4xl text-center">
-                            <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-indigo-300 mb-6">
+                            <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-300 mb-6">
                                 Pricing
                             </div>
-                            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl mb-4">
+                            <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl mb-4">
                                 Simple, Transparent Pricing
                             </h1>
-                            <p className="mt-2 text-lg text-gray-300/80 max-w-2xl mx-auto">
+                            <p className="mt-2 text-lg text-gray-600 dark:text-gray-300/80 max-w-2xl mx-auto">
                                 Choose the perfect plan for your needs. Always know what you'll pay.
                             </p>
                         </div>
 
                         {/* Billing Toggle */}
                         <div className="mt-10 flex justify-center">
-                            <div className="relative flex rounded-full bg-white/10 backdrop-blur-sm p-1 ring-1 ring-white/10">
+                            <div className="relative flex rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur-sm p-1 ring-1 ring-gray-200 dark:ring-white/10">
                                 <button
                                     onClick={() => setBilling('monthly')}
-                                    className={`${billing === 'monthly' ? 'bg-white text-gray-900 shadow-lg' : 'text-gray-300 hover:text-white'} rounded-full py-2 px-6 text-sm font-semibold transition-all duration-200`}
+                                    className={`${billing === 'monthly' ? 'bg-white text-gray-900 shadow-lg' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'} rounded-full py-2 px-6 text-sm font-semibold transition-all duration-200`}
                                 >
                                     Monthly
                                 </button>
                                 <button
                                     onClick={() => setBilling('yearly')}
-                                    className={`${billing === 'yearly' ? 'bg-white text-gray-900 shadow-lg' : 'text-gray-300 hover:text-white'} rounded-full py-2 px-6 text-sm font-semibold transition-all duration-200`}
+                                    className={`${billing === 'yearly' ? 'bg-white text-gray-900 shadow-lg' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'} rounded-full py-2 px-6 text-sm font-semibold transition-all duration-200`}
                                 >
                                     Yearly <span className="text-xs text-green-500 ml-1 font-bold">
                                         -{Math.round((1 - (plans.pro.price_yearly! / (plans.pro.price_monthly! * 12))) * 100)}%

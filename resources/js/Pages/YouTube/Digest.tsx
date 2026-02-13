@@ -77,19 +77,19 @@ export default function Digest({ auth, digests }: Props) {
             <Head title="Daily Digests" />
 
             {/* Hero Header */}
-            <div className="relative bg-gradient-to-br from-amber-600 via-orange-600 to-red-700 overflow-hidden">
+            <div className="relative bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-amber-600 dark:via-orange-600 dark:to-red-700 overflow-hidden">
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
-                    <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-yellow-400/10 blur-3xl" />
+                    <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-orange-500/5 dark:bg-white/5 blur-3xl" />
+                    <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-red-500/5 dark:bg-yellow-400/10 blur-3xl" />
                 </div>
 
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
                     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
                         <div>
-                            <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
                                 Daily Digests
                             </h1>
-                            <p className="mt-2 text-orange-100 text-lg">
+                            <p className="mt-2 text-orange-800 dark:text-orange-100 text-lg">
                                 AI-powered summaries of your subscribed channels' latest videos.
                             </p>
                         </div>
@@ -98,7 +98,7 @@ export default function Digest({ auth, digests }: Props) {
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={expandAll}
-                                    className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+                                    className="flex items-center gap-1.5 bg-white/50 hover:bg-white/80 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-sm border border-orange-200/50 dark:border-white/10 text-orange-900 dark:text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm"
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
@@ -107,7 +107,7 @@ export default function Digest({ auth, digests }: Props) {
                                 </button>
                                 <button
                                     onClick={collapseAll}
-                                    className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+                                    className="flex items-center gap-1.5 bg-white/50 hover:bg-white/80 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-sm border border-orange-200/50 dark:border-white/10 text-orange-900 dark:text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm"
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
@@ -123,20 +123,20 @@ export default function Digest({ auth, digests }: Props) {
                         <div className="mt-6 flex items-center gap-6">
                             <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-yellow-300" />
-                                <span className="text-sm text-orange-100">
-                                    <span className="font-semibold text-white">{totalVideos}</span> videos
+                                <span className="text-sm text-orange-800 dark:text-orange-200">
+                                    <span className="font-semibold text-gray-900 dark:text-white">{totalVideos}</span> videos
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-orange-300" />
-                                <span className="text-sm text-orange-100">
-                                    <span className="font-semibold text-white">{totalChannels}</span> channels
+                                <span className="text-sm text-orange-800 dark:text-orange-200">
+                                    <span className="font-semibold text-gray-900 dark:text-white">{totalChannels}</span> channels
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-red-300" />
-                                <span className="text-sm text-orange-100">
-                                    <span className="font-semibold text-white">{digests.length}</span> {digests.length === 1 ? 'day' : 'days'}
+                                <span className="text-sm text-orange-800 dark:text-orange-200">
+                                    <span className="font-semibold text-gray-900 dark:text-white">{digests.length}</span> {digests.length === 1 ? 'day' : 'days'}
                                 </span>
                             </div>
                         </div>
@@ -154,7 +154,7 @@ export default function Digest({ auth, digests }: Props) {
                             </svg>
                         </div>
                         <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">No digests yet</h3>
-                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
                             Subscribe to channels and wait for the next scheduled run to see your digests here.
                         </p>
                         <Link
@@ -195,7 +195,7 @@ export default function Digest({ auth, digests }: Props) {
                                                     </svg>
                                                     {batch.time}
                                                 </span>
-                                                <span className="text-xs text-gray-400 dark:text-gray-500">
+                                                <span className="text-xs text-gray-600 dark:text-gray-400">
                                                     {batch.channels.reduce((acc, ch) => acc + ch.videos.length, 0)} videos across {batch.channels.length} {batch.channels.length === 1 ? 'channel' : 'channels'}
                                                 </span>
                                             </div>
@@ -206,7 +206,7 @@ export default function Digest({ auth, digests }: Props) {
                                                     const isCollapsed = collapsedChannels.has(channelKey);
 
                                                     return (
-                                                        <div key={channel.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                                                        <div key={channel.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
                                                             {/* Channel header */}
                                                             <button
                                                                 onClick={() => toggleChannel(dateGroup.date, batch.time, channel.id)}
@@ -233,7 +233,7 @@ export default function Digest({ auth, digests }: Props) {
                                                                 <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex-1 text-left truncate">
                                                                     {channel.name}
                                                                 </h4>
-                                                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-lg flex-shrink-0">
+                                                                <span className="text-xs font-medium text-gray-700 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-lg flex-shrink-0">
                                                                     {channel.videos.length} {channel.videos.length === 1 ? 'video' : 'videos'}
                                                                 </span>
                                                             </button>
@@ -243,7 +243,7 @@ export default function Digest({ auth, digests }: Props) {
                                                                 <div className="border-t border-gray-100 dark:border-gray-700 p-5">
                                                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                                                         {channel.videos.map((video) => (
-                                                                            <div key={video.id} className="group/card rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-md transition-all duration-300 flex flex-col">
+                                                                            <div key={video.id} className="group/card rounded-xl border border-gray-300 dark:border-gray-700 overflow-hidden hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-md transition-all duration-300 flex flex-col">
                                                                                 <a href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="block relative aspect-video overflow-hidden">
                                                                                     <img
                                                                                         src={video.thumbnail}

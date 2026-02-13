@@ -103,62 +103,62 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
 
             {/* Hero */}
             <div className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900" />
-                <div className="absolute top-10 right-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 left-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-100 via-slate-100 to-gray-200 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900" />
+                <div className="absolute top-10 right-20 w-64 h-64 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 left-10 w-80 h-80 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-3xl" />
 
                 <div className="relative py-10 lg:py-14">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center">
                             <div>
-                                <div className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/10 backdrop-blur-sm px-3 py-1 text-xs font-medium text-red-300 mb-3">
+                                <div className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/10 backdrop-blur-sm px-3 py-1 text-xs font-medium text-red-600 dark:text-red-300 mb-3">
                                     <svg className="w-3 h-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
                                     {stats.service} Admin Only
                                 </div>
-                                <h1 className="text-2xl font-bold text-white mb-2">{stats.service} Admin Dashboard</h1>
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{stats.service} Admin Dashboard</h1>
                                 <div className="flex flex-wrap items-center gap-3">
                                     {/* Guest Mode */}
                                     <div className="flex items-center gap-2">
-                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.guestAccess ? 'bg-green-500/20 text-green-300 ring-1 ring-green-500/50' : 'bg-yellow-500/20 text-yellow-300 ring-1 ring-yellow-500/50'}`}>
+                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.guestAccess ? 'bg-green-500/20 text-green-700 dark:text-green-300 ring-1 ring-green-500/50' : 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 ring-1 ring-yellow-500/50'}`}>
                                             Guest: {stats.guestAccess ? 'On' : 'Off'}
                                         </div>
                                         <button
                                             onClick={() => router.post(route('admin.settings.guest_access'))}
-                                            className="text-xs hover:underline text-indigo-300"
+                                            className="text-xs hover:underline text-indigo-500 dark:text-indigo-300"
                                             title="Toggle Guest Access"
                                         >
                                             Toggle
                                         </button>
                                     </div>
 
-                                    <div className="w-px h-3 bg-white/20 mx-1"></div>
+                                    <div className="w-px h-3 bg-gray-300 dark:bg-white/20 mx-1"></div>
 
                                     {/* Sign Ups */}
                                     <div className="flex items-center gap-2">
-                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.signUpEnabled ? 'bg-green-500/20 text-green-300 ring-1 ring-green-500/50' : 'bg-red-500/20 text-red-300 ring-1 ring-red-500/50'}`}>
+                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.signUpEnabled ? 'bg-green-500/20 text-green-700 dark:text-green-300 ring-1 ring-green-500/50' : 'bg-red-500/20 text-red-700 dark:text-red-300 ring-1 ring-red-500/50'}`}>
                                             Sign-ups: {stats.signUpEnabled ? 'On' : 'Off'}
                                         </div>
                                         <button
                                             onClick={() => router.post(route('admin.settings.sign_up'))}
-                                            className="text-xs hover:underline text-indigo-300"
+                                            className="text-xs hover:underline text-indigo-500 dark:text-indigo-300"
                                             title="Toggle New Sign-ups"
                                         >
                                             Toggle
                                         </button>
                                     </div>
 
-                                    <div className="w-px h-3 bg-white/20 mx-1"></div>
+                                    <div className="w-px h-3 bg-gray-300 dark:bg-white/20 mx-1"></div>
 
                                     {/* Admin Only */}
                                     <div className="flex items-center gap-2">
-                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.adminOnly ? 'bg-red-500/20 text-red-300 ring-1 ring-red-500/50' : 'bg-green-500/20 text-green-300 ring-1 ring-green-500/50'}`}>
+                                        <div className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${stats.adminOnly ? 'bg-red-500/20 text-red-700 dark:text-red-300 ring-1 ring-red-500/50' : 'bg-green-500/20 text-green-700 dark:text-green-300 ring-1 ring-green-500/50'}`}>
                                             Maintenance: {stats.adminOnly ? 'On' : 'Off'}
                                         </div>
                                         <button
                                             onClick={() => router.post(route('admin.settings.admin_only'))}
-                                            className="text-xs hover:underline text-indigo-300"
+                                            className="text-xs hover:underline text-indigo-500 dark:text-indigo-300"
                                             title="Toggle Maintenance Mode (Admin Only Access)"
                                         >
                                             Toggle
@@ -180,42 +180,42 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
 
                         {/* Stats Grid */}
                         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 ring-1 ring-white/10">
+                            <div className="bg-white/50 dark:bg-white/5 backdrop-blur-sm rounded-xl p-5 ring-1 ring-gray-200 dark:ring-white/10">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                                        <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <div className="w-10 h-10 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center">
+                                        <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-2xl font-bold text-white">{stats.totalUsers}</p>
-                                        <p className="text-xs text-gray-400">Total Users</p>
+                                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalUsers}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Total Users</p>
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 ring-1 ring-white/10">
+                            <div className="bg-white/50 dark:bg-white/5 backdrop-blur-sm rounded-xl p-5 ring-1 ring-gray-200 dark:ring-white/10">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                                        <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <div className="w-10 h-10 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 flex items-center justify-center">
+                                        <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-2xl font-bold text-white">{stats.totalCreditsConsumed}</p>
-                                        <p className="text-xs text-gray-400">Credits Consumed</p>
+                                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalCreditsConsumed}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Credits Consumed</p>
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 ring-1 ring-white/10">
+                            <div className="bg-white/50 dark:bg-white/5 backdrop-blur-sm rounded-xl p-5 ring-1 ring-gray-200 dark:ring-white/10">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
-                                        <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <div className="w-10 h-10 rounded-lg bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center">
+                                        <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-2xl font-bold text-white">{stats.totalVideosProcessed}</p>
-                                        <p className="text-xs text-gray-400">Videos Processed</p>
+                                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalVideosProcessed}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Videos Processed</p>
                                     </div>
                                 </div>
                             </div>
