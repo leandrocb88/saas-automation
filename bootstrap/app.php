@@ -26,9 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'guest.access' => \App\Http\Middleware\EnsureGuestAccessEnabled::class,
         ]);
 
-        if (env('APP_ENV') !== 'local') {
-            $middleware->trustProxies(at: '*');
-        }
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
