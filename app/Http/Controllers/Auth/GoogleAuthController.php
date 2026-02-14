@@ -21,9 +21,9 @@ class GoogleAuthController extends Controller
     public function handleGoogleCallback()
     {
         try {
-            Log::info('Google Callback Received');
+            Log::channel('stderr')->info('Google Callback Received');
             $googleUser = Socialite::driver('google')->user();
-            Log::info('Google User Retrieved: ' . $googleUser->getEmail());
+            Log::channel('stderr')->info('Google User Retrieved: ' . $googleUser->getEmail());
 
             $signUpEnabled = \App\Models\Setting::where('key', 'sign_up_enabled')->value('value');
             $adminOnly = \App\Models\Setting::where('key', 'admin_only_access')->value('value');
@@ -31,9 +31,9 @@ class GoogleAuthController extends Controller
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if (!$user) {
-                Log::info('User not found, attempting creation/check');
+                Log::channel('stderr')->info('User not found, attempting creation/check');
                 if ($signUpEnabled === 'false' || $adminOnly === 'true') {
-                     Log::warning('Registration blocked: Signups=' . $signUpEnabled . ', AdminOnly=' . $adminOnly);
+                     Log::channel('stderr')->warning('Registration blocked: Signups=' . $signUpEnabled . ', AdminOnly=' . $adminOnly);
                      return redirect()->route('login')->withErrors(['email' => 'New registrations are currently disabled.']);
                 }
 
@@ -51,11 +51,11 @@ class GoogleAuthController extends Controller
                     'avatar' => $googleUser->getAvatar(),
                     'service_type' => 'youtube', // Default
                 ]);
-                Log::info('User created: ' . $user->id);
+                Log::channel('stderr')->info('User created: ' . $user->id);
             } else {
-                Log::info('User found: ' . $user->id);
+                Log::channel('stderr')->info('User found: ' . $user->id);
                 if ($adminOnly === 'true' && !$user->is_admin) {
-                     Log::warning('Maintenance mode block for user: ' . $user->id);
+                     Log::channel('stderr')->warning('Maintenance mode block for user: ' . $user->id);
                      return redirect()->route('login')->withErrors(['email' => 'Maintenance mode is active. Administrators only.']);
                 }
                 // Update Google ID if not set
@@ -64,17 +64,17 @@ class GoogleAuthController extends Controller
                         'google_id' => $googleUser->getId(),
                         'avatar' => $googleUser->getAvatar(),
                     ]);
-                    Log::info('User Google ID updated');
+                    Log::channel('stderr')->info('User Google ID updated');
                 }
             }
 
             Auth::login($user);
-            Log::info('User logged in successfully');
+            Log::channel('stderr')->info('User logged in successfully');
 
             return redirect()->intended(route('dashboard'));
 
         } catch (\Exception $e) {
-            Log::error('Google Auth Failed: ' . $e->getMessage() . PHP_EOL . $e->getTraceAsString());
+            Log::channel('stderr')->error('Google Auth Failed: ' . $e->getMessage() . PHP_EOL . $e->getTraceAsString());
             return redirect()->route('login')->withErrors(['email' => 'Google Login failed. Please try again.']);
         }
     }
