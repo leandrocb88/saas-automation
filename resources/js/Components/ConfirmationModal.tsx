@@ -6,7 +6,7 @@ import { useState } from 'react';
 interface Props {
     show: boolean;
     title: string;
-    content: string;
+    content: React.ReactNode;
     confirmText?: string;
     cancelText?: string;
     onClose: () => void;
@@ -31,9 +31,9 @@ export default function ConfirmationModal({
                     {title}
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                     {content}
-                </p>
+                </div>
 
                 <div className="mt-6 flex justify-end">
                     <SecondaryButton onClick={onClose} disabled={processing}>

@@ -19,7 +19,12 @@ use Carbon\Carbon;
 
 class ProcessDailyDigests extends Command
 {
-    protected $signature = 'app:process-daily-digests {--force : Run immediately without checking schedule}';
+    protected $signature = 'app:process-daily-digests 
+                            {--force : Run immediately without checking schedule} 
+                            {--user= : Process only for specific user ID}
+                            {--limit= : Total max videos to fetch across all channels}
+                            {--sort= : Sort order (newest, oldest, relevance)}
+                            {--days-back= : Number of days to look back}';
     protected $description = 'Process and send daily email digests for subscribed channels.';
 
     public function handle(ApifyService $apify, OpenAIService $openAI, GeminiService $gemini, QuotaManager $quotaManager)
@@ -28,14 +33,23 @@ class ProcessDailyDigests extends Command
 
         $currentHour = Carbon::now()->format('H'); // 00-23
         $force = $this->option('force');
+        $userId = $this->option('user');
         
-        $users = User::whereHas('digestSchedule', function($q) use ($currentHour, $force) {
-            $q->where('is_active', true);
-            
-            if (!$force) {
-                $q->where('preferred_time', 'like', "{$currentHour}:%");
-            }
-        })->with(['channels' => function($q) {
+        $query = User::query();
+
+        if ($userId) {
+            $query->where('id', $userId);
+        } else {
+             $query->whereHas('digestSchedule', function($q) use ($currentHour, $force) {
+                $q->where('is_active', true);
+                
+                if (!$force) {
+                    $q->where('preferred_time', 'like', "{$currentHour}:%");
+                }
+            });
+        }
+
+        $users = $query->with(['channels' => function($q) {
             $q->where('is_paused', false);
         }, 'digestSchedule'])->get();
 
@@ -57,9 +71,33 @@ class ProcessDailyDigests extends Command
             
             if (empty($channelUrls)) continue;
 
-            // Check available credits and limit fetch accordingly
+        // Check available credits and limit fetch accordingly
             $remaining = $quotaManager->getRemainingQuota($user, 'youtube');
-            $maxVideosPerChannel = min(100, (int)floor($remaining / count($channelUrls)));
+            
+            $limit = $this->option('limit');
+            $sort = $this->option('sort');
+            $daysBack = $this->option('days-back') ?? 1;
+
+            if ($limit) {
+                // User specified total limit
+                $maxVideosPerChannel = (int)ceil($limit / count($channelUrls));
+            } else {
+                $maxVideosPerChannel = min(100, (int)floor($remaining / count($channelUrls)));
+            }
+
+            // Ensure we don't exceed quota even with manual limit (optional safeguard, or let it fail/partial?)
+            // Let's safe guard:
+            if ($maxVideosPerChannel * count($channelUrls) > $remaining) {
+                // Adjust to fit quota? Or just error? 
+                // Let's adjust maxVideosPerChannel to fit quota if force is not used? 
+                // Actually, if user explicitly asks for 50, and has 20 credits, maybe we should warn?
+                // For now, let's respect quota as hard limit.
+                 $maxAuthored = (int)floor($remaining / count($channelUrls));
+                 if ($maxVideosPerChannel > $maxAuthored) {
+                     $maxVideosPerChannel = $maxAuthored;
+                     $this->warn("User quota limits fetch to {$maxVideosPerChannel} per channel.");
+                 }
+            }
             
             if ($maxVideosPerChannel <= 0) {
                 $this->info("User has insufficient credits. Skipping.");
@@ -76,7 +114,7 @@ class ProcessDailyDigests extends Command
             $input = [
                 'channelUrls' => $channelUrls,
                 'dateFilterMode' => 'relative',
-                'daysBack' => 1,
+                'daysBack' => (int)$daysBack,
                 'downloadSubtitles' => true,
                 'enableSummary' => false, // We do it locally
                 'includeTimestamps' => true,
@@ -85,6 +123,10 @@ class ProcessDailyDigests extends Command
                 'maxVideosPerChannel' => $maxVideosPerChannel,
                 'preferAutoSubtitles' => false,
             ];
+            
+            if ($sort) {
+                $input['sortBy'] = $sort;
+            }
 
             $this->info("Fetching videos from Apify...");
             // Use existing actor ID

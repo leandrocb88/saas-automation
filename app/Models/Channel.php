@@ -28,4 +28,9 @@ class Channel extends Model
     {
         return $this->hasMany(Video::class);
     }
+
+    public function digests()
+    {
+        return $this->belongstoMany(Digest::class, 'digest_channels');
+    }
 }

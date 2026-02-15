@@ -9,7 +9,7 @@ class GeminiService
 {
     protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-    public function addToPool(\Illuminate\Http\Client\Pool $pool, string $key, string $transcript, string $type = 'detailed')
+    public function addToPool(\Illuminate\Http\Client\Pool $pool, string $key, string $transcript, string $type = 'detailed', ?string $customPrompt = null)
     {
         if (empty($transcript)) {
             return null;
@@ -28,6 +28,10 @@ class GeminiService
         $systemPrompt = $type === 'short' 
             ? 'You are a helpful assistant. Provide a very concise summary (max 3-5 bullet points) focusing only on the main idea. Use Markdown.'
             : 'You are a helpful assistant that summarizes YouTube video transcripts. Provide a summary with key takeaways, deep analysis, and structured sections (Introduction, Key Points, Conclusion). Use Markdown formatting. If the transcript is very short or nonsensical, say so.';
+        
+        if ($customPrompt) {
+            $systemPrompt .= "\n\nSpecific Instruction: " . $customPrompt;
+        }
 
         return $pool->as($key)->retry(3, 2000, function ($exception, $request) {
                 return $exception instanceof \Illuminate\Http\Client\ConnectionException ||
@@ -61,14 +65,13 @@ class GeminiService
         return $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
     }
 
-    public function generateSummary(string $transcript, string $type = 'detailed'): ?string
+    public function generateSummary(string $transcript, string $type = 'detailed', ?string $customPrompt = null): ?string
     {
         // Reuse logic? Or keep separate to avoid breaking robust error handling in generateSummary?
         // Keeping separate for now to minimize risk.
         if (empty($transcript)) {
             return null;
         }
-// ... existing code ...
 
         $apiKey = config('services.google.gemini_api_key');
 
@@ -87,6 +90,10 @@ class GeminiService
         $systemPrompt = $type === 'short' 
             ? 'You are a helpful assistant. Provide a very concise summary (max 3-5 bullet points) focusing only on the main idea. Use Markdown.'
             : 'You are a helpful assistant that summarizes YouTube video transcripts. Provide a summary with key takeaways, deep analysis, and structured sections (Introduction, Key Points, Conclusion). Use Markdown formatting. If the transcript is very short or nonsensical, say so.';
+
+        if ($customPrompt) {
+            $systemPrompt .= "\n\nSpecific Instruction: " . $customPrompt;
+        }
 
         try {
             $response = Http::retry(3, 2000, function ($exception, $request) {

@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\User;
+use App\Models\Digest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -10,7 +11,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class DailyDigest extends Mailable
+class CustomDigestMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -19,6 +20,7 @@ class DailyDigest extends Mailable
      */
     public function __construct(
         public User $user,
+        public Digest $digest,
         public array $videos,
         public string $date,
         public string $shareToken,
@@ -31,7 +33,7 @@ class DailyDigest extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Daily YouTube Digest - ' . $this->date,
+            subject: "Your '{$this->digest->name}' Digest - " . $this->date,
         );
     }
 
@@ -44,11 +46,13 @@ class DailyDigest extends Mailable
             markdown: 'emails.daily-digest',
             with: [
                 'user' => $this->user,
+                'digest' => $this->digest,
                 'videos' => $this->videos,
                 'date' => $this->date,
                 'shareToken' => $this->shareToken,
                 'summaryMetrics' => $this->summaryMetrics,
-                'title' => 'Daily Digest',
+                'isCustom' => true,
+                'title' => $this->digest->name,
             ],
         );
     }

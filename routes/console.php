@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\Schedule;
 Schedule::command('videos:prune')->daily();
 Schedule::command('app:process-daily-digests')->hourly();
+Schedule::command('app:process-custom-digests')->everyFiveMinutes();

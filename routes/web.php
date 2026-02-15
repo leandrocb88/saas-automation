@@ -38,6 +38,8 @@ Route::middleware('web')->group(function () {
             Route::post('/schedule', [App\Http\Controllers\YouTubeController::class, 'updateSchedule'])->name('youtube.schedule.update');
             Route::get('/digest', [App\Http\Controllers\YouTubeController::class, 'digest'])->name('youtube.digest');
             Route::get('/digest/{token}', [App\Http\Controllers\YouTubeController::class, 'showDigestRun'])->name('youtube.digest.show');
+            Route::resource('digests', \App\Http\Controllers\DigestController::class);
+            Route::post('/digest/force', [App\Http\Controllers\YouTubeController::class, 'forceDigest'])->name('youtube.digest.force');
         });
 
         // Redirect /welcome to /

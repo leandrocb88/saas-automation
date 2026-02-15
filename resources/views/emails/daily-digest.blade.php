@@ -1,6 +1,6 @@
 <x-mail::message>
 <div style="text-align: center; padding-bottom: 20px;">
-    <h1 style="color: #333; margin-bottom: 5px;">Daily Digest</h1>
+    <h1 style="color: #333; margin-bottom: 5px;">{{ $title ?? 'Daily Digest' }}</h1>
     <p style="color: #666; font-size: 14px; margin-top: 0;">{{ $date }}</p>
 </div>
 

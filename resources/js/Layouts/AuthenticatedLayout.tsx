@@ -106,6 +106,12 @@ export default function Authenticated({
                                     Subscriptions
                                 </NavLink>
                                 <NavLink
+                                    href={route('digests.index')}
+                                    active={route().current('digests.*')}
+                                >
+                                    My Digests
+                                </NavLink>
+                                <NavLink
                                     href={route('youtube.digest')}
                                     active={route().current('youtube.digest')}
                                 >
@@ -298,6 +304,12 @@ export default function Authenticated({
                             active={route().current('youtube.subscriptions')}
                         >
                             Subscriptions
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('digests.index')}
+                            active={route().current('digests.*')}
+                        >
+                            My Digests
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={route('youtube.digest')}

@@ -45,17 +45,37 @@ export default function Login({
                 </div>
             )}
 
-            <div className="mb-6">
-                <a
-                    href={route('auth.google')}
-                    className="flex w-full items-center justify-center gap-3 rounded-xl bg-white dark:bg-gray-800 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-                >
-                    <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
-                        <path d="M12.0003 20.45c4.6667 0 8.45-3.7833 8.45-8.45 0-.5833-.05-1.15-.15-1.7H12.0003v3.2h4.8667c-.2167 1.1333-1.2834 3.2-4.8667 3.2-2.9167 0-5.2834-2.3667-5.2834-5.2833 0-2.9167 2.3667-5.2833 5.2834-5.2833 1.5833 0 2.9833.5667 4.1 1.6333l2.3666-2.3666C16.9336 3.9833 14.6503 3.05 12.0003 3.05 7.3336 3.05 3.5503 6.8333 3.5503 11.5c0 4.6667 3.7833 8.45 8.45 8.45z" fill="#EA4335" />
-                    </svg>
-                    <span className="text-sm font-semibold leading-6">Continue with Google</span>
-                </a>
-            </div>
+            {settings?.sign_up_enabled !== false && !settings?.admin_only_access ? (
+                <div className="mb-6">
+                    <a
+                        href={route('auth.google')}
+                        className="flex w-full items-center justify-center gap-3 rounded-xl bg-white dark:bg-gray-800 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                    >
+                        <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
+                            <path d="M12.0003 20.45c4.6667 0 8.45-3.7833 8.45-8.45 0-.5833-.05-1.15-.15-1.7H12.0003v3.2h4.8667c-.2167 1.1333-1.2834 3.2-4.8667 3.2-2.9167 0-5.2834-2.3667-5.2834-5.2833 0-2.9167 2.3667-5.2833 5.2834-5.2833 1.5833 0 2.9833.5667 4.1 1.6333l2.3666-2.3666C16.9336 3.9833 14.6503 3.05 12.0003 3.05 7.3336 3.05 3.5503 6.8333 3.5503 11.5c0 4.6667 3.7833 8.45 8.45 8.45z" fill="#EA4335" />
+                        </svg>
+                        <span className="text-sm font-semibold leading-6">Continue with Google</span>
+                    </a>
+                </div>
+            ) : (
+                <div className="mb-6 rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-4">
+                    <div className="flex">
+                        <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div className="ml-3">
+                            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                                Sign-ups are currently disabled
+                            </h3>
+                            <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                                <p>Please log in with your email and password if you have an existing account.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="relative mb-6">
                 <div className="absolute inset-0 flex items-center">

@@ -296,6 +296,37 @@ class YouTubeController extends Controller
         ]);
     }
 
+    public function forceDigest(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->subscribed('youtube')) {
+             return back()->withErrors(['limit' => 'Daily Digest is only available for paid members.']);
+        }
+
+        $validated = $request->validate([
+            'limit' => 'nullable|integer|min:1|max:100',
+            'days_back' => 'nullable|integer|min:1|max:30',
+            'sort' => 'nullable|string|in:newest,oldest,relevance',
+        ]);
+
+        try {
+            $params = [
+                '--force' => true,
+                '--user' => $user->id
+            ];
+
+            if (!empty($validated['limit'])) $params['--limit'] = $validated['limit'];
+            if (!empty($validated['days_back'])) $params['--days-back'] = $validated['days_back'];
+            if (!empty($validated['sort'])) $params['--sort'] = $validated['sort'];
+
+            \Illuminate\Support\Facades\Artisan::call('app:process-daily-digests', $params);
+            
+            return back()->with('success', 'Digest processing started. check your email shortly.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Failed to start digest process: ' . $e->getMessage()]);
+        }
+    }
+
     public function processChannel(Request $request)
     {
         $user = $request->user();

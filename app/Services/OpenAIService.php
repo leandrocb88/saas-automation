@@ -8,13 +8,19 @@ use Illuminate\Support\Facades\Http; // Added this import for the new summarize 
 
 class OpenAIService
 {
-    public function summarize(string $transcript, string $language = 'en'): array
+    public function summarize(string $transcript, string $language = 'en', ?string $customPrompt = null): array
     {
         // Truncate transcript to reasonable length (approx 100k chars ~ 25k tokens) to fit context
         $transcriptSnippet = substr($transcript, 0, 100000);
 
+        $baseInstruction = "You are an expert video analyzer. Analyze the provided transcript and generate a structured JSON response.";
+        
+        if ($customPrompt) {
+            $baseInstruction .= "\n\nSpecific Focus/Instruction: " . $customPrompt;
+        }
+
         $prompt = "
-        You are an expert video analyzer. Analyze the provided transcript and generate a structured JSON response.
+        $baseInstruction
         
         Output format (JSON):
         {
@@ -70,12 +76,18 @@ class OpenAIService
         }
     }
 
-    public function addToPool(\Illuminate\Http\Client\Pool $pool, string $key, string $transcript, string $type = 'detailed')
+    public function addToPool(\Illuminate\Http\Client\Pool $pool, string $key, string $transcript, string $type = 'detailed', ?string $customPrompt = null)
     {
         $transcriptSnippet = substr($transcript, 0, 100000);
 
+        $baseInstruction = "You are an expert video analyzer. Analyze the provided transcript and generate a structured JSON response.";
+        
+        if ($customPrompt) {
+            $baseInstruction .= "\n\nSpecific Focus/Instruction: " . $customPrompt;
+        }
+
         $prompt = "
-        You are an expert video analyzer. Analyze the provided transcript and generate a structured JSON response.
+        $baseInstruction
         
         Output format (JSON):
         {
@@ -102,46 +114,17 @@ class OpenAIService
                 'response_format' => ['type' => 'json_object'],
             ]);
     }
-
-    public function parseResponse(\Illuminate\Http\Client\Response $response)
-    {
-        if ($response->failed()) {
-            Log::error('OpenAI Async Error', ['status' => $response->status(), 'body' => $response->body()]);
-            return null;
-        }
-
-        $content = $response->json('choices.0.message.content');
-        $data = json_decode($content, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return null;
-        }
-
-        // Format Output
-        $output = "### Summary\n" . ($data['summary'] ?? '') . "\n\n";
-        
-        if (!empty($data['key_points'])) {
-            $output .= "### Key Takeaways\n";
-            foreach ($data['key_points'] as $point) {
-                $output .= "- " . $point . "\n";
-            }
-            $output .= "\n";
-        }
-
-        $output .= "### Detailed Analysis\n" . ($data['detailed_summary'] ?? $data['summary'] ?? '') . "\n\n";
-        $output .= "**Sentiment:** " . ($data['sentiment'] ?? 'Neutral');
-
-        return $output;
-    }
-
-    public function generateSummary(string $transcript, string $type = 'detailed'): ?string
+// ...
+    public function generateSummary(string $transcript, string $type = 'detailed', ?string $customPrompt = null): ?string
     {
         if (empty($transcript)) {
             return null;
         }
 
         try {
-            $data = $this->summarize($transcript);
+            // we need to pass customPrompt to summarize method too, let's update summarize first or inline it here?
+            // summarize() is public, let's update it too.
+            $data = $this->summarize($transcript, 'en', $customPrompt); // Updating signature of summarize call
 
             if ($type === 'short') {
                 return $data['summary'];

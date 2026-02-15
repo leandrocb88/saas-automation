@@ -77,4 +77,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(DigestSchedule::class);
     }
+
+    public function digests()
+    {
+        return $this->hasMany(Digest::class);
+    }
 }
