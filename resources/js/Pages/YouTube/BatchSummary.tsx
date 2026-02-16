@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 interface TranscriptSegment {
     text: string;
@@ -539,8 +540,10 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                         </button>
                                                                     </div>
                                                                 </div>
-                                                                <div className="p-5 overflow-y-auto prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed flex-1">
-                                                                    {video.summary_detailed}
+                                                                <div className="p-5 overflow-y-auto flex-1 prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                                    <ReactMarkdown>
+                                                                        {video.summary_detailed}
+                                                                    </ReactMarkdown>
                                                                 </div>
                                                                 {(() => {
                                                                     const content = video.summary_detailed;
