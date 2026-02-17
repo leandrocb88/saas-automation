@@ -20,6 +20,12 @@ class Video extends Model
         'digest_date',
         'source',
         'duration',
+        'pdf_path',
+        'audio_path',
+        'pdf_status',
+        'audio_status',
+        'audio_duration',
+        'summary_status',
     ];
 
     protected $casts = [

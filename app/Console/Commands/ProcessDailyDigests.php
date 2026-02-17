@@ -245,6 +245,7 @@ class ProcessDailyDigests extends Command
                 if (empty($video->summary_detailed)) {
                     $fullText = collect($video->transcript)->pluck('text')->join(' ');
                     if (!empty($fullText)) {
+                         $video->update(['summary_status' => 'processing']);
                          $videosToSummarize[] = ['video' => $video, 'text' => $fullText];
                     }
                 }
@@ -280,11 +281,18 @@ class ProcessDailyDigests extends Command
                              
                              if ($summary) {
                                  $video = $chunk[$index]['video'];
-                                 $video->summary_detailed = $summary;
-                                 $video->save();
+                                 $video->update([
+                                    'summary_detailed' => $summary,
+                                    'summary_status' => 'completed'
+                                 ]);
                              }
                          } else {
                              Log::error("Digest Summary Failed: " . $response->body());
+                             // Check if we can fail the specific video?
+                             // The response index matches the chunk index.
+                             if (isset($chunk[$index])) {
+                                $chunk[$index]['video']->update(['summary_status' => 'failed']);
+                             }
                          }
                      }
                      
@@ -315,9 +323,22 @@ class ProcessDailyDigests extends Command
                 $this->info("Refunded {$diff} unused credits.");
             }
 
-            // 4. Send Email
+            // 4. Send Email & Create Run
             if (!empty($processedVideos)) {
                 $this->info("Sending email with " . count($processedVideos) . " videos.");
+                
+                // Create Digest Run
+                $run = \App\Models\DigestRun::create([
+                    'user_id' => $user->id,
+                    'digest_id' => null, // Daily digests are not linked to a specific custom Digest config yet
+                    'batch_id' => $shareToken,
+                    'summary_count' => count($processedVideos),
+                    'total_duration' => collect($videosToSend)->sum('duration'),
+                ]);
+
+                // Generation is now on-demand (user click)
+                // \App\Jobs\GenerateDigestPdf::dispatch($run);
+                // \App\Jobs\GenerateDigestAudio::dispatch($run);
 
                 // Calculate Metrics
                 $totalVideos = count($processedVideos);

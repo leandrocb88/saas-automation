@@ -40,6 +40,14 @@ Route::middleware('web')->group(function () {
             Route::get('/digest/{token}', [App\Http\Controllers\YouTubeController::class, 'showDigestRun'])->name('youtube.digest.show');
             Route::resource('digests', \App\Http\Controllers\DigestController::class);
             Route::post('/digest/force', [App\Http\Controllers\YouTubeController::class, 'forceDigest'])->name('youtube.digest.force');
+            Route::get('/digest-runs/{digestRun}/pdf', [App\Http\Controllers\DigestRunController::class, 'downloadPdf'])->name('digest_runs.pdf');
+            Route::get('/digest-runs/{digestRun}/audio', [App\Http\Controllers\DigestRunController::class, 'downloadAudio'])->name('digest_runs.audio');
+            Route::get('/digest-runs/{digestRun}/status', [App\Http\Controllers\DigestRunController::class, 'status'])->name('digest_runs.status');
+
+            // Video Downloads
+            Route::get('/videos/{video}/pdf', [App\Http\Controllers\YouTubeController::class, 'downloadVideoPdf'])->name('video.pdf');
+            Route::get('/videos/{video}/audio', [App\Http\Controllers\YouTubeController::class, 'downloadVideoAudio'])->name('video.audio');
+            Route::get('/videos/{video}/status', [App\Http\Controllers\YouTubeController::class, 'videoStatus'])->name('video.status');
         });
 
         // Redirect /welcome to /

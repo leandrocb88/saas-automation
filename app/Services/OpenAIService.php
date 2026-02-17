@@ -152,4 +152,72 @@ class OpenAIService
             return null; // Controller logs it too
         }
     }
+    public function generateAudio(string $text, ?string $voice = null): ?string
+    {
+        try {
+            $driver = config('services.audio.driver', 'openai');
+            $config = config("services.audio.{$driver}");
+
+            // Fallback to OpenAI values if config is missing (sanity check)
+            if (!$config) {
+                $config = config('services.audio.openai');
+            }
+
+            $endpoint = rtrim($config['endpoint'] ?? 'https://api.openai.com/v1', '/');
+            $url = $endpoint . '/audio/speech';
+            
+            $apiKey = $config['key'];
+            $model = $config['model'] ?? 'tts-1';
+            $voice = $voice ?? $config['voice'] ?? 'alloy';
+
+            // Kokoro might need a different handling if it's not fully OpenAI compatible, 
+            // but the plan assumes OpenAI compatibility.
+            // Adjust input length limit based on driver if needed. 
+            // Kokoro shouldn't have the 4096 char limit of OpenAI strictly, but good to keep safe.
+
+            $headers = [
+                'Content-Type' => 'application/json',
+            ];
+
+            if (!empty($apiKey)) {
+                $headers['Authorization'] = 'Bearer ' . $apiKey;
+            }
+
+            $response = Http::withHeaders($headers)
+                ->timeout(300)
+                ->post($url, [
+                    'model' => $model,
+                    'input' => substr($text, 0, 4096),
+                    'voice' => $voice,
+                ]);
+
+            if ($response->failed()) {
+                Log::error('Audio Generation Error (' . $driver . ')', ['status' => $response->status(), 'body' => $response->body()]);
+                return null;
+            }
+
+            return $response->body();
+        } catch (\Exception $e) {
+            Log::error('Audio Generation Exception: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function parseResponse($response)
+    {
+        if ($response->failed()) {
+            Log::error('OpenAI Async API Error', ['status' => $response->status(), 'body' => $response->body()]);
+            return null;
+        }
+
+        $content = $response->json('choices.0.message.content');
+        $data = json_decode($content, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::error('OpenAI Async JSON Parse Error', ['content' => $content]);
+            return null;
+        }
+
+        return $data['detailed_summary'] ?? $data['summary'] ?? null;
+    }
 }

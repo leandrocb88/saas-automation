@@ -213,13 +213,14 @@ class ProcessCustomDigests extends Command
             
             if ($shouldSummarize) {
                  $fullText = collect($video->transcript)->pluck('text')->join(' ');
-                 if (!empty($fullText)) {
-                      $videosToSummarize[] = [
-                          'video' => $video,
-                          'text' => $fullText,
-                          'prompt' => $digest->custom_prompt // Pass the specific prompt
-                      ];
-                 }
+                  if (!empty($fullText)) {
+                       $video->update(['summary_status' => 'processing']);
+                       $videosToSummarize[] = [
+                           'video' => $video,
+                           'text' => $fullText,
+                           'prompt' => $digest->custom_prompt // Pass the specific prompt
+                       ];
+                  }
             }
         }
 
@@ -246,15 +247,19 @@ class ProcessCustomDigests extends Command
                         $summary = null;
                          if ($provider === 'gemini') $summary = $gemini->parseResponse($response);
                          else $summary = $openAI->parseResponse($response);
-                         
-                         if ($summary) {
-                             $video = $chunk[$idx]['video'];
-                             $video->summary_detailed = $summary;
-                             $video->save();
+                                                  if ($summary) {
+                              $video = $chunk[$idx]['video'];
+                              $video->update([
+                                'summary_detailed' => $summary,
+                                'summary_status' => 'completed'
+                              ]);
+                          }
+                     } else {
+                         Log::error("Custom Digest Summary Failed: " . $response->body());
+                         if (isset($chunk[$idx])) {
+                            $chunk[$idx]['video']->update(['summary_status' => 'failed']);
                          }
-                    } else {
-                        Log::error("Custom Digest Summary Failed: " . $response->body());
-                    }
+                     }
                 }
                 sleep(1);
             }
@@ -282,8 +287,20 @@ class ProcessCustomDigests extends Command
             $this->info("Refunded {$diff} credits.");
         }
 
-        // 7. Send Email
+        // 7. Creating Digest Run & Dispatching Assets
         if (!empty($processedVideos)) {
+            $run = \App\Models\DigestRun::create([
+                'digest_id' => $digest->id,
+                'user_id' => $user->id,
+                'batch_id' => $shareToken,
+                'summary_count' => count($processedVideos),
+                'total_duration' => collect($videosToSend)->sum('duration'),
+            ]);
+
+            // Generation is now on-demand (user click)
+            // \App\Jobs\GenerateDigestPdf::dispatch($run);
+            // \App\Jobs\GenerateDigestAudio::dispatch($run);
+
             $this->info("Sending custom digest email...");
             
             // Calculate Metrics

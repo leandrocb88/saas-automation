@@ -1,7 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import axios from 'axios';
+import Dropdown from '@/Components/Dropdown';
 
 interface TranscriptSegment {
     text: string;
@@ -23,6 +25,11 @@ interface VideoResult {
     transcript_read_time?: string;
     summary_read_time?: string;
     duration_timestamp?: string;
+    pdf_status?: 'pending' | 'processing' | 'completed' | 'failed';
+    audio_status?: 'pending' | 'processing' | 'completed' | 'failed';
+    pdf_url?: string;
+    audio_url?: string;
+    audio_duration?: number;
 }
 
 interface BatchSummaryProps {
@@ -85,6 +92,101 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
     const [processingId, setProcessingId] = useState<number | null>(null);
     const [generationError, setGenerationError] = useState<{ id: number, message: string } | null>(null);
 
+    // --- Polling & Download Logic ---
+    const [downloading, setDownloading] = useState<Record<string, boolean>>({});
+    const pollingRefs = useRef<Record<string, NodeJS.Timeout>>({});
+
+    useEffect(() => {
+        // Resume polling for any processing items on mount
+        results.forEach(video => {
+            if (video.id) {
+                if (video.pdf_status === 'processing') {
+                    setDownloading(prev => ({ ...prev, [`${video.id}-pdf`]: true }));
+                    startPolling(video.id, 'pdf', `${video.id}-pdf`);
+                }
+                if (video.audio_status === 'processing') {
+                    setDownloading(prev => ({ ...prev, [`${video.id}-audio`]: true }));
+                    startPolling(video.id, 'audio', `${video.id}-audio`);
+                }
+            }
+        });
+
+        return () => {
+            Object.values(pollingRefs.current).forEach(clearInterval);
+        };
+    }, []);
+
+    const startPolling = (videoId: number, type: 'pdf' | 'audio', key: string) => {
+        if (pollingRefs.current[key]) return;
+        pollingRefs.current[key] = setInterval(() => {
+            checkStatus(videoId, type, key);
+        }, 3000);
+    };
+
+    const checkStatus = async (videoId: number, type: 'pdf' | 'audio', key: string) => {
+        try {
+            const response = await axios.get(route('video.status', videoId));
+            const status = type === 'pdf' ? response.data.pdf_status : response.data.audio_status;
+            const url = type === 'pdf' ? response.data.pdf_url : response.data.audio_url;
+
+            if (status === 'completed' && url) {
+                if (pollingRefs.current[key]) {
+                    clearInterval(pollingRefs.current[key]);
+                    const newRefs = { ...pollingRefs.current };
+                    delete newRefs[key];
+                    pollingRefs.current = newRefs;
+                }
+                setDownloading(prev => ({ ...prev, [key]: false }));
+                window.location.href = url;
+                // Reload data to get the new duration
+                router.reload({ only: ['results'] });
+            } else if (status === 'failed') {
+                if (pollingRefs.current[key]) {
+                    clearInterval(pollingRefs.current[key]);
+                    const newRefs = { ...pollingRefs.current };
+                    delete newRefs[key];
+                    pollingRefs.current = newRefs;
+                }
+                setDownloading(prev => ({ ...prev, [key]: false }));
+                alert(`Generation of ${type.toUpperCase()} failed.`);
+            }
+        } catch (error) {
+            console.error('Status check failed:', error);
+        }
+    };
+
+    const handleDownloadClick = async (videoId: number, type: 'pdf' | 'audio') => {
+        const key = `${videoId}-${type}`;
+        if (downloading[key]) return;
+
+        setDownloading(prev => ({ ...prev, [key]: true }));
+
+        try {
+            // Check status first
+            const statusRes = await axios.get(route('video.status', videoId));
+            const status = type === 'pdf' ? statusRes.data.pdf_status : statusRes.data.audio_status;
+
+            if (status === 'completed') {
+                const url = type === 'pdf' ? statusRes.data.pdf_url : statusRes.data.audio_url;
+                window.location.href = url;
+                setDownloading(prev => ({ ...prev, [key]: false }));
+            } else if (status === 'processing') {
+                // Already processing, just poll
+                startPolling(videoId, type, key);
+            } else {
+                // Trigger generation
+                const triggerUrl = type === 'pdf' ? route('video.pdf', videoId) : route('video.audio', videoId);
+                await axios.get(triggerUrl);
+                startPolling(videoId, type, key);
+            }
+        } catch (error) {
+            console.error("Download trigger failed", error);
+            setDownloading(prev => ({ ...prev, [key]: false }));
+            alert("Failed to start download.");
+        }
+    };
+
+
     const copyToClipboard = async (text: string, index: number) => {
         try {
             await navigator.clipboard.writeText(text);
@@ -127,6 +229,23 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
         element.click();
     };
 
+    const downloadMarkdown = (filename: string, video: VideoResult, type: 'transcript' | 'summary', includeTimestamps: boolean) => {
+        let content = `# ${video.title}\n\n`;
+        if (video.channel_title) content += `**Channel:** ${video.channel_title}\n`;
+        if (video.videoUrl) content += `**URL:** ${video.videoUrl}\n`;
+        content += `\n---\n\n`;
+
+        if (type === 'summary') {
+            content += `## Summary\n\n`;
+            content += video.summary_detailed || video.summary || 'No summary available.';
+        } else {
+            content += `## Transcript\n\n`;
+            content += getExportText(video, includeTimestamps);
+        }
+
+        downloadText(filename, content);
+    };
+
     const getExportText = (video: VideoResult, includeTimestamps: boolean) => {
         if (!includeTimestamps) {
             return video.transcript.map(t => t.text).join(' ');
@@ -134,7 +253,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
         const segments = groupTranscriptSegments(video.transcript);
         return segments.map(s => {
             const time = new Date(s.start * 1000).toISOString().substr(11, 8);
-            return `[${time}] ${s.text}`;
+            return `[${time}] ${s.text} `;
         }).join('\n');
     };
 
@@ -223,6 +342,12 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                             const displaySegments = groupTranscriptSegments(video.transcript);
                             const isExpanded = expandedIndex === index;
 
+                            // Statuses for this video
+                            const pdfStatus = video.pdf_status || 'pending';
+                            const audioStatus = video.audio_status || 'pending';
+                            const isPdfDownloading = downloading[`${video.id}-pdf`] || pdfStatus === 'processing';
+                            const isAudioDownloading = downloading[`${video.id}-audio`] || audioStatus === 'processing';
+
                             return (
                                 <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl ring-1 ring-gray-200/50 dark:ring-gray-700/50 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
                                     {/* Collapsed Header */}
@@ -261,12 +386,12 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
 
                                                 {/* Metadata Row */}
                                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                                    {video.duration && (
+                                                    {(video.duration_timestamp || video.duration) && (
                                                         <div className="flex items-center gap-1">
                                                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                             </svg>
-                                                            {video.duration}
+                                                            {video.duration_timestamp || video.duration}
                                                         </div>
                                                     )}
                                                     {video.published_at && (
@@ -365,7 +490,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                             <div className={`grid grid-cols-1 ${maximizedSections[index] ? '' : 'lg:grid-cols-2'} gap-6`}>
 
                                                 {/* Transcript Column */}
-                                                <div className={`${maximizedSections[index] === 'summary' ? 'hidden' : ''} ${maximizedSections[index] === 'transcript' ? 'w-full' : ''}`}>
+                                                <div className={`${maximizedSections[index] === 'summary' ? 'hidden' : ''} ${maximizedSections[index] === 'transcript' ? 'w-full' : ''} `}>
                                                     <div className="rounded-2xl bg-white dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-700/50 shadow-sm overflow-hidden flex flex-col max-h-[600px]">
                                                         <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center shrink-0">
                                                             <div className="flex items-center gap-2">
@@ -401,12 +526,50 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                         </>
                                                                     ) : 'Copy'}
                                                                 </button>
-                                                                <button
-                                                                    onClick={() => downloadText(`${video.title || 'transcript'}.txt`, getExportText(video, showTimestamps))}
-                                                                    className="text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 bg-white dark:bg-gray-800 rounded-lg px-2.5 py-1.5 ring-1 ring-gray-200 dark:ring-gray-600 hover:ring-indigo-300 dark:hover:ring-indigo-600 transition-all shadow-sm"
-                                                                >
-                                                                    Download
-                                                                </button>
+                                                                <Dropdown>
+                                                                    <Dropdown.Trigger>
+                                                                        <button className="text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 bg-white dark:bg-gray-800 rounded-lg px-2.5 py-1.5 ring-1 ring-gray-200 dark:ring-gray-600 hover:ring-indigo-300 dark:hover:ring-indigo-600 transition-all shadow-sm flex items-center gap-1">
+                                                                            Download
+                                                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                            </svg>
+                                                                        </button>
+                                                                    </Dropdown.Trigger>
+                                                                    <Dropdown.Content width="48" align="right">
+                                                                        <button
+                                                                            onClick={() => downloadText(`${video.title || 'transcript'}.txt`, getExportText(video, showTimestamps))}
+                                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
+                                                                        >
+                                                                            <span>Text (.txt)</span>
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => downloadMarkdown(`${video.title || 'transcript'}.md`, video, 'transcript', showTimestamps)}
+                                                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
+                                                                        >
+                                                                            <span>Markdown (.md)</span>
+                                                                        </button>
+                                                                        <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                                                        <button
+                                                                            onClick={() => handleDownloadClick(video.id!, 'pdf')}
+                                                                            disabled={isPdfDownloading}
+                                                                            className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between
+                                                                                ${isPdfDownloading
+                                                                                    ? 'text-gray-400 cursor-not-allowed'
+                                                                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                                                }`}
+                                                                        >
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span>PDF (Full Report)</span>
+                                                                                {isPdfDownloading && (
+                                                                                    <svg className="animate-spin h-3 w-3 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                                    </svg>
+                                                                                )}
+                                                                            </div>
+                                                                        </button>
+                                                                    </Dropdown.Content>
+                                                                </Dropdown>
                                                             </div>
                                                         </div>
                                                         <div className="p-4 overflow-y-auto">
@@ -488,7 +651,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                 </div>
 
                                                 {/* Summary Column */}
-                                                <div className={`${maximizedSections[index] === 'transcript' ? 'hidden' : ''} ${maximizedSections[index] === 'summary' ? 'w-full' : ''}`}>
+                                                <div className={`${maximizedSections[index] === 'transcript' ? 'hidden' : ''} ${maximizedSections[index] === 'summary' ? 'w-full' : ''} `}>
                                                     <div className="h-full rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 ring-1 ring-indigo-200/50 dark:ring-indigo-800/50 overflow-hidden flex flex-col max-h-[600px]">
                                                         {video.summary_detailed ? (
                                                             <>
@@ -529,15 +692,69 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                                 </>
                                                                             ) : 'Copy'}
                                                                         </button>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                const content = video.summary_detailed;
-                                                                                downloadText(`${video.title || 'summary'}_detailed.txt`, content || '');
-                                                                            }}
-                                                                            className="text-xs font-medium text-indigo-600 dark:text-indigo-300 bg-white dark:bg-gray-800 rounded-lg px-2.5 py-1.5 ring-1 ring-indigo-200 dark:ring-indigo-700/50 hover:ring-indigo-300 transition-all shadow-sm"
-                                                                        >
-                                                                            Download
-                                                                        </button>
+                                                                        <Dropdown>
+                                                                            <Dropdown.Trigger>
+                                                                                <button className="text-xs font-medium text-indigo-600 dark:text-indigo-300 bg-white dark:bg-gray-800 rounded-lg px-2.5 py-1.5 ring-1 ring-indigo-200 dark:ring-indigo-700/50 hover:ring-indigo-300 transition-all shadow-sm flex items-center gap-1">
+                                                                                    Download
+                                                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                                    </svg>
+                                                                                </button>
+                                                                            </Dropdown.Trigger>
+                                                                            <Dropdown.Content width="48" align="right">
+                                                                                <button
+                                                                                    onClick={() => downloadText(`${video.title || 'summary'}_summary.txt`, video.summary_detailed || video.summary || '')}
+                                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
+                                                                                >
+                                                                                    <span>Text (.txt)</span>
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => downloadMarkdown(`${video.title || 'summary'}_summary.md`, video, 'summary', false)}
+                                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
+                                                                                >
+                                                                                    <span>Markdown (.md)</span>
+                                                                                </button>
+                                                                                <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                                                                <button
+                                                                                    onClick={() => handleDownloadClick(video.id!, 'pdf')}
+                                                                                    disabled={isPdfDownloading}
+                                                                                    className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between
+                                                                                        ${isPdfDownloading
+                                                                                            ? 'text-gray-400 cursor-not-allowed'
+                                                                                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                                                        }`}
+                                                                                >
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <span>PDF (Full Report)</span>
+                                                                                        {isPdfDownloading && (
+                                                                                            <svg className="animate-spin h-3 w-3 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                                            </svg>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => handleDownloadClick(video.id!, 'audio')}
+                                                                                    disabled={isAudioDownloading}
+                                                                                    className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between
+                                                                                        ${isAudioDownloading
+                                                                                            ? 'text-gray-400 cursor-not-allowed'
+                                                                                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                                                        }`}
+                                                                                >
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <span>Audio (.mp3)</span>
+                                                                                        {isAudioDownloading && (
+                                                                                            <svg className="animate-spin h-3 w-3 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                                            </svg>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </button>
+                                                                            </Dropdown.Content>
+                                                                        </Dropdown>
                                                                     </div>
                                                                 </div>
                                                                 <div className="p-5 overflow-y-auto flex-1 prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 leading-relaxed">
@@ -558,51 +775,126 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                 })()}
                                                             </>
                                                         ) : (
-                                                            <div className="flex flex-col items-center justify-center h-full p-8 text-center min-h-[300px]">
-                                                                <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm ring-1 ring-indigo-200/50 dark:ring-indigo-800/50 mb-5">
-                                                                    <svg className="w-8 h-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                                    </svg>
-                                                                </div>
-                                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                                                                    No Summary Available
-                                                                </h3>
-                                                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs">
-                                                                    Generate a summary for this video using AI.
-                                                                </p>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        if (!video.id) {
-                                                                            console.error("Video ID missing", video);
-                                                                            return;
-                                                                        }
-                                                                        router.post(route('youtube.summary.generate', video.id), {}, {
-                                                                            preserveScroll: true,
-                                                                            onStart: () => {
-                                                                                setProcessingId(video.id!);
-                                                                                setGenerationError(null);
-                                                                            },
-                                                                            onFinish: () => setProcessingId(null),
-                                                                            onError: (errors) => {
-                                                                                console.error("Generate Summary Failed", errors);
-                                                                                setGenerationError({
-                                                                                    id: video.id!,
-                                                                                    message: errors.summary || "Failed to generate summary. Please try again."
-                                                                                });
-                                                                            }
-                                                                        });
-                                                                    }}
-                                                                    disabled={processingId === video.id}
-                                                                    className={`inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all ${processingId === video.id ? 'bg-indigo-400 cursor-not-allowed shadow-sm' : 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-indigo-700 hover:to-purple-700'}`}
-                                                                >
-                                                                    {processingId === video.id ? 'Generating...' : 'Generate Summary'}
-                                                                </button>
-                                                                {generationError && generationError.id === video.id && (
-                                                                    <div className="mt-3 text-xs text-red-600 dark:text-red-400 text-center bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg ring-1 ring-red-200 dark:ring-red-800">
-                                                                        {generationError.message}
+                                                            // Only show this block if there was an explicit error or if the user clicks retry
+                                                            // If status is pending/processing, show loading.
+                                                            // If status is failed, show the error UI.
+                                                            video.summary_status === 'failed' ? (
+                                                                <div className="flex flex-col items-center justify-center h-full p-8 text-center min-h-[300px]">
+                                                                    <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl shadow-sm ring-1 ring-red-200 dark:ring-red-800 mb-5">
+                                                                        <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                                        </svg>
                                                                     </div>
-                                                                )}
-                                                            </div>
+                                                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                                                                        Summary Generation Failed
+                                                                    </h3>
+                                                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs">
+                                                                        We couldn't generate the summary automatically.
+                                                                    </p>
+                                                                    {/* Render the generic "Generate" button below */}
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            if (!video.id) return;
+                                                                            router.post(route('youtube.summary.generate', video.id), {}, {
+                                                                                preserveScroll: true,
+                                                                                onStart: () => {
+                                                                                    setProcessingId(video.id!);
+                                                                                    setGenerationError(null);
+                                                                                },
+                                                                                onFinish: () => setProcessingId(null),
+                                                                                onError: (errors) => {
+                                                                                    console.error("Generate Summary Failed", errors);
+                                                                                    setGenerationError({
+                                                                                        id: video.id!,
+                                                                                        message: errors.summary || "Failed to generate summary. Please try again."
+                                                                                    });
+                                                                                }
+                                                                            });
+                                                                        }}
+                                                                        disabled={processingId === video.id}
+                                                                        className={`inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all ${processingId === video.id ? 'bg-indigo-400 cursor-not-allowed shadow-sm' : 'bg-gradient-to-r from-red-600 to-orange-600 shadow-red-500/25 hover:shadow-red-500/40 hover:from-red-700 hover:to-orange-700'}`}
+                                                                    >
+                                                                        {processingId === video.id ? 'Retrying...' : 'Retry Generation'}
+                                                                    </button>
+                                                                    {generationError && generationError.id === video.id && (
+                                                                        <div className="mt-3 text-xs text-red-600 dark:text-red-400 text-center bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg ring-1 ring-red-200 dark:ring-red-800">
+                                                                            {generationError.message}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                // If summary is null but NOT failed (e.g. pending/processing/null), what to show?
+                                                                // User said "only show THIS when there was an error".
+                                                                // If it's processing, maybe show a loader?
+                                                                video.summary_status === 'processing' || processingId === video.id ? (
+                                                                    <div className="flex flex-col items-center justify-center h-full p-8 text-center min-h-[300px]">
+                                                                        <svg className="animate-spin h-8 w-8 text-indigo-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                        </svg>
+                                                                        <p className="text-sm text-gray-500 animate-pulse">Generating Summary...</p>
+                                                                    </div>
+                                                                ) : (
+                                                                    // Default generic placeholder if user didn't request summary? 
+                                                                    // Or if status is 'pending' (before start)?
+                                                                    // Let's show a "Generate" button but distinct from the "Error" one.
+                                                                    // Actually, strictly speaking the user said "only show THIS [the error like one] when there was an error".
+                                                                    // I will return null/empty if not failed, OR a very subtle "Start" button?
+                                                                    // Let's show the standard one but only if NOT failed (which is this else block).
+                                                                    // Wait, the standard one IS the one they complained about.
+                                                                    // They said "only show this when there was an error".
+                                                                    // So I should hide it completely? But then how do they request it if they changed their mind? "manual trigger".
+                                                                    // I'll show a "Create Summary" button but simpler/cleaner, or just the instruction.
+                                                                    // Re-reading: "only show this when there was an error generating the summary automatically"
+                                                                    // This implies that for "no summary yet" (normal case), show something else?
+                                                                    // Or maybe they imply that "No Summary Available" implies failure, which is misleading if it's just not done yet.
+                                                                    // If I modify the text to "Generate Summary" it might be fine.
+                                                                    // But let's stick to strict interpretation: Show the button/message ONLY on failure.
+                                                                    // But I need to provide a UI to generate it if it wasn't requested.
+                                                                    // I'll duplicate the block but remove "No Summary Available" for the "fresh" state, and just say "Ready to summarize".
+                                                                    // But to be safe and address the specific complaint:
+                                                                    // I will reuse the existing block logic BUT wrap it.
+                                                                    // Actually, I'll just change the text based on status.
+
+                                                                    <div className="flex flex-col items-center justify-center h-full p-8 text-center min-h-[300px]">
+                                                                        <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm ring-1 ring-indigo-200/50 dark:ring-indigo-800/50 mb-5">
+                                                                            <svg className="w-8 h-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                                            </svg>
+                                                                        </div>
+                                                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                                                                            Generate AI Summary
+                                                                        </h3>
+                                                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs">
+                                                                            Get a detailed summary of this video.
+                                                                        </p>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                if (!video.id) return;
+                                                                                router.post(route('youtube.summary.generate', video.id), {}, {
+                                                                                    preserveScroll: true,
+                                                                                    onStart: () => {
+                                                                                        setProcessingId(video.id!);
+                                                                                        setGenerationError(null);
+                                                                                    },
+                                                                                    onFinish: () => setProcessingId(null),
+                                                                                    onError: (errors) => {
+                                                                                        console.error("Generate Summary Failed", errors);
+                                                                                        setGenerationError({
+                                                                                            id: video.id!,
+                                                                                            message: errors.summary || "Failed. Please try again."
+                                                                                        });
+                                                                                    }
+                                                                                });
+                                                                            }}
+                                                                            disabled={processingId === video.id}
+                                                                            className={`inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all ${processingId === video.id ? 'bg-indigo-400 cursor-not-allowed shadow-sm' : 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-indigo-700 hover:to-purple-700'}`}
+                                                                        >
+                                                                            {processingId === video.id ? 'Generating...' : 'Generate Summary'}
+                                                                        </button>
+                                                                    </div>
+                                                                )
+                                                            )
                                                         )}
                                                     </div>
                                                 </div>

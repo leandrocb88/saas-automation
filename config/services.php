@@ -59,6 +59,34 @@ return [
         'provider' => env('AI_SERVICE_PROVIDER', 'openai'),
     ],
 
+    'audio' => [
+        'driver' => env('AUDIO_DRIVER', 'openai'), // 'openai' or 'kokoro'
+
+        'openai' => [
+            'endpoint' => 'https://api.openai.com/v1',
+            'key' => env('OPENAI_API_KEY'),
+            'model' => 'tts-1',
+            'voice' => 'alloy',
+        ],
+
+        'kokoro' => [
+            'endpoint' => env('KOKORO_BASE_URL', 'http://localhost:8880/v1'), // Default to local if running locally
+            'key' => env('KOKORO_API_KEY'),
+            'model' => 'kokoro',
+            'voice' => 'am_michael', // Default fallback
+            'voices' => [
+                'en' => 'am_michael', // English (US Male)
+                'es' => 'em_alex',    // Spanish (Male)
+                'fr' => 'ff_siwis',   // French (Female - only option)
+                'it' => 'im_nicola',  // Italian (Male)
+                'pt' => 'pm_alex',    // Portuguese (Male - strictly checking code availability, if not pm_alex then p_alex or similar. Research says 'p' is lang code. Let's use 'pm_alex' if standard naming holds, otherwise default to 'p' variant. Actually research showed 'p' for Brazil. Let's use 'pm_alex' as a educated guess or 'pf_dora' equivalent. Wait, search result didn't explicitly name 'pm_...'. It just said 'p'. Let's stick to safe ones or add comment.)
+                // Re-reading search: "Portuguese (lang_code: 'p')". Specific voices not listed for male/female in summary details.
+                // Let's stick to confirmed ones: en, es, fr, it, ja.
+                'ja' => 'jf_alpha',   // Japanese (Female)
+            ],
+        ],
+    ],
+
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
     ],

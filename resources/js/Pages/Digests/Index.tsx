@@ -117,6 +117,7 @@ export default function Index({ auth, digests, flash }: Props) {
                                                         </button>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <Link href={route('digests.show', digest.id)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-4">History</Link>
                                                         <Link href={route('digests.edit', digest.id)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4">Edit</Link>
                                                         <button onClick={() => handleDelete(digest.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
                                                     </td>

@@ -34,4 +34,9 @@ class Digest extends Model
     {
         return $this->belongsToMany(Channel::class, 'digest_channels');
     }
+
+    public function runs()
+    {
+        return $this->hasMany(DigestRun::class);
+    }
 }

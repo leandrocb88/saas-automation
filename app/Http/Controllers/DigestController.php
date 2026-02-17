@@ -71,6 +71,20 @@ class DigestController extends Controller
         ]);
     }
 
+    public function show(Digest $digest)
+    {
+        if ($digest->user_id !== Auth::id()) abort(403);
+
+        $digest->load(['runs' => function($q) {
+            $q->latest();
+        }]);
+
+        return Inertia::render('Digests/Show', [
+            'digest' => $digest,
+            'runs' => $digest->runs,
+        ]);
+    }
+
     public function update(Request $request, Digest $digest)
     {
         if ($digest->user_id !== Auth::id()) abort(403);

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Pool;
+use Illuminate\Support\Facades\Storage;
 
 class YouTubeController extends Controller
 {
@@ -146,6 +147,9 @@ class YouTubeController extends Controller
                 return $val->digest_date->format('Y-m-d');
             });
 
+        // Fetch all runs for this user to map them
+        $runs = \App\Models\DigestRun::where('user_id', $user->id)->get()->keyBy('batch_id');
+
         $formattedDigests = [];
         foreach ($digests as $dateStr => $videosByDate) {
              
@@ -190,6 +194,23 @@ class YouTubeController extends Controller
                  $readTimeSeconds = ceil(($totalWords / 200) * 60);
                  $timeSavedSeconds = max(0, $totalDurationSeconds - $readTimeSeconds);
 
+                 // Link to DigestRun
+                 $firstVideo = $videosByBatch->first();
+                 $shareToken = $firstVideo->share_token ?? null;
+                 $run = $shareToken ? ($runs[$shareToken] ?? null) : null;
+
+                 $downloads = null;
+                 if ($run) {
+                     $downloads = [
+                         'id' => $run->id,
+                         'pdf_status' => $run->pdf_status,
+                         'audio_status' => $run->audio_status,
+                         'audio_duration' => $run->audio_duration,
+                         'pdf' => route('digest_runs.pdf', $run->id),
+                         'audio' => route('digest_runs.audio', $run->id),
+                     ];
+                 }
+
                  $formattedBatches[] = [
                      'time' => $timeStr,
                      'channels' => $formattedChannels,
@@ -199,19 +220,12 @@ class YouTubeController extends Controller
                         'read_time' => $this->formatDuration($readTimeSeconds) ?? '0s',
                         'time_saved' => $this->formatDuration($timeSavedSeconds) ?? '0s',
                      ],
+                     'downloads' => $downloads,
                  ];
              }
              
              // Sort batches desc (latest first)
-             // Since $batches is from Collection groupBy, keys are time strings. 
-             // But original query was ordered by digest_date desc, so $batches should roughly be in order?
-             // Not guaranteed if keys are strings. 
-             // We can sort $formattedBatches by time if needed, but 'g:i A' is hard to sort.
-             // Better to trust DB order -> collection order.
-             // DB order was `orderBy('digest_date', 'desc')`. 
-             // So `groupBy(date)` keeps order? Yes.
-             // `groupBy(time)` keeps order? Yes. 
-             // So first batch should be latest time.
+             // ... existing comments ...
 
              $formattedDigests[] = [
                  'date' => Carbon::parse($dateStr)->format('F j, Y'),
@@ -811,6 +825,8 @@ class YouTubeController extends Controller
                 $provider = config('services.ai.provider', 'openai');
                 $summary = null;
 
+                $video->update(['summary_status' => 'processing']);
+
                 if ($provider === 'gemini') {
                     Log::info("Generating summary with Gemini for video {$videoId}");
                     $summary = $gemini->generateSummary($fullText, 'detailed');
@@ -819,11 +835,15 @@ class YouTubeController extends Controller
                     $summary = $openAI->generateSummary($fullText, 'detailed');
                 }
 
-                $video->update(['summary_detailed' => $summary]);
+                $video->update([
+                    'summary_detailed' => $summary,
+                    'summary_status' => 'completed'
+                ]);
             } catch (\Exception $e) {
                 // Log error but don't fail the request, users can retry later if we keep that button (or we just accept it failed)
                 // For now, let's just log it.
                 \Illuminate\Support\Facades\Log::error("Auto-summary failed for video {$videoId}: " . $e->getMessage());
+                $video->update(['summary_status' => 'failed']);
             }
 
             $result['id'] = $video->id;
@@ -1015,6 +1035,8 @@ class YouTubeController extends Controller
         try {
             $provider = config('services.ai.provider', 'openai');
             $summary = null;
+            
+            $video->update(['summary_status' => 'processing']);
 
             if ($provider === 'gemini') {
                  $summary = $gemini->generateSummary($fullText, $type);
@@ -1023,7 +1045,10 @@ class YouTubeController extends Controller
                  $summary = $openAI->generateSummary($fullText, $type);
             }
             
-            $video->update([$column => $summary]);
+            $video->update([
+                $column => $summary,
+                'summary_status' => 'completed'
+            ]);
             
             // Increment usage with 'ai_summary' tracking
             if ($user) {
@@ -1036,6 +1061,7 @@ class YouTubeController extends Controller
             
             return back()->with('success', 'Summary generated successfully.');
         } catch (\Exception $e) {
+            $video->update(['summary_status' => 'failed']);
             return back()->withErrors(['summary' => 'Failed to generate summary: ' . $e->getMessage()]);
         }
     }
@@ -1143,18 +1169,72 @@ class YouTubeController extends Controller
             'id' => $video->id,
             'videoUrl' => "https://www.youtube.com/watch?v={$video->video_id}",
             'title' => $video->title,
-            'channel_title' => $video->channel_title,
-            'thumbnail' => $thumbnail,
-            'transcript' => $video->transcript,
-            'summary' => $video->summary_detailed, // Backwards compat
-            'summary_short' => $video->summary_short,
+            'thumbnail' => $video->thumbnail_url,
+            'transcript' => $video->transcript ?? [],
+            'summary' => $video->summary_short,
             'summary_detailed' => $video->summary_detailed,
+            'summary_status' => $video->summary_status,
+            'channel_title' => $video->channel_title,
             'duration' => $this->formatDuration($video->duration ?? 0),
-            'published_at' => $video->created_at ? $video->created_at->format('M d, Y') : null,
+            'published_at' => $video->published_at ? $video->published_at->format('M j, Y') : null,
             'transcript_read_time' => $transcriptReadTime,
             'summary_read_time' => $summaryReadTime,
             'duration_timestamp' => $this->formatDurationTimestamp($video->duration ?? 0),
+            'pdf_status' => $video->pdf_status ?? 'pending',
+            'audio_status' => $video->audio_status ?? 'pending',
+            'pdf_url' => $video->pdf_status === 'completed' ? route('video.pdf', $video->id) : null,
+            'audio_url' => $video->audio_status === 'completed' ? route('video.audio', $video->id) : null,
+            'audio_duration' => $video->audio_duration,
         ];
+    }
+
+    public function downloadVideoPdf(Video $video)
+    {
+        if ($video->user_id !== auth()->id()) abort(403);
+
+        if ($video->pdf_status === 'completed' && $video->pdf_path && Storage::disk(config('filesystems.default', 'public'))->exists($video->pdf_path)) {
+            return Storage::disk(config('filesystems.default', 'public'))->download($video->pdf_path);
+        }
+
+        if ($video->pdf_status === 'processing') {
+            return response()->json(['status' => 'processing']);
+        }
+
+        $video->update(['pdf_status' => 'processing']);
+        \App\Jobs\GenerateVideoPdf::dispatch($video);
+
+        return response()->json(['status' => 'processing']);
+    }
+
+    public function downloadVideoAudio(Video $video)
+    {
+        if ($video->user_id !== auth()->id()) abort(403);
+
+        if ($video->audio_status === 'completed' && $video->audio_path && Storage::disk(config('filesystems.default', 'public'))->exists($video->audio_path)) {
+            return Storage::disk(config('filesystems.default', 'public'))->download($video->audio_path);
+        }
+
+        if ($video->audio_status === 'processing') {
+             return response()->json(['status' => 'processing']);
+        }
+
+        $video->update(['audio_status' => 'processing']);
+        \App\Jobs\GenerateVideoAudio::dispatch($video);
+        
+        return response()->json(['status' => 'processing']);
+    }
+
+    public function videoStatus(Video $video)
+    {
+        if ($video->user_id !== auth()->id()) abort(403);
+
+        return response()->json([
+            'pdf_status' => $video->pdf_status,
+            'audio_status' => $video->audio_status,
+            'pdf_url' => $video->pdf_status === 'completed' ? route('video.pdf', $video->id) : null,
+            'audio_url' => $video->audio_status === 'completed' ? route('video.audio', $video->id) : null,
+            'audio_duration' => $video->audio_duration,
+        ]);
     }
 
     private function formatDurationTimestamp($seconds)
