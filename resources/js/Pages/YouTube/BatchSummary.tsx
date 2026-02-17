@@ -30,6 +30,7 @@ interface VideoResult {
     pdf_url?: string;
     audio_url?: string;
     audio_duration?: number;
+    summary_status?: 'pending' | 'processing' | 'completed' | 'failed' | null;
 }
 
 interface BatchSummaryProps {
