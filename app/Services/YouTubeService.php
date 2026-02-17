@@ -64,7 +64,7 @@ class YouTubeService
     {
         if (!$this->apiKey) {
             Log::warning('YOUTUBE_API_KEY is missing.');
-            return null;
+            throw new \Exception('YOUTUBE_API_KEY is missing. Please check your .env configuration.');
         }
 
         $params = [
@@ -80,11 +80,12 @@ class YouTubeService
              $params['forUsername'] = $identifier['value'];
         }
 
-        $response = Http::get("{$this->baseUrl}/channels", $params);
+        $response = Http::timeout(15)->get("{$this->baseUrl}/channels", $params);
 
         if ($response->failed()) {
             Log::error("YouTube API Error: " . $response->body());
-            return null;
+            $error = $response->json()['error']['message'] ?? $response->body();
+            throw new \Exception("YouTube API Error: " . $error);
         }
 
         $data = $response->json();

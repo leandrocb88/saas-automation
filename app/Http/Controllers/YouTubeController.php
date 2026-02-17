@@ -75,7 +75,12 @@ class YouTubeController extends Controller
         $user = $request->user();
         
         // Fetch Channel Details from API
-        $details = $this->youtube->getChannelDetails($request->url);
+        try {
+            $details = $this->youtube->getChannelDetails($request->url);
+        } catch (\Exception $e) {
+            Log::error("Subscription Failed for URL {$request->url}: " . $e->getMessage());
+            return back()->withErrors(['url' => 'Unable to subscribe. Please verify the URL or try again later.']);
+        }
 
         if (!$details) {
             return back()->withErrors(['url' => 'Channel not found or invalid URL. Please check the URL and try again.']);
@@ -385,10 +390,15 @@ class YouTubeController extends Controller
             }
 
             // 2. Existence Check (API)
-            if ($youtube->getChannelDetails($url)) {
-                $channelUrls[] = $url;
-            } else {
-                $invalidChannels[] = "$url (Not Found)";
+            try {
+                if ($youtube->getChannelDetails($url)) {
+                    $channelUrls[] = $url;
+                } else {
+                    $invalidChannels[] = "$url (Not Found)";
+                }
+            } catch (\Exception $e) {
+                Log::error("Channel Validation Failed for URL {$url}: " . $e->getMessage());
+                return back()->withErrors(['urls' => "Error validating channel: {$url}. Please verify URL."]);
             }
         }
 
