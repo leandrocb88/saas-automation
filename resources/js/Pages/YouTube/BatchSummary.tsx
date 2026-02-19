@@ -109,6 +109,10 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                     setDownloading(prev => ({ ...prev, [`${video.id}-audio`]: true }));
                     startPolling(video.id, 'audio', `${video.id}-audio`);
                 }
+                if (video.summary_status === 'processing') {
+                    setDownloading(prev => ({ ...prev, [`${video.id}-summary`]: true }));
+                    startPolling(video.id, 'summary', `${video.id}-summary`);
+                }
             }
         });
 
@@ -117,20 +121,27 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
         };
     }, []);
 
-    const startPolling = (videoId: number, type: 'pdf' | 'audio', key: string) => {
+    const startPolling = (videoId: number, type: 'pdf' | 'audio' | 'summary', key: string) => {
         if (pollingRefs.current[key]) return;
         pollingRefs.current[key] = setInterval(() => {
             checkStatus(videoId, type, key);
         }, 3000);
     };
 
-    const checkStatus = async (videoId: number, type: 'pdf' | 'audio', key: string) => {
+    const checkStatus = async (videoId: number, type: 'pdf' | 'audio' | 'summary', key: string) => {
         try {
             const response = await axios.get(route('video.status', videoId));
-            const status = type === 'pdf' ? response.data.pdf_status : response.data.audio_status;
-            const url = type === 'pdf' ? response.data.pdf_url : response.data.audio_url;
+            let status;
+            let url;
 
-            if (status === 'completed' && url) {
+            if (type === 'summary') {
+                status = response.data.summary_status;
+            } else {
+                status = type === 'pdf' ? response.data.pdf_status : response.data.audio_status;
+                url = type === 'pdf' ? response.data.pdf_url : response.data.audio_url;
+            }
+
+            if (status === 'completed') {
                 if (pollingRefs.current[key]) {
                     clearInterval(pollingRefs.current[key]);
                     const newRefs = { ...pollingRefs.current };
@@ -138,8 +149,10 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                     pollingRefs.current = newRefs;
                 }
                 setDownloading(prev => ({ ...prev, [key]: false }));
-                window.location.href = url;
-                // Reload data to get the new duration
+                if (type !== 'summary' && url) {
+                    window.location.href = url;
+                }
+                // Reload data to get the new duration or summary
                 router.reload({ only: ['results'] });
             } else if (status === 'failed') {
                 if (pollingRefs.current[key]) {
@@ -338,7 +351,11 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
             <div className="py-10 bg-gray-50 dark:bg-gray-900">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="space-y-6">
-                        {results.map((video, index) => {
+                        {results.filter(video => {
+                            const isGenericTitle = !video.title || ['N/A', 'Unknown Video', 'Unknown Title', 'Unknown'].includes(video.title);
+                            const hasNoTranscript = !video.transcript || video.transcript.length === 0;
+                            return !(isGenericTitle && hasNoTranscript);
+                        }).map((video, index) => {
                             const fullText = video.transcript.map(t => t.text).join(' ');
                             const displaySegments = groupTranscriptSegments(video.transcript);
                             const isExpanded = expandedIndex === index;
@@ -796,20 +813,19 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                     <button
                                                                         onClick={() => {
                                                                             if (!video.id) return;
-                                                                            router.post(route('youtube.summary.generate', video.id), {}, {
-                                                                                preserveScroll: true,
-                                                                                onStart: () => {
+                                                                            axios.post(route('youtube.summary.generate', video.id), {}, {
+                                                                            }).then(res => {
+                                                                                if (res.data.status === 'processing') {
                                                                                     setProcessingId(video.id!);
                                                                                     setGenerationError(null);
-                                                                                },
-                                                                                onFinish: () => setProcessingId(null),
-                                                                                onError: (errors) => {
-                                                                                    console.error("Generate Summary Failed", errors);
-                                                                                    setGenerationError({
-                                                                                        id: video.id!,
-                                                                                        message: errors.summary || "Failed to generate summary. Please try again."
-                                                                                    });
+                                                                                    startPolling(video.id!, 'summary', `${video.id}-summary`);
                                                                                 }
+                                                                            }).catch(err => {
+                                                                                console.error("Generate Summary Failed", err);
+                                                                                setGenerationError({
+                                                                                    id: video.id!,
+                                                                                    message: err.response?.data?.error || "Failed to generate summary. Please try again."
+                                                                                });
                                                                             });
                                                                         }}
                                                                         disabled={processingId === video.id}

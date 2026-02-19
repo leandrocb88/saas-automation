@@ -124,19 +124,42 @@ class ApifyService
      */
     public function runActorSyncGetDatasetItems(string $actorId, array $input = []): array
     {
-        $url = "{$this->baseUrl}/acts/{$actorId}/run-sync-get-dataset-items";
+        // Check if actorId is actually a full URL (e.g. Standby Mode)
+        if (str_starts_with($actorId, 'http')) {
+            $url = $actorId;
+        } else {
+            $url = "{$this->baseUrl}/acts/{$actorId}/run-sync-get-dataset-items";
+        }
         
         $queryParams = [
             'token' => $this->token,
-            'timeout' => 300, // 5 minutes max (increased from 60)
         ];
 
+        // Only add timeout for standard API calls, not direct Container URLs
+        if (!str_starts_with($actorId, 'http')) {
+             $queryParams['timeout'] = 300; // 5 minutes max
+        }
+
         try {
+            // Handle existing query params in URL
+            $separator = str_contains($url, '?') ? '&' : '?';
+            $fullUrl = $url . $separator . http_build_query($queryParams);
+
             // This endpoint expects the input as the body
-            $response = Http::timeout(300)->post($url . '?' . http_build_query($queryParams), $input);
+            // Explicitly use asJson() to ensure Content-Type: application/json
+            $response = Http::asJson()
+                ->timeout(300)
+                ->post($fullUrl, $input);
 
             if ($response->successful()) {
-                return $response->json();
+                $data = $response->json();
+                
+                // Standby Actor returns wrapped response { items: [...] }
+                if (is_array($data) && isset($data['items'])) {
+                    return $data['items'];
+                }
+                
+                return $data ?? [];
             }
 
             Log::error('Apify Sync/Dataset Run Failed', [

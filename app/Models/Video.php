@@ -26,11 +26,13 @@ class Video extends Model
         'audio_status',
         'audio_duration',
         'summary_status',
+        'published_at',
     ];
 
     protected $casts = [
         'transcript' => 'array',
         'digest_date' => 'datetime',
+        'published_at' => 'datetime',
     ];
 
     public function user()

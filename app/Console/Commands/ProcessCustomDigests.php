@@ -112,7 +112,9 @@ class ProcessCustomDigests extends Command
         ];
 
         $this->info("Fetching videos from Apify...");
-        $actorId = 'leandrocb88~youtube-video-transcript-actor';
+        // $actorId = 'leandrocb88~youtube-video-transcript-actor';
+        // Use Standby Mode URL
+        $actorId = 'https://leandrocb88--youtube-video-transcript-actor.apify.actor';
 
         try {
             $items = $apify->runActorSyncGetDatasetItems($actorId, $input);

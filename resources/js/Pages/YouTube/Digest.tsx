@@ -8,8 +8,10 @@ interface Video {
     title: string;
     thumbnail: string;
     videoUrl: string;
-    summary_short?: string;
+    summary?: string;
+    summary_detailed?: string;
     duration_timestamp?: string;
+    published_at?: string;
 }
 
 interface ChannelGroup {
@@ -37,6 +39,7 @@ interface BatchGroup {
         audio_status: 'pending' | 'processing' | 'completed' | 'failed';
         audio_duration?: number;
     };
+    share_token?: string;
 }
 
 interface DigestGroup {
@@ -203,10 +206,10 @@ export default function Digest({ auth, digests }: Props) {
             <Head title="Daily Digests" />
 
             {/* Hero Header */}
-            <div className="relative bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-amber-600 dark:via-orange-600 dark:to-red-700 overflow-hidden">
+            <div className="relative bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 overflow-hidden">
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-orange-500/5 dark:bg-white/5 blur-3xl" />
-                    <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-red-500/5 dark:bg-yellow-400/10 blur-3xl" />
+                    <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-gray-50 dark:bg-gray-800/50 blur-3xl opacity-60" />
+                    <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-gray-50 dark:bg-gray-800/50 blur-3xl opacity-60" />
                 </div>
 
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
@@ -215,7 +218,7 @@ export default function Digest({ auth, digests }: Props) {
                             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
                                 Daily Digests
                             </h1>
-                            <p className="mt-2 text-orange-800 dark:text-orange-100 text-lg">
+                            <p className="mt-2 text-gray-600 dark:text-gray-400 text-lg">
                                 AI-powered summaries of your subscribed channels' latest videos.
                             </p>
                         </div>
@@ -224,7 +227,7 @@ export default function Digest({ auth, digests }: Props) {
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={expandAll}
-                                    className="flex items-center gap-1.5 bg-white/50 hover:bg-white/80 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-sm border border-orange-200/50 dark:border-white/10 text-orange-900 dark:text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm"
+                                    className="flex items-center gap-1.5 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm"
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
@@ -233,7 +236,7 @@ export default function Digest({ auth, digests }: Props) {
                                 </button>
                                 <button
                                     onClick={collapseAll}
-                                    className="flex items-center gap-1.5 bg-white/50 hover:bg-white/80 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-sm border border-orange-200/50 dark:border-white/10 text-orange-900 dark:text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm"
+                                    className="flex items-center gap-1.5 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm"
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
@@ -248,20 +251,20 @@ export default function Digest({ auth, digests }: Props) {
                     {digests.length > 0 && (
                         <div className="mt-6 flex items-center gap-6">
                             <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-yellow-300" />
-                                <span className="text-sm text-orange-800 dark:text-orange-200">
+                                <div className="h-2 w-2 rounded-full bg-gray-400 dark:bg-gray-500" />
+                                <span className="text-sm text-gray-600 dark:text-gray-400">
                                     <span className="font-semibold text-gray-900 dark:text-white">{totalVideos}</span> videos
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-orange-300" />
-                                <span className="text-sm text-orange-800 dark:text-orange-200">
+                                <div className="h-2 w-2 rounded-full bg-gray-400 dark:bg-gray-500" />
+                                <span className="text-sm text-gray-600 dark:text-gray-400">
                                     <span className="font-semibold text-gray-900 dark:text-white">{totalChannels}</span> channels
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-red-300" />
-                                <span className="text-sm text-orange-800 dark:text-orange-200">
+                                <div className="h-2 w-2 rounded-full bg-gray-400 dark:bg-gray-500" />
+                                <span className="text-sm text-gray-600 dark:text-gray-400">
                                     <span className="font-semibold text-gray-900 dark:text-white">{digests.length}</span> {digests.length === 1 ? 'day' : 'days'}
                                 </span>
                             </div>
@@ -324,6 +327,17 @@ export default function Digest({ auth, digests }: Props) {
                                                 <span className="text-sm text-gray-600 dark:text-gray-400">
                                                     {batch.channels.reduce((acc, ch) => acc + ch.videos.length, 0)} videos across {batch.channels.length} {batch.channels.length === 1 ? 'channel' : 'channels'}
                                                 </span>
+                                                {batch.share_token && (
+                                                    <Link
+                                                        href={route('youtube.digest.show', batch.share_token)}
+                                                        className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 transition-colors ml-auto"
+                                                    >
+                                                        View Digest
+                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                                        </svg>
+                                                    </Link>
+                                                )}
                                             </div>
 
                                             {/* Batch Metrics */}
@@ -340,133 +354,112 @@ export default function Digest({ auth, digests }: Props) {
                                                     </span>
                                                 </div>
                                             )}
-
-                                            {/* Downloads */}
-                                            {batch.downloads && (
-                                                <div className="flex flex-wrap items-center gap-3 mb-6 ml-1">
-                                                    <button
-                                                        onClick={() => batch.downloads?.id && handleDownloadClick(batch.downloads.id, 'pdf', `${dateGroup.date}-${batch.time}-pdf`)}
-                                                        disabled={downloading[`${dateGroup.date}-${batch.time}-pdf`]}
-                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors ${downloading[`${dateGroup.date}-${batch.time}-pdf`] ? 'opacity-75 cursor-not-allowed' : ''}`}
-                                                    >
-                                                        {downloading[`${dateGroup.date}-${batch.time}-pdf`] ? (
-                                                            <svg className="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                            </svg>
-                                                        ) : (
-                                                            <svg className="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                                            </svg>
-                                                        )}
-                                                        {downloading[`${dateGroup.date}-${batch.time}-pdf`] ? 'Generating...' : 'Download PDF'}
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => batch.downloads?.id && handleDownloadClick(batch.downloads.id, 'audio', `${dateGroup.date}-${batch.time}-audio`)}
-                                                        disabled={downloading[`${dateGroup.date}-${batch.time}-audio`]}
-                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors ${downloading[`${dateGroup.date}-${batch.time}-audio`] ? 'opacity-75 cursor-not-allowed' : ''}`}
-                                                    >
-                                                        {downloading[`${dateGroup.date}-${batch.time}-audio`] ? (
-                                                            <svg className="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                            </svg>
-                                                        ) : (
-                                                            <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
-                                                            </svg>
-                                                        )}
-                                                        {downloading[`${dateGroup.date}-${batch.time}-audio`] ? 'Generating...' :
-                                                            (batch.downloads.audio_duration
-                                                                ? `Audio (${Math.floor(batch.downloads.audio_duration / 60)}:${(batch.downloads.audio_duration % 60).toString().padStart(2, '0')})`
-                                                                : 'Download Audio')
-                                                        }
-                                                    </button>
-                                                </div>
-                                            )}
                                             <div className="space-y-5">
                                                 {batch.channels.map((channel) => {
                                                     const channelKey = `${dateGroup.date}-${batch.time}-${channel.id}`;
                                                     const isCollapsed = collapsedChannels.has(channelKey);
 
                                                     return (
-                                                        <div key={channel.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                                                            {/* Channel header */}
+                                                        <div key={channel.id} className={`rounded-xl border transition-all duration-200 overflow-hidden ${isCollapsed
+                                                            ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 shadow-sm'
+                                                            : 'bg-indigo-50/30 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800/30 ring-1 ring-indigo-500/10 dark:ring-indigo-400/10'
+                                                            }`}>
+                                                            {/* Premium Channel Header Styling */}
                                                             <button
                                                                 onClick={() => toggleChannel(dateGroup.date, batch.time, channel.id)}
-                                                                className="w-full flex items-center gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                                                className="w-full flex items-center gap-4 px-4 py-3 text-left group transition-colors"
                                                             >
-                                                                <svg
-                                                                    className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${isCollapsed ? '' : 'rotate-90'}`}
-                                                                    fill="none"
-                                                                    viewBox="0 0 24 24"
-                                                                    stroke="currentColor"
-                                                                    strokeWidth={2}
-                                                                >
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                                                </svg>
-                                                                <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-100 dark:ring-gray-600 flex-shrink-0">
+                                                                <div className="relative">
                                                                     {channel.thumbnail ? (
-                                                                        <img src={channel.thumbnail} alt={channel.name} className="w-full h-full object-cover" />
+                                                                        <img src={channel.thumbnail} alt={channel.name} className="w-10 h-10 rounded-full ring-2 ring-white dark:ring-gray-700 shadow-sm" />
                                                                     ) : (
-                                                                        <div className="w-full h-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-bold text-sm">
+                                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
                                                                             {channel.name.substring(0, 1)}
                                                                         </div>
                                                                     )}
+                                                                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center border border-gray-100 dark:border-gray-700`}>
+                                                                        <div className={`w-2 h-2 rounded-full ${isCollapsed ? 'bg-gray-300 dark:bg-gray-600' : 'bg-green-500'}`} />
+                                                                    </div>
                                                                 </div>
-                                                                <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex-1 text-left truncate">
-                                                                    {channel.name}
-                                                                </h4>
-                                                                <span className="text-xs font-medium text-gray-700 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-lg flex-shrink-0">
-                                                                    {channel.videos.length} {channel.videos.length === 1 ? 'video' : 'videos'}
-                                                                </span>
+
+                                                                <div className="flex-1 min-w-0">
+                                                                    <h4 className={`text-lg font-black transition-colors tracking-tight truncate ${isCollapsed
+                                                                        ? 'text-gray-700 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
+                                                                        : 'text-indigo-900 dark:text-indigo-100'
+                                                                        }`}>
+                                                                        {channel.name}
+                                                                    </h4>
+                                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                                                        <span>{channel.videos.length} {channel.videos.length === 1 ? 'video' : 'videos'} analyzed</span>
+                                                                        {!isCollapsed && <span className="w-1 h-1 rounded-full bg-indigo-400" />}
+                                                                        {!isCollapsed && <span className="text-indigo-500 dark:text-indigo-400">Expanded</span>}
+                                                                    </p>
+                                                                </div>
+
+                                                                {/* Chevron */}
+                                                                <div className={`p-2 rounded-full transition-all duration-300 ${isCollapsed
+                                                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-hover:text-indigo-600'
+                                                                    : 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 rotate-180'
+                                                                    }`}>
+                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                                                                    </svg>
+                                                                </div>
                                                             </button>
 
                                                             {/* Videos grid */}
                                                             {!isCollapsed && (
-                                                                <div className="border-t border-gray-100 dark:border-gray-700 p-5">
+                                                                <div className="p-4 border-t border-indigo-100 dark:border-indigo-800/20">
                                                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                                                         {channel.videos.map((video) => (
-                                                                            <div key={video.id} className="group/card rounded-xl border border-gray-300 dark:border-gray-700 overflow-hidden hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-md transition-all duration-300 flex flex-col">
+                                                                            <div key={video.id} className="group/card rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-md transition-all duration-300 bg-white dark:bg-gray-800 flex flex-col">
                                                                                 <a href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="block relative aspect-video overflow-hidden">
                                                                                     <img
                                                                                         src={video.thumbnail}
                                                                                         alt={video.title}
-                                                                                        className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                                                                                        className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-1000"
                                                                                     />
-                                                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity bg-black/30 backdrop-blur-[2px]">
-                                                                                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 shadow-lg">
-                                                                                            <svg className="w-5 h-5 text-gray-800 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+
+                                                                                    {/* Refined Play Overlay */}
+                                                                                    <div className="absolute inset-0 bg-black/10 group-hover/card:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                                                                                        <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center ring-1 ring-white/30 transform scale-90 opacity-0 group-hover/card:scale-100 group-hover/card:opacity-100 transition-all duration-500">
+                                                                                            <svg className="w-6 h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                                                                                                 <path d="M8 5v14l11-7z" />
                                                                                             </svg>
                                                                                         </div>
                                                                                     </div>
+
                                                                                     {video.duration_timestamp && (
-                                                                                        <div className="absolute bottom-2 right-2 z-10 bg-black/80 text-white text-xs font-bold px-2 py-1 rounded-[4px] pointer-events-none">
+                                                                                        <div className="absolute bottom-2.5 right-2.5 bg-black/80 backdrop-blur-md text-white text-[9px] font-black px-1.5 py-0.5 rounded-md border border-white/10 tracking-widest z-10">
                                                                                             {video.duration_timestamp}
                                                                                         </div>
                                                                                     )}
                                                                                 </a>
-                                                                                <div className="p-3.5 flex flex-col flex-1">
+
+                                                                                <div className="p-4 flex flex-col flex-1">
                                                                                     <div className="flex-1">
-                                                                                        <h5 className="font-medium text-sm text-gray-900 dark:text-gray-100 line-clamp-2 leading-snug mb-3" title={video.title}>
+                                                                                        <h5 className="font-black text-sm text-gray-900 dark:text-white line-clamp-2 leading-tight tracking-tight mb-2" title={video.title}>
                                                                                             <a href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                                                                                                 {video.title}
                                                                                             </a>
                                                                                         </h5>
+
+                                                                                        {video.published_at && (
+                                                                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 block mb-4">
+                                                                                                {video.published_at}
+                                                                                            </span>
+                                                                                        )}
                                                                                     </div>
-                                                                                    <div className="mt-auto pt-3">
-                                                                                        <Link
-                                                                                            href={route('youtube.show', video.id)}
-                                                                                            className="flex items-center justify-center gap-1.5 w-full px-3 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900/40 ring-1 ring-inset ring-indigo-200/50 dark:ring-indigo-800/50 transition-colors"
-                                                                                        >
-                                                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                                                                            </svg>
-                                                                                            View Summary
-                                                                                        </Link>
-                                                                                    </div>
+
+                                                                                    <Link
+                                                                                        href={route('youtube.show', video.id)}
+                                                                                        className="flex items-center justify-center gap-2 w-full px-3 py-2 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 transition-all duration-300 ring-1 ring-gray-200 dark:ring-white/10 mt-auto"
+                                                                                    >
+                                                                                        Video Analysis
+                                                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                                                                        </svg>
+                                                                                    </Link>
                                                                                 </div>
                                                                             </div>
                                                                         ))}

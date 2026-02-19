@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Storage;
 class YouTubeController extends Controller
 {
     protected $apify;
+    protected $railway;
     protected $openai;
     protected $gemini;
     protected $quotaManager;
@@ -27,12 +28,14 @@ class YouTubeController extends Controller
 
     public function __construct(
         ApifyService $apify, 
+        \App\Services\RailwayService $railway,
         OpenAIService $openai, 
         GeminiService $gemini,
         QuotaManager $quotaManager,
         \App\Services\YouTubeService $youtube
     ) {
         $this->apify = $apify;
+        $this->railway = $railway;
         $this->openai = $openai;
         $this->gemini = $gemini;
         $this->quotaManager = $quotaManager;
@@ -226,6 +229,7 @@ class YouTubeController extends Controller
                         'time_saved' => $this->formatDuration($timeSavedSeconds) ?? '0s',
                      ],
                      'downloads' => $downloads,
+                     'share_token' => $shareToken,
                  ];
              }
              
@@ -305,13 +309,27 @@ class YouTubeController extends Controller
             'time_saved' => $this->formatDuration($timeSavedSeconds) ?? '0s',
         ];
 
+        // Find the digest run for downloads
+        $run = \App\Models\DigestRun::where('batch_id', $token)->first();
+        $downloads = null;
+        if ($run) {
+             $downloads = [
+                 'id' => $run->id,
+                 'pdf_status' => $run->pdf_status,
+                 'audio_status' => $run->audio_status,
+                 'audio_duration' => $run->audio_duration,
+                 'pdf' => route('digest_runs.pdf', $run->id),
+                 'audio' => route('digest_runs.audio', $run->id),
+             ];
+        }
+
         return Inertia::render('YouTube/DigestRun', [
             'digestDate' => $digestDate,
-            'digestTime' => $digestTime,
             'digestTime' => $digestTime,
             'channels' => $formattedChannels,
             'shareToken' => $token,
             'summaryMetrics' => $summaryMetrics,
+            'downloads' => $downloads,
         ]);
     }
 
@@ -447,10 +465,8 @@ class YouTubeController extends Controller
         ignore_user_abort(true);
         set_time_limit(600);
 
-        // 2. Trigger Apify Actor
-        $actorId = 'leandrocb88~youtube-video-transcript-actor';
-        $input = [
-            'channelUrls' => array_values($channelUrls),
+        // 2. Trigger Railway API (with Apify fallback)
+        $options = [
             'maxVideosPerChannel' => $maxVideosPerChannel,
             'maxShortsPerChannel' => 0,
             'maxStreamsPerChannel' => 0,
@@ -460,18 +476,29 @@ class YouTubeController extends Controller
             'preferAutoSubtitles' => false,
         ];
 
-        // Add date filter if not 'any'
         if ($daysBack !== null) {
-            $input['dateFilterMode'] = 'relative';
-            $input['daysBack'] = $daysBack;
+            $options['dateFilterMode'] = 'relative';
+            $options['daysBack'] = $daysBack;
         }
 
-        try {
-            $items = $apify->runActorSyncGetDatasetItems($actorId, $input);
-        } catch (\Exception $e) {
-            // Refund on Failure
-            $quotaManager->decrementUsage($user, 'youtube', $estimatedCost);
-            return back()->withErrors(['error' => 'Analysis failed: ' . $e->getMessage()]);
+        $items = $this->railway->analyzeChannels(array_values($channelUrls), $options);
+
+        // Fallback to Apify ONLY if Railway API failed (returns null)
+        if ($items === null) {
+            Log::warning("Railway Channel Analysis failed, falling back to Apify.");
+
+            $actorId = 'leandrocb88~youtube-video-transcript-actor';
+            $input = array_merge([
+                'channelUrls' => array_values($channelUrls),
+            ], $options);
+
+            try {
+                $items = $this->apify->runActorSyncGetDatasetItems($actorId, $input);
+            } catch (\Exception $e) {
+                // Refund on Failure
+                $quotaManager->decrementUsage($user, 'youtube', $estimatedCost);
+                return back()->withErrors(['error' => 'Analysis failed: ' . $e->getMessage()]);
+            }
         }
 
         if (empty($items)) {
@@ -501,17 +528,13 @@ class YouTubeController extends Controller
                     $video->source = 'channel_analysis';
 
                     $video->title = $result['title'];
-                    $video->title = $result['title'];
                     $video->channel_title = $result['channel_title'] ?? null;
-
-                    if (empty($newResults)) {
-                         \Log::info("Channel Analysis Debug: First Item Keys", array_keys($videoData));
-                         \Log::info("Channel Analysis Debug: Extracted Channel Title", ['title' => $video->channel_title]);
-                    }
 
                     $video->thumbnail_url = $result['thumbnail'];
                     $video->transcript = $result['transcript'];
                     $video->summary_detailed = $result['summary'] ?? null;
+                    $video->duration = $result['duration'] ?? 0;
+                    $video->published_at = $result['published_at'] ?? null;
                     
                     // Try to match channel
                     $channelName = $videoData['channel'] ?? '';
@@ -529,19 +552,11 @@ class YouTubeController extends Controller
                     $video->save();
                     $newResults[] = $video;
 
-                    // --- Queue for Auto-Generate Summary if missing ---
-                    if (!$video->summary_detailed) {
-                         $fullText = '';
-                         if (is_array($result['transcript'])) {
-                             $fullText = collect($result['transcript'])->pluck('text')->join(' ');
-                         }
+                    // Dispatch Summary Generation Job
+                    $video->update(['summary_status' => 'processing']);
+                    \App\Jobs\GenerateVideoSummary::dispatch($video, 'detailed');
 
-                         if (!empty($fullText)) {
-                             $videosToSummarize[$video->id] = ['video' => $video, 'text' => $fullText];
-                         }
-                    }
-
-                    \Log::info("Channel Analysis: Saved video", ['video_id' => $videoId, 'title' => $result['title']]);
+                    \Log::info("Channel Analysis: Saved video and dispatched summary job", ['video_id' => $videoId, 'title' => $result['title']]);
                 } else {
                     \Log::warning("Channel Analysis: Could not extract video ID", ['url' => $result['videoUrl']]);
                 }
@@ -555,58 +570,10 @@ class YouTubeController extends Controller
             }
         }
 
-        // Execute Parallel Summaries
-        if (!empty($videosToSummarize)) {
-             set_time_limit(0); // Unlimited execution time for large batches
-             $provider = config('services.ai.provider', 'openai');
-             \Log::info("Channel Analysis: Generating summaries for " . count($videosToSummarize) . " videos in parallel using $provider");
-             
-             // Chunk to avoid rate limits (10 concurrent requests max per batch)
-             $chunks = array_chunk($videosToSummarize, 10, true);
-             
-             foreach ($chunks as $chunkIndex => $chunk) {
-                 \Log::info("Channel Analysis: Processing chunk " . ($chunkIndex + 1) . " of " . count($chunks));
-                 
-                 try {
-                     $responses = Http::pool(function (Pool $pool) use ($chunk, $gemini, $openAI, $provider) {
-                          foreach ($chunk as $id => $data) {
-                              if ($provider === 'gemini') {
-                                  $gemini->addToPool($pool, (string)$id, $data['text']);
-                              } else {
-                                  $openAI->addToPool($pool, (string)$id, $data['text']);
-                              }
-                          }
-                     });
-        
-                     foreach ($responses as $id => $response) {
-                          if ($response->ok() && isset($videosToSummarize[$id])) {
-                               $video = $videosToSummarize[$id]['video'];
-                               $summary = null;
-                               
-                               if ($provider === 'gemini') {
-                                    $summary = $gemini->parseResponse($response);
-                               } else {
-                                    $summary = $openAI->parseResponse($response);
-                               }
-                               
-                               if ($summary) {
-                                   $video->summary_detailed = $summary;
-                                   $video->save();
-                               }
-                          } else {
-                               \Log::error("Channel Analysis: Async summary failed for video ID $id");
-                          }
-                     }
-                 } catch (\Exception $e) {
-                     \Log::error("Channel Analysis: Pool execution failed for chunk $chunkIndex: " . $e->getMessage());
-                 }
-                 
-                 // Small delay between chunks
-                 if ($chunkIndex < count($chunks) - 1) {
-                     sleep(1);
-                 }
-             }
-        }
+        // Filter out any invalid/empty videos before returning
+        $newResults = array_filter($newResults, function($v) {
+            return $this->isVideoValid($this->formatVideoRecordForValidation($v));
+        });
 
         \Log::info("Channel Analysis: Processed {count} videos successfully", ['count' => count($newResults)]);
 
@@ -718,6 +685,11 @@ class YouTubeController extends Controller
                  
                  $video = $query->first();
                  if ($video) {
+                     // If video has no summary, dispatch a job to generate it
+                     if (empty($video->summary_detailed) && $video->summary_status !== 'processing') {
+                         $video->update(['summary_status' => 'processing']);
+                         \App\Jobs\GenerateVideoSummary::dispatch($video, 'detailed');
+                     }
                      return to_route('youtube.show', $video);
                  }
              }
@@ -753,26 +725,38 @@ class YouTubeController extends Controller
 
         set_time_limit(600); 
 
-        // 2. Trigger Apify
-        $actorId = 'leandrocb88~youtube-video-transcript-actor';
-        $input = [
+        // 2. Trigger Fetching
+        $items = $this->railway->fetchTranscripts(array_values($urlsToFetch), [
             'downloadSubtitles' => true,
             'enableSummary' => $request->boolean('include_summary'),
             'includeTimestamps' => $request->boolean('include_timestamps'),
             'preferAutoSubtitles' => false,
-            'startUrls' => array_values($urlsToFetch),
-        ];
+        ]);
 
-        try {
-            $items = $apify->runActorSyncGetDatasetItems($actorId, $input);
-        } catch (\Exception $e) {
-            // Refund on Failure
-            if ($user) {
-                $quotaManager->decrementUsage($user, 'youtube', $cost);
-            } else {
-                $quotaManager->decrementGuestUsage($ip, $userAgent, 'youtube', $cost);
+        // Fallback to Apify ONLY if Railway API failed (returns null)
+        if ($items === null) {
+            Log::warning("Railway API failed, falling back to Apify.");
+            
+            $actorId = 'leandrocb88~youtube-video-transcript-actor';
+            $input = [
+                'downloadSubtitles' => true,
+                'enableSummary' => $request->boolean('include_summary'),
+                'includeTimestamps' => $request->boolean('include_timestamps'),
+                'preferAutoSubtitles' => false,
+                'startUrls' => array_values($urlsToFetch),
+            ];
+
+            try {
+                $items = $apify->runActorSyncGetDatasetItems($actorId, $input);
+            } catch (\Exception $e) {
+                // Refund on Failure
+                if ($user) {
+                    $quotaManager->decrementUsage($user, 'youtube', $cost);
+                } else {
+                    $quotaManager->decrementGuestUsage($ip, $userAgent, 'youtube', $cost);
+                }
+                return back()->withErrors(['error' => 'Analysis failed: ' . $e->getMessage()]);
             }
-            return back()->withErrors(['error' => 'Analysis failed: ' . $e->getMessage()]);
         }
 
         if (empty($items) && $existingVideos->isEmpty()) {
@@ -788,14 +772,29 @@ class YouTubeController extends Controller
         // Process Results
         $newResults = [];
         foreach ($items as $videoData) {
-            $newResults[] = $this->parseVideoData($videoData);
+            $parsed = $this->parseVideoData($videoData);
+            if ($this->isVideoValid($parsed)) {
+                $newResults[] = $parsed;
+            } else {
+                Log::warning("Skipping empty/invalid video result", ['url' => $parsed['videoUrl'] ?? 'unknown']);
+            }
         }
 
         // 3. Confirm & Refund Difference
         $actualCount = count($newResults);
-        // Ensure we don't refund more than cost (if Apify returned duplicates or something weird)
-        $charged = $cost;
-        $diff = max(0, $charged - $actualCount);
+
+        if ($actualCount === 0 && $existingVideos->isEmpty()) {
+             // Refund
+             if ($user) {
+                 $quotaManager->decrementUsage($user, 'youtube', $cost);
+             } else {
+                 $quotaManager->decrementGuestUsage($ip, $userAgent, 'youtube', $cost);
+             }
+             return back()->withErrors(['urls' => 'Analysis failed. No videos found mapping your request.']);
+        }
+
+        // Ensure we don't refund more than cost
+        $diff = max(0, $cost - $actualCount);
         
         if ($diff > 0) {
             if ($user) {
@@ -820,61 +819,36 @@ class YouTubeController extends Controller
                 'thumbnail_url' => $result['thumbnail'],
                 'transcript' => $result['transcript'],
                 'duration' => $result['duration'] ?? 0,
+                'published_at' => $result['published_at'] ?? null,
+                'summary_status' => 'processing',
             ]);
 
-            // --- Auto-Generate Summary (Detailed Only) ---
-            $fullText = '';
-            if (is_array($result['transcript'])) {
-                $videoDataArray = $result['transcript']; // It's already parsed as array in parseVideoData? 
-                // Wait, parseVideoData returns 'transcript' as array of ['text', 'start', 'duration']
-                $fullText = collect($videoDataArray)->pluck('text')->join(' ');
-            }
-            
-            try {
-                // Determine AI Provider
-                $provider = config('services.ai.provider', 'openai');
-                $summary = null;
-
-                $video->update(['summary_status' => 'processing']);
-
-                if ($provider === 'gemini') {
-                    Log::info("Generating summary with Gemini for video {$videoId}");
-                    $summary = $gemini->generateSummary($fullText, 'detailed');
-                } else {
-                    Log::info("Generating summary with OpenAI (GPT-5 Nano) for video {$videoId}");
-                    $summary = $openAI->generateSummary($fullText, 'detailed');
-                }
-
-                $video->update([
-                    'summary_detailed' => $summary,
-                    'summary_status' => 'completed'
-                ]);
-            } catch (\Exception $e) {
-                // Log error but don't fail the request, users can retry later if we keep that button (or we just accept it failed)
-                // For now, let's just log it.
-                \Illuminate\Support\Facades\Log::error("Auto-summary failed for video {$videoId}: " . $e->getMessage());
-                $video->update(['summary_status' => 'failed']);
-            }
+            // Dispatch Summary Generation Job
+            \App\Jobs\GenerateVideoSummary::dispatch($video, 'detailed');
 
             $result['id'] = $video->id;
-            $result['summary'] = $video->summary_detailed; // Use detailed as main summary
+            $result['summary'] = null;
             $result['summary_short'] = null;
-            $result['summary_detailed'] = $video->summary_detailed;
+            $result['summary_detailed'] = null;
+            $result['summary_status'] = 'processing';
         }
         unset($result); // Break reference
         
         // Merge New Results with Existing Cached Results
         $finalResults = array_merge($existingVideos->toArray(), $newResults);
 
-        // Redirect based on outcome
+        if (empty($finalResults)) {
+            return back()->withErrors(['urls' => 'No new videos found and none in cache.']);
+        }
+
+        // Single result -> Go to video detail page
         if (count($finalResults) === 1) {
-             // Single result -> Go to details
              $video = Video::find($finalResults[0]['id']);
              return to_route('youtube.show', $video);
-        } else {
-             // Multiple results -> Go to history
-             return to_route('youtube.history');
         }
+
+        // Multiple results -> Go to history
+        return to_route('youtube.history');
     }
 
     public function destroy(Request $request, Video $video)
@@ -936,7 +910,6 @@ class YouTubeController extends Controller
         }
 
         $cutoff = Carbon::now()->subDays($retentionDays);
-
         $query = Video::where('created_at', '>=', $cutoff);
         
         if ($user) {
@@ -945,14 +918,41 @@ class YouTubeController extends Controller
             $query->where('session_id', $this->getGuestId($request));
         }
 
+        // Search logic
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('channel_title', 'like', "%{$search}%");
+            });
+        }
+
+        // Sort logic
+        $sort = $request->input('sort', 'newest');
+        switch ($sort) {
+            case 'older':
+                $query->oldest();
+                break;
+            case 'alphabetical_asc':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'alphabetical_desc':
+                $query->orderBy('title', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->latest();
+                break;
+        }
+
         $perPage = $request->input('per_page', 20);
         if (!in_array($perPage, [20, 40, 60, 100])) {
             $perPage = 20;
         }
 
-        $videos = $query->latest()
-            ->select('id', 'video_id', 'title', 'channel_title', 'thumbnail_url', 'created_at', 'duration') // Lightweight select
+        $videos = $query->select('id', 'video_id', 'title', 'channel_title', 'thumbnail_url', 'created_at', 'duration', 'published_at') // Lightweight select
             ->paginate($perPage)
+            ->withQueryString()
             ->through(function ($video) {
                 $thumbnail = $video->thumbnail_url;
                 if (!$thumbnail && $video->video_id) {
@@ -963,7 +963,8 @@ class YouTubeController extends Controller
                     'title' => $video->title,
                     'channel' => $video->channel_title,
                     'thumbnail' => $thumbnail,
-                    'date' => $video->created_at->format('M d, Y'),
+                    'date' => ($video->published_at ?? $video->created_at)->format('M d, Y'),
+                    'published_at' => $video->published_at ? $video->published_at->format('M j, Y') : null,
                     'duration_timestamp' => $this->formatDurationTimestamp($video->duration ?? 0),
                      // 'relative_date' => $video->created_at->diffForHumans(),
                 ];
@@ -982,20 +983,17 @@ class YouTubeController extends Controller
         $user = $request->user();
 
         // Policy Check
-        // Policy Check
         if ($video->user_id) {
-            // Owned by a registered user
             if (!$user) {
                 return redirect()->route('login');
             }
             if ($user->id !== $video->user_id) abort(403);
         } else {
-            // Guest video
             if ($video->session_id !== $this->getGuestId($request)) abort(403);
         }
 
         return Inertia::render('YouTube/BatchSummary', [
-            'results' => [$this->formatVideoForView($video)], 
+            'results' => [$this->formatVideoForView($video)],
             'isHistoryView' => true,
         ]);
     }
@@ -1034,46 +1032,21 @@ class YouTubeController extends Controller
         }
 
         $type = $request->input('type', 'detailed');
-        $column = $type === 'short' ? 'summary_short' : 'summary_detailed';
 
-        // Construct full transcript text
-        $fullText = '';
-        if (is_array($video->transcript)) {
-            $fullText = collect($video->transcript)->pluck('text')->join(' ');
+        $video->update(['summary_status' => 'processing']);
+        \App\Jobs\GenerateVideoSummary::dispatch($video, $type);
+
+        // Deduct quota immediately if you want, or handle in Job. 
+        // User requirements implied background generation, but quota usually happens at request.
+        if ($user) {
+            $quotaManager->incrementUsage($user, 'youtube', $summaryCost, 'ai_summary');
+        } else {
+             $ip = $request->ip();
+             $userAgent = $request->userAgent();
+             $quotaManager->incrementGuestUsage($ip, $userAgent, 'youtube', $summaryCost);
         }
 
-        try {
-            $provider = config('services.ai.provider', 'openai');
-            $summary = null;
-            
-            $video->update(['summary_status' => 'processing']);
-
-            if ($provider === 'gemini') {
-                 $summary = $gemini->generateSummary($fullText, $type);
-            } else {
-                 Log::info("Generating summary with OpenAI (GPT-5 Nano) for video");
-                 $summary = $openAI->generateSummary($fullText, $type);
-            }
-            
-            $video->update([
-                $column => $summary,
-                'summary_status' => 'completed'
-            ]);
-            
-            // Increment usage with 'ai_summary' tracking
-            if ($user) {
-                $quotaManager->incrementUsage($user, 'youtube', $summaryCost, 'ai_summary');
-            } else {
-                 $ip = $request->ip();
-                 $userAgent = $request->userAgent();
-                 $quotaManager->incrementGuestUsage($ip, $userAgent, 'youtube', $summaryCost);
-            }
-            
-            return back()->with('success', 'Summary generated successfully.');
-        } catch (\Exception $e) {
-            $video->update(['summary_status' => 'failed']);
-            return back()->withErrors(['summary' => 'Failed to generate summary: ' . $e->getMessage()]);
-        }
+        return response()->json(['status' => 'processing']);
     }
 
     private function parseVideoData($videoData) {
@@ -1127,11 +1100,48 @@ class YouTubeController extends Controller
         
         return [
             'videoUrl' => $videoUrl,
-            'title' => $videoData['title'] ?? 'Unknown Video',
-            'channel_title' => $videoData['channel'] ?? $videoData['channelName'] ?? $videoData['author'] ?? 'Unknown Channel',
+            'title' => ($videoData['title'] ?? '') ?: 'Unknown Video',
+            'channel_title' => ($videoData['channel'] ?? $videoData['channelName'] ?? $videoData['author'] ?? '') ?: 'Unknown Channel',
             'thumbnail' => $thumbnail ?? '',
             'transcript' => $transcript,
             'duration' => $duration,
+            'published_at' => $this->parseDate($videoData['publishedDate'] ?? $videoData['date'] ?? $videoData['published_at'] ?? null),
+        ];
+    }
+
+    private function parseDate($dateString)
+    {
+        if (!$dateString || $dateString === 'N/A' || $dateString === 'Unknown') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($dateString);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    private function isVideoValid($parsedData)
+    {
+        $title = $parsedData['title'] ?? '';
+        $transcript = $parsedData['transcript'] ?? [];
+        
+        // If title is missing or generic AND transcript is empty, it's invalid
+        $isGenericTitle = in_array($title, ['N/A', 'Unknown Video', 'Unknown Title', '']);
+        
+        if ($isGenericTitle && empty($transcript)) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    private function formatVideoRecordForValidation(Video $video)
+    {
+        return [
+            'title' => $video->title,
+            'transcript' => $video->transcript,
         ];
     }
 
@@ -1234,13 +1244,21 @@ class YouTubeController extends Controller
         return response()->json(['status' => 'processing']);
     }
 
-    public function videoStatus(Video $video)
+    public function videoStatus(Request $request, Video $video)
     {
-        if ($video->user_id !== auth()->id()) abort(403);
+        $user = $request->user();
+
+        // Policy Check — mirrors show() and generateSummary()
+        if ($video->user_id) {
+            if (!$user || $user->id !== $video->user_id) abort(403);
+        } else {
+            if ($video->session_id !== $this->getGuestId($request)) abort(403);
+        }
 
         return response()->json([
             'pdf_status' => $video->pdf_status,
             'audio_status' => $video->audio_status,
+            'summary_status' => $video->summary_status,
             'pdf_url' => $video->pdf_status === 'completed' ? route('video.pdf', $video->id) : null,
             'audio_url' => $video->audio_status === 'completed' ? route('video.audio', $video->id) : null,
             'audio_duration' => $video->audio_duration,
