@@ -404,14 +404,6 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
 
                                                 {/* Metadata Row */}
                                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                                    {(video.duration_timestamp || video.duration) && (
-                                                        <div className="flex items-center gap-1">
-                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                            {video.duration_timestamp || video.duration}
-                                                        </div>
-                                                    )}
                                                     {video.published_at && (
                                                         <div className="flex items-center gap-1">
                                                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 
 interface Video {
@@ -12,6 +13,7 @@ interface Video {
     summary_detailed?: string;
     duration_timestamp?: string;
     published_at?: string;
+    summary_read_time?: string;
 }
 
 interface ChannelGroup {
@@ -346,7 +348,7 @@ export default function DigestRun({ auth, digestDate, digestTime, channels, shar
                                     </button>
 
                                     {!isCollapsed && (
-                                        <div className="space-y-10 p-4 border-t border-indigo-100 dark:border-indigo-800/20">
+                                        <div className="space-y-10 p-4 border-t border-indigo-100 dark:border-indigo-800/20 bg-gray-50 dark:bg-gray-900">
                                             {channel.videos.map((video) => (
                                                 <div key={video.id} className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-[2rem] border border-gray-200/50 dark:border-gray-700/50 overflow-hidden shadow-xl shadow-gray-200/20 dark:shadow-none">
                                                     {/* Video Header Section */}
@@ -381,17 +383,13 @@ export default function DigestRun({ auth, digestDate, digestTime, channels, shar
                                                                     </a>
                                                                 </h5>
                                                                 <div className="flex flex-wrap items-center gap-3">
-                                                                    <span className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/10 text-amber-500 rounded text-[9px] font-black uppercase tracking-widest border border-amber-500/20">
-                                                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                                                            <path d="M8 5v14l11-7z" />
-                                                                        </svg>
-                                                                        Video Analysis
-                                                                    </span>
-                                                                    <div className="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700" />
-                                                                    {video.published_at && (
-                                                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
-                                                                            Released {video.published_at}
-                                                                        </span>
+                                                                    {video.summary_read_time && (
+                                                                        <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium" title="Estimated time to read summary">
+                                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                                            </svg>
+                                                                            Summary: {video.summary_read_time}
+                                                                        </div>
                                                                     )}
                                                                     <div className="flex-1" />
                                                                     <Link
@@ -409,32 +407,30 @@ export default function DigestRun({ auth, digestDate, digestTime, channels, shar
                                                     </div>
 
                                                     {/* Integrated Summary Section */}
-                                                    <div className="px-6 pb-8 sm:px-8 sm:pb-10">
-                                                        <div className="flex items-center gap-3 mb-6">
-                                                            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                                                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <div className="p-6 sm:p-8 pt-0 bg-gray-50/50 dark:bg-gray-900/50">
+                                                        <div className="h-full rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 ring-1 ring-indigo-200/50 dark:ring-indigo-800/50 overflow-hidden flex flex-col">
+                                                            <div className="px-4 py-3 bg-indigo-100/50 dark:bg-indigo-900/40 border-b border-indigo-200 dark:border-indigo-800 shrink-0 flex items-center gap-2">
+                                                                <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                                                 </svg>
+                                                                <span className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider">AI Intelligence Digest</span>
                                                             </div>
-                                                            <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest">AI Intelligence Digest</h4>
-                                                        </div>
-
-                                                        <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed">
-                                                            {(video.summary || video.summary_detailed || "Summary analysis in progress...")
-                                                                .split('\n')
-                                                                .map((line, idx) => {
-                                                                    if (line.startsWith('## ')) {
-                                                                        return <h6 key={idx} className="text-gray-900 dark:text-white font-bold text-base mt-6 mb-4 uppercase tracking-wide">{line.replace('## ', '')}</h6>;
-                                                                    }
-                                                                    if (line.startsWith('- ')) {
-                                                                        return <div key={idx} className="flex gap-4 mb-3 ps-4 text-sm md:text-base">
-                                                                            <span className="text-amber-500 shrink-0 mt-2 h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                                                                            <span>{line.replace('- ', '')}</span>
-                                                                        </div>;
-                                                                    }
-                                                                    return line.trim() ? <p key={idx} className="mb-4 text-sm md:text-base">{line}</p> : null;
-                                                                })
-                                                            }
+                                                            <div className="p-5 overflow-y-auto flex-1 prose prose-sm md:prose-base dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                                <ReactMarkdown>
+                                                                    {video.summary_detailed || video.summary || "Summary analysis in progress..."}
+                                                                </ReactMarkdown>
+                                                            </div>
+                                                            {(() => {
+                                                                const content = video.summary_detailed || video.summary;
+                                                                if (!content) return null;
+                                                                const words = content.split(/\s+/).filter(w => w.length > 0).length;
+                                                                const chars = content.length;
+                                                                return (
+                                                                    <div className="px-4 py-2.5 bg-indigo-100/50 dark:bg-indigo-900/40 border-t border-indigo-200 dark:border-indigo-700 text-xs text-indigo-600 dark:text-indigo-400 font-mono text-center shrink-0">
+                                                                        {words.toLocaleString()} words • {chars.toLocaleString()} chars
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </div>
                                                     </div>
                                                 </div>

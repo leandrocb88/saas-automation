@@ -8,10 +8,22 @@ use Illuminate\Support\Facades\Log;
 class RailwayService
 {
     protected string $baseUrl;
+    protected ?string $apiKey;
 
     public function __construct()
     {
         $this->baseUrl = config('services.railway.base_url');
+        $this->apiKey = config('services.railway.api_key');
+    }
+
+    protected function getClient(int $timeout = 60)
+    {
+        $headers = [];
+        if ($this->apiKey) {
+            $headers['x-api-key'] = $this->apiKey;
+        }
+        
+        return Http::withHeaders($headers)->timeout($timeout);
     }
 
     /**
@@ -28,7 +40,7 @@ class RailwayService
         ], $options);
 
         try {
-            $response = Http::timeout(60)->post($this->baseUrl, $payload);
+            $response = $this->getClient(60)->post($this->baseUrl, $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -65,7 +77,7 @@ class RailwayService
         ], $options);
 
         try {
-            $response = Http::timeout(120)->post($this->baseUrl, $payload);
+            $response = $this->getClient(120)->post($this->baseUrl, $payload);
 
             if ($response->successful()) {
                 $data = $response->json();

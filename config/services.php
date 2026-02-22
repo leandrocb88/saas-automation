@@ -97,6 +97,7 @@ return [
 
     'railway' => [
         'base_url' => env('RAILWAY_API_URL', 'https://youtube-video-transcript-scraper-production.up.railway.app/'),
+        'api_key' => env('RAILWAY_API_KEY'),
     ],
 
 ];
