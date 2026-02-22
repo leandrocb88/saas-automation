@@ -10,7 +10,7 @@ RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoload
 FROM node:20-slim AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm install --legacy-peer-deps
 COPY . .
 # Copy vendor from composer stage so TypeScript can find Ziggy files
 COPY --from=composer /app/vendor ./vendor
