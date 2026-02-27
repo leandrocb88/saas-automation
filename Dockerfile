@@ -41,11 +41,8 @@ RUN rm -rf node_modules tests
 COPY --chown=www-data:www-data deploy/run-migrations.sh /etc/entrypoint.d/run-migrations.sh
 RUN chmod +x /etc/entrypoint.d/run-migrations.sh
 
-# Run Laravel optimizations
-RUN php artisan storage:link && \
-    php artisan view:cache && \
-    php artisan config:cache && \
-    php artisan route:cache
+# Run Laravel storage link during build
+RUN php artisan storage:link
 
 # Set permissions
 RUN chmod -R 775 storage bootstrap/cache database

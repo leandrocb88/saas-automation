@@ -17,3 +17,9 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
         php artisan db:seed --force
     fi
 fi
+
+# Run Laravel optimizations at runtime (when env vars are available)
+echo "Caching Laravel configuration..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
