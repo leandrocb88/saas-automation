@@ -61,12 +61,12 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->is_admin;
+        return (bool) ($this->is_admin ?? false);
     }
 
     public function isBlocked(): bool
     {
-        return $this->is_blocked;
+        return (bool) ($this->is_blocked ?? false);
     }
     public function channels()
     {
