@@ -92,7 +92,11 @@ class HandleInertiaRequests extends Middleware
             
             /** @var \App\Services\QuotaManager $quotaManager */
             $quotaManager = app(\App\Services\QuotaManager::class);
-            $used = $quotaManager->getGuestUsage($request->ip(), $request->userAgent(), $service);
+            try {
+                $used = $quotaManager->getGuestUsage($request->ip(), $request->userAgent(), $service);
+            } catch (\Exception $e) {
+                $used = 0;
+            }
             $limit = config("plans.{$service}.free.limit", 1);
             
             $userData = null; // Ensure UserData is null
@@ -114,10 +118,19 @@ class HandleInertiaRequests extends Middleware
                     ]
                 ] : null,
             ],
-            'settings' => [
-                'sign_up_enabled' => \App\Models\Setting::where('key', 'sign_up_enabled')->value('value') !== 'false',
-                'admin_only_access' => \App\Models\Setting::where('key', 'admin_only_access')->value('value') === 'true',
-            ],
+            'settings' => (function() {
+                try {
+                    return [
+                        'sign_up_enabled' => \App\Models\Setting::where('key', 'sign_up_enabled')->value('value') !== 'false',
+                        'admin_only_access' => \App\Models\Setting::where('key', 'admin_only_access')->value('value') === 'true',
+                    ];
+                } catch (\Exception $e) {
+                    return [
+                        'sign_up_enabled' => true,
+                        'admin_only_access' => false,
+                    ];
+                }
+            })(),
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),

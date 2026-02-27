@@ -95,7 +95,7 @@ return [
             'driver' => 'failover',
             'stores' => [
                 'database',
-                'array',
+                'file',
             ],
         ],
 
