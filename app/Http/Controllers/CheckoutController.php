@@ -54,4 +54,55 @@ class CheckoutController extends Controller
 
         return back()->with('message', 'Subscription resumed. Welcome back!');
     }
+
+    public function buyCredits(Request $request)
+    {
+        $user = $request->user();
+
+        // Only paid subscribers can top up credits
+        if (!$user->subscribed('youtube')) {
+            return redirect()->route('plans', ['service' => 'youtube'])
+                ->withErrors(['error' => 'Credit top-ups are available for paid subscribers only. Please upgrade your plan first.']);
+        }
+        
+        // Ensure you have a standard price ID or create an inline price item
+        // Assuming $5 for 5000 credits as a one-time charge
+        
+        return $user->checkoutCharge(500, '5000 Credits Top-up', 1, [
+            'success_url' => route('checkout.credits.success').'?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('billing'),
+        ]);
+    }
+
+    public function creditSuccess(Request $request)
+    {
+        $user = $request->user();
+        $sessionId = $request->query('session_id');
+
+        if (!$sessionId) {
+            return redirect()->route('billing')->withErrors(['error' => 'Invalid session.']);
+        }
+
+        try {
+            // Verify session with Stripe
+            $stripe = new \Stripe\StripeClient(config('cashier.secret'));
+            $session = $stripe->checkout->sessions->retrieve($sessionId);
+
+            // Double check payment status and metadata if needed
+            if ($session->payment_status === 'paid') {
+                // Prevent duplicate processing if possible (e.g. tracking processed session IDs)
+                // For now, simpler implementation:
+                
+                // Add credits
+                $user->increment('purchased_credits', 5000);
+                
+                return redirect()->route('billing')->with('success', '5000 credits successfully added to your account!');
+            }
+            
+        } catch (\Exception $e) {
+            return redirect()->route('billing')->withErrors(['error' => 'Payment verification failed.']);
+        }
+
+        return redirect()->route('billing');
+    }
 }

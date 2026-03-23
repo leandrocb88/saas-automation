@@ -35,11 +35,12 @@ class OpenAIService
         ";
 
         try {
+            $model = config('services.openai.summary_model', 'gpt-5-nano');
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . config('services.openai.api_key'),
                 'Content-Type' => 'application/json',
             ])->timeout(120)->post('https://api.openai.com/v1/chat/completions', [
-                'model' => 'gpt-5-nano', 
+                'model' => $model, 
                 'messages' => [
                     ['role' => 'system', 'content' => 'You are a helpful AI assistant that analyzes video transcripts and outputs JSON.'],
                     ['role' => 'user', 'content' => $prompt],
@@ -101,11 +102,12 @@ class OpenAIService
         $transcriptSnippet
         ";
 
+        $model = config('services.openai.summary_model', 'gpt-5-nano');
         return $pool->as($key)->withHeaders([
                 'Authorization' => 'Bearer ' . config('services.openai.api_key'),
                 'Content-Type' => 'application/json',
             ])->timeout(120)->post('https://api.openai.com/v1/chat/completions', [
-                'model' => 'gpt-5-nano', 
+                'model' => $model, 
                 'messages' => [
                     ['role' => 'system', 'content' => 'You are a helpful AI assistant that analyzes video transcripts and outputs JSON.'],
                     ['role' => 'user', 'content' => $prompt],
@@ -219,5 +221,122 @@ class OpenAIService
         }
 
         return $data['detailed_summary'] ?? $data['summary'] ?? null;
+    }
+
+    public function translateTranscript(array $transcript, string $targetLanguage): ?array
+    {
+        if (empty($transcript)) {
+            return null;
+        }
+
+        $apiKey = config('services.openai.api_key');
+        $model = config('services.openai.translate_model', 'gpt-4o-mini');
+
+        $systemPrompt = "You are a professional translator. Translate the following video transcript into {$targetLanguage}.
+        Return ONLY a JSON array of objects, where each object has 'text', 'start', and 'duration' fields.
+        Translate ONLY the 'text' field. Keep 'start' and 'duration' exactly as they are.
+        Maintain the same number of items in the array.";
+
+        $transcriptJson = json_encode($transcript);
+
+        try {
+            $response = Http::timeout(300)->withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->post('https://api.openai.com/v1/chat/completions', [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => "Transcript JSON:\n" . $transcriptJson],
+                ],
+                'temperature' => 0.2,
+                'response_format' => ['type' => 'json_object'],
+            ]);
+
+            if ($response->failed()) {
+                Log::error('OpenAI Translation Error: ' . $response->body());
+                return null;
+            }
+
+            $data = $response->json();
+            $translatedJson = $data['choices'][0]['message']['content'] ?? null;
+
+            if (!$translatedJson) {
+                Log::error('OpenAI Translation Missing Content in Response');
+                return null;
+            }
+
+            $decoded = json_decode($translatedJson, true);
+            
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return null;
+            }
+
+            // Robust extraction
+            $finalTranscript = null;
+            if (is_array($decoded)) {
+                if (isset($decoded['transcript']) && is_array($decoded['transcript'])) {
+                    $finalTranscript = $decoded['transcript'];
+                } elseif (isset($decoded['translatedTranscript']) && is_array($decoded['translatedTranscript'])) {
+                    $finalTranscript = $decoded['translatedTranscript'];
+                } elseif (isset($decoded[0]) && is_array($decoded[0])) {
+                    // It's already a flat array of objects
+                    $finalTranscript = $decoded;
+                } else {
+                    // Look for any array in the object
+                    foreach ($decoded as $value) {
+                        if (is_array($value) && isset($value[0]['text'])) {
+                            $finalTranscript = $value;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return $finalTranscript;
+
+        } catch (\Exception $e) {
+            file_put_contents('/tmp/openai_debug.json', 'Exception: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function translateSummary(string $summary, string $targetLanguage): ?string
+    {
+        if (empty($summary)) {
+            return null;
+        }
+
+        $apiKey = config('services.openai.api_key');
+        $model = config('services.openai.translate_model', 'gpt-4o-mini');
+
+        $systemPrompt = "You are a professional translator. Translate the following AI-generated video summary into {$targetLanguage}.
+        Preserve all Markdown formatting (headers, bold text, bullet points).
+        Provide ONLY the translated text.";
+
+        try {
+            $response = Http::timeout(300)->withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->post('https://api.openai.com/v1/chat/completions', [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => "Summary:\n" . $summary],
+                ],
+                'temperature' => 0.3,
+            ]);
+
+            if ($response->failed()) {
+                Log::error('OpenAI Summary Translation Error: ' . $response->body());
+                return null;
+            }
+
+            return $response->json('choices.0.message.content');
+
+        } catch (\Exception $e) {
+            Log::error('OpenAI Summary Translation Failed: ' . $e->getMessage());
+            return null;
+        }
     }
 }

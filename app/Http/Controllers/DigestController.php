@@ -20,7 +20,7 @@ class DigestController extends Controller
 
     public function create()
     {
-        $channels = Auth::user()->channels()->select('id', 'name', 'thumbnail_url')->get();
+        $channels = Auth::user()->channels()->select('id', 'name', 'thumbnail_url', 'is_paused')->get();
         return Inertia::render('Digests/Create', [
             'availableChannels' => $channels,
         ]);
@@ -38,6 +38,7 @@ class DigestController extends Controller
             'channel_ids' => 'nullable|array',
             'channel_ids.*' => 'exists:channels,id',
             'custom_prompt' => 'nullable|string',
+            'global_summary_prompt' => 'nullable|string',
         ]);
 
         $digest = Auth::user()->digests()->create([
@@ -48,6 +49,7 @@ class DigestController extends Controller
             'mode' => $validated['mode'],
             'search_term' => $validated['search_term'],
             'custom_prompt' => $validated['custom_prompt'],
+            'global_summary_prompt' => $validated['global_summary_prompt'],
             'is_active' => true,
         ]);
 
@@ -62,7 +64,7 @@ class DigestController extends Controller
     {
         if ($digest->user_id !== Auth::id()) abort(403);
 
-        $channels = Auth::user()->channels()->select('id', 'name', 'thumbnail_url')->get();
+        $channels = Auth::user()->channels()->select('id', 'name', 'thumbnail_url', 'is_paused')->get();
         $digest->load('channels');
 
         return Inertia::render('Digests/Edit', [
@@ -99,6 +101,7 @@ class DigestController extends Controller
             'channel_ids' => 'nullable|array',
             'channel_ids.*' => 'exists:channels,id',
             'custom_prompt' => 'nullable|string',
+            'global_summary_prompt' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
@@ -110,6 +113,7 @@ class DigestController extends Controller
             'mode' => $validated['mode'],
             'search_term' => $validated['search_term'],
             'custom_prompt' => $validated['custom_prompt'],
+            'global_summary_prompt' => $validated['global_summary_prompt'],
             'is_active' => $validated['is_active'] ?? $digest->is_active,
         ]);
 

@@ -13,47 +13,13 @@ interface Channel {
     is_paused: boolean;
 }
 
-interface Schedule {
-    preferred_time: string;
-    timezone: string;
-    is_active: boolean;
-}
-
 interface Props {
     auth: any;
     channels: Channel[];
-    schedule: Schedule | null;
 }
 
-export default function Subscriptions({ auth, channels, schedule }: Props) {
+export default function Subscriptions({ auth, channels }: Props) {
     const [channelToUnsubscribe, setChannelToUnsubscribe] = useState<number | null>(null);
-    const [showSchedulePanel, setShowSchedulePanel] = useState(false);
-    const [isProcessingDigest, setIsProcessingDigest] = useState(false);
-    const [showDigestPanel, setShowDigestPanel] = useState(false);
-    const [digestConfig, setDigestConfig] = useState({
-        limit: 20,
-        days_back: 1,
-        sort: 'newest'
-    });
-
-    const [confirmingDigestProcess, setConfirmingDigestProcess] = useState(false);
-
-    const handleProcessDigest = (e: React.FormEvent) => {
-        e.preventDefault();
-        setConfirmingDigestProcess(true);
-    };
-
-    const processDigest = () => {
-        setIsProcessingDigest(true);
-        router.post(route('youtube.digest.force'), digestConfig, {
-            preserveScroll: true,
-            onFinish: () => {
-                setIsProcessingDigest(false);
-                setShowDigestPanel(false);
-                setConfirmingDigestProcess(false);
-            },
-        });
-    };
 
     const confirmUnsubscribe = (id: number) => {
         setChannelToUnsubscribe(id);
@@ -77,23 +43,10 @@ export default function Subscriptions({ auth, channels, schedule }: Props) {
         url: '',
     });
 
-    const scheduleForm = useForm({
-        preferred_time: schedule?.preferred_time || '09:00',
-        timezone: schedule?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-        is_active: schedule?.is_active ?? true,
-    });
-
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('youtube.subscriptions.store'), {
             onSuccess: () => reset('url'),
-        });
-    };
-
-    const updateSchedule: FormEventHandler = (e) => {
-        e.preventDefault();
-        scheduleForm.post(route('youtube.schedule.update'), {
-            onSuccess: () => setShowSchedulePanel(false),
         });
     };
 
@@ -127,164 +80,18 @@ export default function Subscriptions({ auth, channels, schedule }: Props) {
                         </div>
 
                         {/* Controls */}
-                        <div className="flex items-stretch gap-3">
-                            {/* Manual Digest Toggle */}
-                            <button
-                                onClick={() => {
-                                    setShowDigestPanel(!showDigestPanel);
-                                    if (showSchedulePanel) setShowSchedulePanel(false);
-                                }}
-                                className={`group flex items-center gap-2 rounded-2xl px-5 py-3 transition-all duration-300 shadow-sm hover:scale-[1.02] active:scale-95 ${showDigestPanel
-                                    ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-indigo-500/25'
-                                    : 'bg-white/50 dark:bg-white/10 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-white/20 border border-indigo-200/50 dark:border-white/20 text-gray-900 dark:text-white hover:shadow-md hover:border-indigo-300/50 dark:hover:border-white/30'
-                                    }`}
+                        <div className="flex items-stretch gap-3 mt-4 sm:mt-0">
+                            <Link
+                                href={route('digests.index')}
+                                className="group flex items-center gap-2 rounded-2xl px-6 py-3 transition-all duration-300 shadow-sm hover:scale-[1.02] active:scale-95 bg-white/50 dark:bg-white/10 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-white/20 border border-indigo-200/50 dark:border-white/20 text-gray-900 dark:text-white hover:shadow-md hover:border-indigo-300/50 dark:hover:border-white/30"
                             >
-                                <svg className={`w-4 h-4 ${isProcessingDigest ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    {isProcessingDigest ? (
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                    ) : (
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                    )}
-                                    {!isProcessingDigest && <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />}
+                                <svg className="w-5 h-5 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                 </svg>
-                                <span className="text-sm font-semibold">Run Digest</span>
-                                <svg className={`w-4 h-4 ml-1 transition-transform ${showDigestPanel ? 'rotate-180 text-white' : 'text-gray-400 dark:text-white/60 group-hover:text-gray-600 dark:group-hover:text-white/80'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-
-                            {/* Schedule Toggle */}
-                            <button
-                                onClick={() => {
-                                    setShowSchedulePanel(!showSchedulePanel);
-                                    if (showDigestPanel) setShowDigestPanel(false);
-                                }}
-                                className={`group flex items-center gap-3 rounded-2xl px-5 py-3 transition-all duration-300 shadow-sm hover:scale-[1.02] active:scale-95 ${showSchedulePanel
-                                    ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-indigo-500/25'
-                                    : 'bg-white/50 dark:bg-white/10 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-white/20 border border-indigo-200/50 dark:border-white/20 text-gray-900 dark:text-white hover:shadow-md hover:border-indigo-300/50 dark:hover:border-white/30'
-                                    }`}
-                            >
-                                <div className={`h-2.5 w-2.5 rounded-full transition-colors ${schedule?.is_active ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-gray-400'}`} />
-                                <div className="text-left">
-                                    <div className={`text-sm font-semibold ${showSchedulePanel ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                                        {schedule?.is_active ? 'Digest Active' : 'Digest Paused'}
-                                    </div>
-                                    <div className={`text-xs ${showSchedulePanel ? 'text-indigo-100' : 'text-indigo-800 dark:text-indigo-200'}`}>
-                                        {schedule ? `${schedule.preferred_time} · ${schedule.timezone.split('/').pop()?.replace('_', ' ')}` : 'Click to configure'}
-                                    </div>
-                                </div>
-                                <svg className={`w-4 h-4 transition-transform ${showSchedulePanel ? 'rotate-180 text-white' : 'text-gray-600 dark:text-white/60'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
+                                <span className="text-sm font-semibold">Automate Channels</span>
+                            </Link>
                         </div>
                     </div>
-
-                    {/* Manual Digest Panel */}
-                    {showDigestPanel && (
-                        <div className="mt-6 bg-white/50 dark:bg-white/10 backdrop-blur-md border border-indigo-200/50 dark:border-white/20 rounded-2xl p-6 animate-in slide-in-from-top shadow-sm">
-                            <form onSubmit={handleProcessDigest} className="flex flex-col md:flex-row items-end gap-5">
-                                <div className="w-full md:w-auto flex-1 max-w-xs">
-                                    <label className="block text-xs font-medium text-indigo-900 dark:text-indigo-200 mb-1.5">Max Total Videos</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="100"
-                                        className="w-full rounded-xl border-0 bg-white dark:bg-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 px-4 py-2.5 text-sm ring-1 ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white/30"
-                                        value={digestConfig.limit}
-                                        onChange={(e) => setDigestConfig({ ...digestConfig, limit: parseInt(e.target.value) || 20 })}
-                                        required
-                                    />
-                                </div>
-                                <div className="w-full md:w-auto flex-1 max-w-xs">
-                                    <label className="block text-xs font-medium text-indigo-900 dark:text-indigo-200 mb-1.5">Look Back</label>
-                                    <select
-                                        className="w-full rounded-xl border-0 bg-white dark:bg-white/10 text-gray-900 dark:text-white px-4 py-2.5 text-sm ring-1 ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white/30 [&>option]:text-gray-900"
-                                        value={digestConfig.days_back}
-                                        onChange={(e) => setDigestConfig({ ...digestConfig, days_back: parseInt(e.target.value) })}
-                                    >
-                                        <option value={1}>Last 24 Hours</option>
-                                        <option value={3}>Last 3 Days</option>
-                                        <option value={7}>Last 7 Days</option>
-                                        <option value={30}>Last 30 Days</option>
-                                    </select>
-                                </div>
-                                <div className="w-full md:w-auto flex-1 max-w-xs">
-                                    <label className="block text-xs font-medium text-indigo-900 dark:text-indigo-200 mb-1.5">Sort Order</label>
-                                    <select
-                                        className="w-full rounded-xl border-0 bg-white dark:bg-white/10 text-gray-900 dark:text-white px-4 py-2.5 text-sm ring-1 ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white/30 [&>option]:text-gray-900"
-                                        value={digestConfig.sort}
-                                        onChange={(e) => setDigestConfig({ ...digestConfig, sort: e.target.value })}
-                                    >
-                                        <option value="newest">Newest First</option>
-                                        <option value="oldest">Oldest First</option>
-                                        <option value="relevance">Relevance</option>
-                                    </select>
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={isProcessingDigest}
-                                    className="w-full md:w-auto rounded-xl bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-400 text-white px-6 py-2.5 text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50"
-                                >
-                                    {isProcessingDigest ? 'Processing...' : 'Start Process'}
-                                </button>
-                            </form>
-                            <p className="mt-3 text-xs text-indigo-700 dark:text-indigo-300">
-                                Note: This will use your AI credits based on the number of new videos found.
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Schedule Panel — slides down */}
-                    {showSchedulePanel && (
-                        <div className="mt-6 bg-white/50 dark:bg-white/10 backdrop-blur-md border border-indigo-200/50 dark:border-white/20 rounded-2xl p-6 animate-in slide-in-from-top shadow-sm">
-                            <form onSubmit={updateSchedule} className="flex flex-col sm:flex-row items-end gap-4">
-                                <div className="w-full sm:w-auto">
-                                    <label className="block text-xs font-medium text-indigo-900 dark:text-indigo-200 mb-1.5">Time</label>
-                                    <input
-                                        type="time"
-                                        className="w-full sm:w-40 rounded-xl border-0 bg-white dark:bg-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 px-4 py-2.5 text-sm ring-1 ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white/30"
-                                        value={scheduleForm.data.preferred_time}
-                                        onChange={(e) => scheduleForm.setData('preferred_time', e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="w-full sm:flex-1">
-                                    <label className="block text-xs font-medium text-indigo-900 dark:text-indigo-200 mb-1.5">Timezone</label>
-                                    <select
-                                        className="w-full rounded-xl border-0 bg-white dark:bg-white/10 text-gray-900 dark:text-white px-4 py-2.5 text-sm ring-1 ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white/30 [&>option]:text-gray-900"
-                                        value={scheduleForm.data.timezone}
-                                        onChange={(e) => scheduleForm.setData('timezone', e.target.value)}
-                                        required
-                                    >
-                                        {Intl.supportedValuesOf('timeZone').map((tz) => (
-                                            <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <label className="flex items-center gap-2.5 cursor-pointer whitespace-nowrap py-2.5">
-                                    <div className="relative">
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only peer"
-                                            checked={scheduleForm.data.is_active}
-                                            onChange={(e) => scheduleForm.setData('is_active', e.target.checked)}
-                                        />
-                                        <div className="w-10 h-5 bg-gray-200 dark:bg-white/20 rounded-full peer peer-checked:bg-emerald-500 transition-colors" />
-                                        <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-5" />
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-900 dark:text-white">Active</span>
-                                </label>
-                                <button
-                                    type="submit"
-                                    disabled={scheduleForm.processing}
-                                    className="w-full sm:w-auto rounded-xl bg-indigo-600 dark:bg-white px-6 py-2.5 text-sm font-semibold text-white dark:text-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-50 transition-colors disabled:opacity-50 shadow-sm"
-                                >
-                                    {scheduleForm.processing ? 'Saving…' : 'Save'}
-                                </button>
-                            </form>
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -441,28 +248,6 @@ export default function Subscriptions({ auth, channels, schedule }: Props) {
                 onClose={() => setChannelToUnsubscribe(null)}
                 onConfirm={unsubscribe}
                 processing={processing}
-            />
-
-            <ConfirmationModal
-                show={confirmingDigestProcess}
-                title="Start Manual Digest?"
-                content={
-                    <div className="space-y-3">
-                        <p>You are about to manually trigger a digest with the following settings:</p>
-                        <ul className="list-disc list-inside space-y-1 ml-1 text-gray-700 dark:text-gray-300 font-medium">
-                            <li>Check <strong>{digestConfig.limit}</strong> most recent videos</li>
-                            <li>From the <strong>Last {digestConfig.days_back} Day{digestConfig.days_back > 1 ? 's' : ''}</strong></li>
-                            <li>Sorted by <strong>{digestConfig.sort === 'newest' ? 'Newest First' : digestConfig.sort === 'oldest' ? 'Oldest First' : 'Relevance'}</strong></li>
-                        </ul>
-                        <p className="text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800">
-                            <strong>Note:</strong> This checks all your active channels and will deduct from your AI credits based on the number of new videos processed.
-                        </p>
-                    </div>
-                }
-                confirmText="Start Process"
-                onClose={() => setConfirmingDigestProcess(false)}
-                onConfirm={processDigest}
-                processing={isProcessingDigest}
             />
         </AuthenticatedLayout>
     );

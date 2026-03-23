@@ -23,6 +23,9 @@ Route::middleware('web')->group(function () {
         Route::middleware(['guest.access'])->group(function() {
             Route::post('/process', [App\Http\Controllers\YouTubeController::class, 'process'])->name('youtube.process');
             Route::post('/summary/{video}', [App\Http\Controllers\YouTubeController::class, 'generateSummary'])->name('youtube.summary.generate');
+            Route::post('/freeze-credits', [App\Http\Controllers\YouTubeController::class, 'freezeCredits'])->name('youtube.freeze_credits');
+            Route::post('/videos/{video}/translate', [App\Http\Controllers\YouTubeController::class, 'translate'])->name('youtube.translate');
+            Route::post('/videos/{video}/translate-summary', [App\Http\Controllers\YouTubeController::class, 'translateSummary'])->name('youtube.translate_summary');
             Route::get('/channels', [App\Http\Controllers\YouTubeController::class, 'channel'])->name('youtube.channel');
             Route::post('/channels/process', [App\Http\Controllers\YouTubeController::class, 'processChannel'])->name('youtube.channel.process');
             Route::get('/history', [App\Http\Controllers\YouTubeController::class, 'history'])->name('youtube.history');
@@ -37,11 +40,7 @@ Route::middleware('web')->group(function () {
             Route::post('/subscriptions', [App\Http\Controllers\YouTubeController::class, 'storeSubscription'])->name('youtube.subscriptions.store');
             Route::delete('/subscriptions/{channel}', [App\Http\Controllers\YouTubeController::class, 'destroySubscription'])->name('youtube.subscriptions.destroy');
             Route::post('/subscriptions/{channel}/toggle', [App\Http\Controllers\YouTubeController::class, 'toggleSubscriptionStatus'])->name('youtube.subscriptions.toggle');
-            Route::post('/schedule', [App\Http\Controllers\YouTubeController::class, 'updateSchedule'])->name('youtube.schedule.update');
-            Route::get('/digest', [App\Http\Controllers\YouTubeController::class, 'digest'])->name('youtube.digest');
-            Route::get('/digest/{token}', [App\Http\Controllers\YouTubeController::class, 'showDigestRun'])->name('youtube.digest.show');
             Route::resource('digests', \App\Http\Controllers\DigestController::class);
-            Route::post('/digest/force', [App\Http\Controllers\YouTubeController::class, 'forceDigest'])->name('youtube.digest.force');
             Route::get('/digest-runs/{digestRun}/pdf', [App\Http\Controllers\DigestRunController::class, 'downloadPdf'])->name('digest_runs.pdf');
             Route::get('/digest-runs/{digestRun}/audio', [App\Http\Controllers\DigestRunController::class, 'downloadAudio'])->name('digest_runs.audio');
             Route::get('/digest-runs/{digestRun}/status', [App\Http\Controllers\DigestRunController::class, 'status'])->name('digest_runs.status');
@@ -77,14 +76,10 @@ Route::middleware('web')->group(function () {
             
             // Refined Check for Plan & Period
             $plusPrices = config("plans.{$service}.plus.prices", []);
-            $proPrices = config("plans.{$service}.pro.prices", []);
 
             if (in_array($priceId, $plusPrices)) {
                 $currentPlan = 'plus';
                 $currentPeriod = ($priceId === $plusPrices['yearly']) ? 'yearly' : 'monthly';
-            } elseif (in_array($priceId, $proPrices)) {
-                $currentPlan = 'pro';
-                $currentPeriod = ($priceId === $proPrices['yearly']) ? 'yearly' : 'monthly';
             } else {
                 $currentPlan = 'plus'; // fallback
                 $currentPeriod = 'monthly';
@@ -126,12 +121,9 @@ Route::middleware('web')->group(function () {
             
             // Check against configured prices
             $plusPrices = config("plans.{$service}.plus.prices");
-            $proPrices = config("plans.{$service}.pro.prices");
 
             if (in_array($priceId, $plusPrices)) {
                 $plan = 'plus';
-            } elseif (in_array($priceId, $proPrices)) {
-                $plan = 'pro';
             } else {
                 // Fallback or legacy handling
                 $plan = 'plus'; 
@@ -147,6 +139,7 @@ Route::middleware('web')->group(function () {
                 'period' => config("plans.{$service}.{$plan}.period"),
                 'plan_name' => ucfirst($plan),
                 'is_pro' => $user->subscribed($service),
+                'purchased_credits' => $user->purchased_credits,
 
                 // We could rely on HandleInertiaRequests for next_reset_at since we added it there,
                 // but passing it explicitly here guarantees it fits the UsageStats interface exactly.
@@ -181,6 +174,8 @@ Route::middleware('web')->group(function () {
 });
 
 Route::middleware(['auth', 'not.blocked'])->group(function () {
+    Route::get('/checkout/credits', [App\Http\Controllers\CheckoutController::class, 'buyCredits'])->name('checkout.credits');
+    Route::get('/checkout/credits/success', [App\Http\Controllers\CheckoutController::class, 'creditSuccess'])->name('checkout.credits.success');
     Route::get('/checkout/{plan}', [App\Http\Controllers\CheckoutController::class, 'subscription'])->name('checkout.subscription');
     Route::post('/subscription/cancel', [App\Http\Controllers\CheckoutController::class, 'cancel'])->name('subscription.cancel');
     Route::post('/subscription/resume', [App\Http\Controllers\CheckoutController::class, 'resume'])->name('subscription.resume');

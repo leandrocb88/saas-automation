@@ -17,41 +17,56 @@ class QuotaManager
             $subscription = $user->subscription($service);
             $priceId = $subscription->stripe_price;
             
-            // Re-using logic from controller/routes (should be centralized in User/Service really)
-            // But for QuotaManager, maybe we just trust 'pro' vs 'free' logic is simplified here?
-            // The original code used: $plan = $user->subscribed($service) ? 'pro' : 'free';
-            // But 'plus' limits are in config too.
-            // Let's improve this simply:
-            
             $plusPrices = config("plans.{$service}.plus.prices", []);
-            $proPrices = config("plans.{$service}.pro.prices", []);
 
             if (in_array($priceId, $plusPrices)) {
                 $plan = 'plus';
-            } elseif (in_array($priceId, $proPrices)) {
-                $plan = 'pro';
             } else {
-                 // Fallback
                  $plan = 'plus';
             }
         }
         
         $limit = config("plans.{$service}.{$plan}.limit", 0);
+        $totalAvailable = $limit + $user->purchased_credits;
 
-        return ($user->daily_usage + $amount) <= $limit;
+        return ($user->daily_usage + $amount) <= $totalAvailable;
+    }
+
+    public function getCost(?User $user, string $service, string $action): int
+    {
+        // Since we decided transcripts are free for everyone, we just return the config value
+        // The config for 'transcript' is now 0.
+        return config("credits.{$service}.{$action}", 1);
     }
 
     public function incrementUsage(User $user, string $service, int $amount = 1, ?string $usageType = null): void
     {
         $this->refreshQuotaIfNeeded($user, $service);
+        
+        // Determine the plan limit
+        $plan = $user->subscribed($service) ? 'plus' : 'free';
+        $limit = config("plans.{$service}.{$plan}.limit", 0);
+        
+        $currentUsage = $user->daily_usage;
+        $newUsage = $currentUsage + $amount;
+        
+        // If the new usage exceeds the base plan limit, deduct from purchased_credits
+        if ($newUsage > $limit) {
+            $excess = $newUsage - max($currentUsage, $limit);
+            if ($user->purchased_credits >= $excess) {
+                $user->decrement('purchased_credits', $excess);
+            } else {
+                // If they don't have enough purchased credits, just zero it out (should ideally be prevented by checkQuota)
+                $user->update(['purchased_credits' => 0]);
+            }
+        }
+
         $user->increment('daily_usage', $amount);
         
-        // Track breakdown by usage type
         // Track breakdown by usage type
         if ($usageType === 'video_fetch') {
             $user->increment('usage_video_fetch', $amount);
         }
-        // AI Summary is now bundled, no separate tracking needed.
     }
 
     protected function refreshQuotaIfNeeded(User $user, string $service): void
@@ -61,13 +76,7 @@ class QuotaManager
         // Need correct plan to get period
         $plan = 'free';
         if ($user->subscribed($service)) {
-             $subscription = $user->subscription($service);
-             $priceId = $subscription->stripe_price; 
-             $plusPrices = config("plans.{$service}.plus.prices", []);
-             $proPrices = config("plans.{$service}.pro.prices", []);
-             if (in_array($priceId, $plusPrices)) $plan = 'plus';
-             elseif (in_array($priceId, $proPrices)) $plan = 'pro';
-             else $plan = 'plus';
+             $plan = 'plus';
         }
 
         $period = config("plans.{$service}.{$plan}.period", 'daily');
@@ -112,32 +121,34 @@ class QuotaManager
 
         $plan = 'free';
         if ($user->subscribed($service)) {
-            $subscription = $user->subscription($service);
-            $priceId = $subscription->stripe_price;
-            $plusPrices = config("plans.{$service}.plus.prices", []);
-            $proPrices = config("plans.{$service}.pro.prices", []);
-
-            if (in_array($priceId, $plusPrices)) {
-                $plan = 'plus';
-            } elseif (in_array($priceId, $proPrices)) {
-                $plan = 'pro';
-            } else {
-                $plan = 'plus';
-            }
+            $plan = 'plus';
         }
         
         $limit = config("plans.{$service}.{$plan}.limit", 0);
-        $remaining = $limit - $user->daily_usage;
+        $remainingFromPlan = $limit - $user->daily_usage;
+        $remainingFromPlan = max(0, $remainingFromPlan);
 
-        return max(0, $remaining);
+        return $remainingFromPlan + $user->purchased_credits;
     }
 
     public function decrementUsage(User $user, string $service, int $amount = 1): void
     {
-        // Refund usage (e.g. failed job or over-estimation)
+        $plan = $user->subscribed($service) ? 'plus' : 'free';
+        $limit = config("plans.{$service}.{$plan}.limit", 0);
+        
+        // If current usage is over the limit, it means purchased credits were used. Refunding means giving back purchased credits first.
+        if ($user->daily_usage > $limit) {
+            $overage = $user->daily_usage - $limit;
+            $refundToPurchased = min($amount, $overage);
+            
+            if ($refundToPurchased > 0) {
+                $user->increment('purchased_credits', $refundToPurchased);
+            }
+        }
+
+        // Refund overall daily usage
         $user->decrement('daily_usage', $amount);
         
-        // Safety check to ensure we don't go below 0?
         if ($user->daily_usage < 0) {
             $user->update(['daily_usage' => 0]);
         }
@@ -173,14 +184,10 @@ class QuotaManager
     public function incrementGuestUsage(string $ip, string $userAgent, string $service, int $amount = 1): void
     {
         $key = $this->getGuestKey($ip, $userAgent, $service);
+        $usage = \Illuminate\Support\Facades\Cache::get($key, 0);
+        $newUsage = $usage + $amount;
         
-        // Increment usage or set to amount if not exists. Expires at midnight.
-        $usage = \Illuminate\Support\Facades\Cache::increment($key, $amount);
-        
-        if ($usage === $amount) {
-            // First usage, ensure it expires at midnight
-            \Illuminate\Support\Facades\Cache::put($key, $usage, Carbon::tomorrow());
-        }
+        \Illuminate\Support\Facades\Cache::put($key, $newUsage, Carbon::tomorrow());
     }
 
     public function getGuestUsage(string $ip, string $userAgent, string $service): int

@@ -29,6 +29,7 @@ class User extends Authenticatable
         'is_blocked',
         'service_type',
         'daily_usage',
+        'purchased_credits',
         'last_quota_reset',
     ];
 
@@ -71,11 +72,6 @@ class User extends Authenticatable
     public function channels()
     {
         return $this->hasMany(Channel::class);
-    }
-
-    public function digestSchedule()
-    {
-        return $this->hasOne(DigestSchedule::class);
     }
 
     public function digests()

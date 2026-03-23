@@ -24,7 +24,7 @@ class GenerateVideoSummary implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(OpenAIService $openAI, GeminiService $gemini): void
+    public function handle(OpenAIService $openAI, GeminiService $gemini, \App\Services\QuotaManager $quotaManager): void
     {
         try {
             $this->video->update(['summary_status' => 'processing']);
@@ -38,17 +38,19 @@ class GenerateVideoSummary implements ShouldQueue
             if (empty($fullText)) {
                 Log::warning("Video summary generation skipped: Empty transcript", ['video_id' => $this->video->id]);
                 $this->video->update(['summary_status' => 'failed']);
+                $this->refundCredit($quotaManager);
                 return;
             }
 
-            $provider = config('services.ai.provider', 'openai');
+            $provider = config('services.ai.provider', 'gemini');
             $summary = null;
 
             if ($provider === 'gemini') {
                 Log::info("Generating summary with Gemini for video {$this->video->video_id}");
                 $summary = $gemini->generateSummary($fullText, $this->type);
             } else {
-                Log::info("Generating summary with OpenAI (GPT-5 Nano) for video {$this->video->video_id}");
+                $openAIModel = config('services.openai.summary_model', 'gpt-5-nano');
+                Log::info("Generating summary with OpenAI ({$openAIModel}) for video {$this->video->video_id}");
                 $summary = $openAI->generateSummary($fullText, $this->type);
             }
 
@@ -65,7 +67,23 @@ class GenerateVideoSummary implements ShouldQueue
                 'error' => $e->getMessage()
             ]);
             $this->video->update(['summary_status' => 'failed']);
+            $this->refundCredit($quotaManager);
             throw $e;
+        }
+    }
+
+    protected function refundCredit(\App\Services\QuotaManager $quotaManager): void
+    {
+        $cost = $quotaManager->getCost($this->video->user, 'youtube', 'ai_summary');
+        
+        if ($this->video->user_id) {
+            $quotaManager->decrementUsage($this->video->user, 'youtube', $cost);
+            Log::info("Refunded summary credit to user {$this->video->user_id} for video {$this->video->id}");
+        } elseif ($this->video->guest_ip && $this->video->guest_ua) {
+            $quotaManager->decrementGuestUsage($this->video->guest_ip, $this->video->guest_ua, 'youtube', $cost);
+            Log::info("Refunded summary credit to guest {$this->video->guest_ip} for video {$this->video->id}");
+        } else {
+            Log::warning("Refund skipped: No user or guest identifiers found for video {$this->video->id}");
         }
     }
 }

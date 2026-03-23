@@ -58,7 +58,7 @@ export default function Select({
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                 >
-                    <Listbox.Options className="absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-2xl bg-white/80 dark:bg-gray-900/90 backdrop-blur-xl py-2 text-base shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm border border-gray-200/50 dark:border-white/10">
+                    <Listbox.Options className="absolute z-50 mt-2 max-h-80 w-full overflow-auto rounded-2xl bg-white/80 dark:bg-gray-900/90 backdrop-blur-xl py-2 text-base shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm border border-gray-200/50 dark:border-white/10">
                         {options.map((option) => (
                             <Listbox.Option
                                 key={option.value}

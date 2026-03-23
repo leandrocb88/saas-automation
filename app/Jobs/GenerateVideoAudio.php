@@ -33,7 +33,7 @@ class GenerateVideoAudio implements ShouldQueue
             // Let's assume 1 credit for now to be safe, or 0 if we want to be generous.
             // effectively this is "re-purposing" the content. 
             // Let's charge 1 credit for the TTS service usage.
-            $cost = 1;
+            $cost = $quotaManager->getCost($user, 'youtube', 'audio');
 
             if (!$quotaManager->checkQuota($user, 'youtube', $cost)) {
                 Log::warning("User {$user->id} has insufficient credits for video audio generation.");

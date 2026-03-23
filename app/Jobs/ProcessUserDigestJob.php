@@ -61,14 +61,23 @@ class ProcessUserDigestJob implements ShouldQueue
         $sort = $this->options['sort'] ?? null;
         $daysBack = $this->options['days_back'] ?? 1;
 
+        $transcriptCost = $quotaManager->getCost($user, 'youtube', 'transcript');
+        $includeSummary = filter_var($this->options['include_summary'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $summaryCost = $includeSummary ? $quotaManager->getCost($user, 'youtube', 'ai_summary') : 0;
+        $costPerVideo = $transcriptCost + $summaryCost;
+
         if ($limit) {
             $maxVideosPerChannel = (int)ceil($limit / count($channelUrls));
         } else {
-            $maxVideosPerChannel = min(100, (int)floor($remaining / count($channelUrls)));
+            if ($costPerVideo > 0) {
+                $maxVideosPerChannel = min(100, (int)floor($remaining / ($costPerVideo * count($channelUrls))));
+            } else {
+                $maxVideosPerChannel = 100;
+            }
         }
 
-        if ($maxVideosPerChannel * count($channelUrls) > $remaining) {
-            $maxAuthored = (int)floor($remaining / count($channelUrls));
+        if ($costPerVideo > 0 && $maxVideosPerChannel * count($channelUrls) * $costPerVideo > $remaining) {
+            $maxAuthored = (int)floor($remaining / ($costPerVideo * count($channelUrls)));
             if ($maxVideosPerChannel > $maxAuthored) {
                 $maxVideosPerChannel = $maxAuthored;
             }
@@ -79,15 +88,16 @@ class ProcessUserDigestJob implements ShouldQueue
             return;
         }
 
-        $estimatedCost = $maxVideosPerChannel * count($channelUrls);
-        $quotaManager->incrementUsage($user, 'youtube', $estimatedCost, 'digest_freeze');
+        $estimatedCost = $maxVideosPerChannel * count($channelUrls) * $costPerVideo;
+        if ($estimatedCost > 0) {
+            $quotaManager->incrementUsage($user, 'youtube', $estimatedCost, 'digest_freeze');
+        }
 
         $input = [
             'channelUrls' => $channelUrls,
-            'dateFilterMode' => 'relative',
-            'daysBack' => (int)$daysBack,
+            'channelDateFilterMode' => 'relative',
+            'channelDaysBack' => (int)$daysBack,
             'downloadSubtitles' => true,
-            'enableSummary' => false,
             'includeTimestamps' => true,
             'maxShortsPerChannel' => 0,
             'maxStreamsPerChannel' => 0,
@@ -96,7 +106,7 @@ class ProcessUserDigestJob implements ShouldQueue
         ];
         
         if ($sort) {
-            $input['sortBy'] = $sort;
+            $input['channelSortBy'] = $sort;
         }
 
         $actorId = 'https://leandrocb88--youtube-video-transcript-actor.apify.actor'; 
@@ -179,7 +189,7 @@ class ProcessUserDigestJob implements ShouldQueue
             $video->save();
             $videosToSend[] = $video;
 
-            if (empty($video->summary_detailed)) {
+            if (empty($video->summary_detailed) && $includeSummary) {
                 $fullText = collect($video->transcript)->pluck('text')->join(' ');
                 if (!empty($fullText)) {
                      $video->update(['summary_status' => 'processing']);

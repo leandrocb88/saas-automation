@@ -53,10 +53,9 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/auth/google/callback'),
         'gemini_api_key' => env('GEMINI_API_KEY'),
-    ],
-
-    'ai' => [
-        'provider' => env('AI_SERVICE_PROVIDER', 'openai'),
+        'gemini_summary_model' => env('GEMINI_SUMMARY_MODEL', 'gemini-2.0-flash'),
+        'gemini_translate_model' => env('GEMINI_TRANSLATE_MODEL', 'gemini-2.0-flash'),
+        'gemini_version' => env('GEMINI_VERSION', 'v1beta'),
     ],
 
     'audio' => [
@@ -89,10 +88,18 @@ return [
 
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
+        'summary_model' => env('OPENAI_SUMMARY_MODEL', 'gpt-5-nano'),
+        'translate_model' => env('OPENAI_TRANSLATE_MODEL', 'gpt-4o-mini'),
     ],
 
     'youtube' => [
         'key' => env('YOUTUBE_API_KEY'),
+    ],
+
+    'ai' => [
+        'provider' => env('SUMMARY_DRIVER', 'gemini'),
+        'summary_driver' => env('SUMMARY_DRIVER', 'gemini'),
+        'translate_driver' => env('TRANSLATE_DRIVER', 'gemini'),
     ],
 
     'railway' => [

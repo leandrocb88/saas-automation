@@ -16,6 +16,7 @@ class Digest extends Model
         'scheduled_at',
         'day_of_week',
         'custom_prompt',
+        'global_summary_prompt',
         'mode',
         'search_term',
         'is_active',

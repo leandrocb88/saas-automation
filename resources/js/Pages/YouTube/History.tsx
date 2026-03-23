@@ -105,8 +105,10 @@ export default function History({ auth, videos, canViewHistory, retentionDays, q
     const totalPages = Math.ceil(videos.total / (videos.per_page || 20));
 
     const sortOptions = [
-        { value: 'newest', label: 'Newest First' },
-        { value: 'older', label: 'Oldest First' },
+        { value: 'published_newest', label: 'Published: Newest First' },
+        { value: 'published_oldest', label: 'Published: Oldest First' },
+        { value: 'newest', label: 'Added: Newest First' },
+        { value: 'older', label: 'Added: Oldest First' },
         { value: 'alphabetical_asc', label: 'Alphabetical (A-Z)' },
         { value: 'alphabetical_desc', label: 'Alphabetical (Z-A)' },
     ];
@@ -137,7 +139,7 @@ export default function History({ auth, videos, canViewHistory, retentionDays, q
                                 History
                             </h1>
                             <p className="mt-2 text-gray-600 dark:text-gray-400 text-lg">
-                                Your processed videos from the last {retentionDays} days.
+                                Your processed videos from the last {retentionDays === 365 ? 'year' : retentionDays === 30 ? 'month' : `${retentionDays} days`}.
                             </p>
                         </div>
                     </div>

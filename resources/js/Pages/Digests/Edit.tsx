@@ -15,26 +15,42 @@ interface Channel {
     is_paused: boolean;
 }
 
+interface Digest {
+    id: number;
+    name: string;
+    frequency: 'daily' | 'weekly';
+    scheduled_at: string;
+    day_of_week: 'mon'|'tue'|'wed'|'thu'|'fri'|'sat'|'sun'|null;
+    mode: 'channels' | 'search_term' | 'mixed';
+    search_term: string | null;
+    custom_prompt: string | null;
+    global_summary_prompt: string | null;
+    is_active: boolean;
+    channels: Channel[];
+}
+
 interface Props extends PageProps {
+    digest: Digest;
     availableChannels: Channel[];
 }
 
-export default function Create({ auth, availableChannels }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
-        name: '',
-        frequency: 'daily',
-        scheduled_at: '08:00',
-        day_of_week: 'mon',
-        mode: 'channels',
-        search_term: '',
-        channel_ids: [] as number[],
-        custom_prompt: '',
-        global_summary_prompt: '',
+export default function Edit({ auth, digest, availableChannels }: Props) {
+    const { data, setData, put, processing, errors } = useForm({
+        name: digest.name || '',
+        frequency: digest.frequency || 'daily',
+        scheduled_at: digest.scheduled_at ? digest.scheduled_at.substring(0, 5) : '08:00',
+        day_of_week: digest.day_of_week || 'mon',
+        mode: digest.mode || 'channels',
+        search_term: digest.search_term || '',
+        channel_ids: digest.channels.map(c => c.id) || [],
+        custom_prompt: digest.custom_prompt || '',
+        global_summary_prompt: digest.global_summary_prompt || '',
+        is_active: digest.is_active,
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('digests.store'));
+        put(route('digests.update', digest.id));
     };
 
     const toggleChannel = (id: number) => {
@@ -49,7 +65,7 @@ export default function Create({ auth, availableChannels }: Props) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Create Digest" />
+            <Head title={`Edit Digest: ${digest.name}`} />
 
             {/* Hero Header */}
             <div className="relative bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-indigo-900 dark:via-purple-900 dark:to-indigo-900 overflow-hidden">
@@ -69,10 +85,10 @@ export default function Create({ auth, availableChannels }: Props) {
                             </Link>
 
                             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
-                                Create New Digest
+                                Edit Digest
                             </h1>
                             <p className="mt-2 text-indigo-900 dark:text-indigo-100 text-lg max-w-xl">
-                                Set up a new automatic summary of your favorite channels or topics.
+                                Update settings for your automatic summary.
                             </p>
                         </div>
                     </div>
@@ -92,7 +108,6 @@ export default function Create({ auth, availableChannels }: Props) {
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     required
-                                    isFocused
                                     placeholder="e.g., Morning Tech News"
                                 />
                                 <InputError className="mt-2" message={errors.name} />
@@ -105,7 +120,7 @@ export default function Create({ auth, availableChannels }: Props) {
                                         id="frequency"
                                         className="mt-2 block w-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-gray-200/80 dark:border-gray-700/80 rounded-xl focus:ring-indigo-500/30 focus:border-indigo-500 text-gray-900 dark:text-gray-100 shadow-sm transition-all"
                                         value={data.frequency}
-                                        onChange={(e) => setData('frequency', e.target.value)}
+                                        onChange={(e) => setData('frequency', e.target.value as 'daily'|'weekly')}
                                     >
                                         <option value="daily">Daily</option>
                                         <option value="weekly">Weekly</option>
@@ -133,8 +148,8 @@ export default function Create({ auth, availableChannels }: Props) {
                                     <select
                                         id="day_of_week"
                                         className="mt-2 block w-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-gray-200/80 dark:border-gray-700/80 rounded-xl focus:ring-indigo-500/30 focus:border-indigo-500 text-gray-900 dark:text-gray-100 shadow-sm transition-all"
-                                        value={data.day_of_week}
-                                        onChange={(e) => setData('day_of_week', e.target.value)}
+                                        value={data.day_of_week || 'mon'}
+                                        onChange={(e) => setData('day_of_week', e.target.value as any)}
                                     >
                                         <option value="mon">Monday</option>
                                         <option value="tue">Tuesday</option>
@@ -154,7 +169,7 @@ export default function Create({ auth, availableChannels }: Props) {
                                     id="mode"
                                     className="mt-2 block w-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-gray-200/80 dark:border-gray-700/80 rounded-xl focus:ring-indigo-500/30 focus:border-indigo-500 text-gray-900 dark:text-gray-100 shadow-sm transition-all"
                                     value={data.mode}
-                                    onChange={(e) => setData('mode', e.target.value)}
+                                    onChange={(e) => setData('mode', e.target.value as any)}
                                 >
                                     <option value="channels">Specific Channels</option>
                                     <option value="search_term">Search Term (All Channels)</option>
@@ -243,26 +258,42 @@ export default function Create({ auth, availableChannels }: Props) {
                                 <InputError className="mt-2" message={errors.global_summary_prompt} />
                             </div>
 
-                            <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100 dark:border-gray-700/50 mt-8">
-                                <Link
-                                    href={route('digests.index')}
-                                    className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition-all hover:shadow-md active:scale-95"
-                                >
-                                    Cancel
-                                </Link>
-                                <PrimaryButton className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-sm transition-all hover:shadow-md active:scale-95 border border-transparent" disabled={processing}>
-                                    {processing ? (
-                                        <>
-                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            Creating...
-                                        </>
-                                    ) : (
-                                        'Create Digest'
-                                    )}
-                                </PrimaryButton>
+                            <div className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-gray-700/50 mt-8">
+                                <label className="flex items-center space-x-3 cursor-pointer group p-2 pl-0 rounded-lg">
+                                    <div className="relative">
+                                        <div className={`block w-11 h-6 rounded-full transition-colors duration-300 ${data.is_active ? 'bg-indigo-500 shadow-inner' : 'bg-gray-300 dark:bg-gray-600 shadow-inner'}`}></div>
+                                        <div className={`absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full shadow-sm transition-transform duration-300 ${data.is_active ? 'transform translate-x-5' : ''}`}></div>
+                                    </div>
+                                    <input 
+                                        type="checkbox" 
+                                        className="sr-only" 
+                                        checked={data.is_active} 
+                                        onChange={(e) => setData('is_active', e.target.checked)} 
+                                    />
+                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Active Status</span>
+                                </label>
+
+                                <div className="flex items-center gap-3">
+                                    <Link
+                                        href={route('digests.index')}
+                                        className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm transition-all hover:shadow-md active:scale-95"
+                                    >
+                                        Cancel
+                                    </Link>
+                                    <PrimaryButton className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-sm transition-all hover:shadow-md active:scale-95 border border-transparent" disabled={processing}>
+                                        {processing ? (
+                                            <>
+                                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            'Save Changes'
+                                        )}
+                                    </PrimaryButton>
+                                </div>
                             </div>
                         </form>
                     </div>

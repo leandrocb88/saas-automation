@@ -21,9 +21,8 @@ interface PlansProps {
     plans: {
         free: Plan;
         plus: Plan;
-        pro: Plan;
     };
-    current_plan: 'free' | 'plus' | 'pro';
+    current_plan: 'free' | 'plus';
     current_period?: 'monthly' | 'yearly';
     on_grace_period?: boolean;
 }
@@ -33,7 +32,7 @@ export default function Plans({ auth, service, plans, current_plan, current_peri
 
     const isCurrent = (plan: string) => current_plan === plan;
     const isCurrentPeriod = current_period === billing;
-    const isPaid = current_plan === 'plus' || current_plan === 'pro';
+    const isPaid = current_plan === 'plus';
 
     const [confirmingCancellation, setConfirmingCancellation] = useState(false);
 
@@ -87,7 +86,7 @@ export default function Plans({ auth, service, plans, current_plan, current_peri
                                     className={`${billing === 'yearly' ? 'bg-white text-gray-900 shadow-lg' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'} rounded-full py-2 px-6 text-sm font-semibold transition-all duration-200`}
                                 >
                                     Yearly <span className="text-xs text-green-500 ml-1 font-bold">
-                                        -{Math.round((1 - (plans.pro.price_yearly! / (plans.pro.price_monthly! * 12))) * 100)}%
+                                        -{Math.round((1 - (plans.plus.price_yearly! / (plans.plus.price_monthly! * 12))) * 100)}%
                                     </span>
                                 </button>
                             </div>
@@ -104,7 +103,7 @@ export default function Plans({ auth, service, plans, current_plan, current_peri
                         {/* FREE */}
                         <div className="group relative rounded-2xl bg-white dark:bg-gray-800 p-8 ring-1 ring-gray-200/50 dark:ring-gray-700/50 hover:ring-indigo-500/20 hover:shadow-lg transition-all duration-300 xl:p-10">
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Free</h3>
-                            <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                            <p className="mt-3 text-sm text-gray-600 dark:text-gray-400 min-h-[2.5rem]">
                                 Perfect for exploring and occasional use.
                             </p>
                             <p className="mt-6 flex items-baseline gap-x-1">
@@ -142,14 +141,17 @@ export default function Plans({ auth, service, plans, current_plan, current_peri
                             </ul>
                         </div>
 
-                        {/* PLUS */}
-                        <div className={`group relative rounded-2xl bg-white dark:bg-gray-800 p-8 ring-1 hover:shadow-lg transition-all duration-300 xl:p-10 ${isCurrent('plus') ? 'ring-2 ring-indigo-600 shadow-lg shadow-indigo-500/10' : 'ring-gray-200/50 dark:ring-gray-700/50 hover:ring-indigo-500/20'}`}>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Plus</h3>
-                            <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-                                Ideally for individual creators.
+                        {/* PREMIUM (formerly Plus) */}
+                        <div className={`group relative rounded-2xl p-8 xl:p-10 bg-gradient-to-br from-gray-900 to-indigo-950 ring-1 ring-indigo-500/30 shadow-xl shadow-indigo-500/10 hover:shadow-indigo-500/20 transition-all duration-300 ${isCurrent('plus') ? 'ring-2 ring-indigo-500' : ''}`}>
+                            <div className="absolute -top-3.5 right-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-1 text-xs font-bold text-white shadow-lg shadow-indigo-500/25">
+                                Premium
+                            </div>
+                            <h3 className="text-lg font-bold text-white">Premium</h3>
+                            <p className="mt-3 text-sm text-gray-400 min-h-[2.5rem]">
+                                Unlock full potential with monthly credits.
                             </p>
                             <p className="mt-6 flex items-baseline gap-x-1">
-                                <span className="text-5xl font-bold tracking-tight text-gray-900 dark:text-white">
+                                <span className="text-5xl font-bold tracking-tight text-white">
                                     ${billing === 'monthly' ? plans.plus.price_monthly : plans.plus.price_yearly}
                                 </span>
                                 <span className="text-sm font-medium text-gray-500">
@@ -161,19 +163,19 @@ export default function Plans({ auth, service, plans, current_plan, current_peri
                                 on_grace_period ? (
                                     <button
                                         onClick={handleResume}
-                                        className="mt-8 block w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all"
+                                        className="mt-8 block w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all"
                                     >
                                         Resume Subscription
                                     </button>
                                 ) : (
-                                    <button disabled className="mt-8 block w-full rounded-xl bg-green-600 py-3 text-center text-sm font-semibold text-white cursor-not-allowed opacity-80 shadow-sm">
+                                    <button disabled className="mt-8 block w-full rounded-xl bg-green-500 py-3 text-center text-sm font-semibold text-white cursor-not-allowed opacity-80 shadow-sm">
                                         Current Plan
                                     </button>
                                 )
                             ) : isCurrent('plus') ? (
                                 <button
                                     type="button"
-                                    className="mt-8 block w-full rounded-xl bg-indigo-50 dark:bg-indigo-900/20 py-3 text-center text-sm font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-800 hover:ring-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-all"
+                                    className="mt-8 block w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-indigo-600 hover:to-purple-600 transition-all"
                                     onClick={() => window.location.href = route('checkout.subscription', { plan: 'plus', period: billing })}
                                 >
                                     Switch to {billing === 'monthly' ? 'Monthly' : 'Yearly'}
@@ -181,80 +183,75 @@ export default function Plans({ auth, service, plans, current_plan, current_peri
                             ) : (
                                 <button
                                     type="button"
-                                    className="mt-8 block w-full rounded-xl bg-indigo-50 dark:bg-indigo-900/20 py-3 text-center text-sm font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-800 hover:ring-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-all"
+                                    className="mt-8 block w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-indigo-600 hover:to-purple-600 transition-all"
                                     onClick={() => window.location.href = route('checkout.subscription', { plan: 'plus', period: billing })}
                                 >
-                                    Subscribe to Plus
+                                    Subscribe to Premium
                                 </button>
                             )}
 
-                            <ul role="list" className="mt-8 space-y-3 text-sm text-gray-600 dark:text-gray-400">
-                                {plans.plus.features?.map((feature) => (
-                                    <li key={feature} className="flex gap-x-3 items-start">
-                                        <CheckIcon />
-                                        {feature}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* PRO */}
-                        <div className="group relative rounded-2xl p-8 xl:p-10 bg-gradient-to-br from-gray-900 to-indigo-950 ring-1 ring-indigo-500/30 shadow-xl shadow-indigo-500/10 hover:shadow-indigo-500/20 transition-all duration-300">
-                            <div className="absolute -top-3.5 right-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-1 text-xs font-bold text-white shadow-lg shadow-indigo-500/25">
-                                Most Popular
+                                <ul role="list" className="mt-8 space-y-3 text-sm text-gray-300">
+                                    {plans.plus.features?.map((feature) => (
+                                        <li key={feature} className="flex gap-x-3 items-start">
+                                            <CheckIcon className="text-indigo-400" />
+                                            {feature}
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
-                            <h3 className="text-lg font-bold text-white">Pro</h3>
-                            <p className="mt-3 text-sm text-gray-400">
-                                For power users and professionals.
-                            </p>
-                            <p className="mt-6 flex items-baseline gap-x-1">
-                                <span className="text-5xl font-bold tracking-tight text-white">
-                                    ${billing === 'monthly' ? plans.pro.price_monthly : plans.pro.price_yearly}
-                                </span>
-                                <span className="text-sm font-medium text-gray-400">
-                                    /{billing === 'monthly' ? 'mo' : 'yr'}
-                                </span>
-                            </p>
 
-                            {isCurrent('pro') && isCurrentPeriod ? (
-                                on_grace_period ? (
+                            {/* CREDITS TOP-UP */}
+                            <div className={`group relative rounded-2xl bg-white dark:bg-gray-800 p-8 ring-1 transition-all duration-300 xl:p-10 ${current_plan === 'free' ? 'ring-gray-200/50 dark:ring-gray-700/50 opacity-70' : 'ring-gray-200/50 dark:ring-gray-700/50 hover:ring-indigo-500/20 hover:shadow-lg'}`}>
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Need More?</h3>
+                                    {current_plan === 'free' && (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 border border-amber-200 dark:border-amber-700">
+                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>
+                                            Paid plan required
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="mt-3 text-sm text-gray-600 dark:text-gray-400 min-h-[2.5rem]">
+                                    Top up your account with credits that never expire.
+                                </p>
+                                <p className="mt-6 flex items-baseline gap-x-1">
+                                    <span className="text-5xl font-bold tracking-tight text-gray-900 dark:text-white">$5</span>
+                                    <span className="text-sm font-medium text-gray-500">one-time</span>
+                                </p>
+
+                                {current_plan === 'free' ? (
                                     <button
-                                        onClick={handleResume}
-                                        className="mt-8 block w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-indigo-600 hover:to-purple-600 transition-all"
+                                        type="button"
+                                        disabled
+                                        className="mt-8 block w-full rounded-xl py-3 text-center text-sm font-semibold bg-gradient-to-r from-indigo-400 to-purple-500 text-white opacity-60 cursor-not-allowed shadow"
                                     >
-                                        Resume Subscription
+                                        🔒 Upgrade to Unlock
                                     </button>
                                 ) : (
-                                    <button disabled className="mt-8 block w-full rounded-xl bg-green-500 py-3 text-center text-sm font-semibold text-white cursor-not-allowed shadow-sm">
-                                        Current Plan
+                                    <button
+                                        type="button"
+                                        onClick={() => window.location.href = route('checkout.credits')}
+                                        className="mt-8 block w-full rounded-xl py-3 text-center text-sm font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-200 hover:ring-indigo-300 hover:bg-indigo-50 dark:ring-indigo-800 dark:hover:bg-indigo-900/20 transition-all"
+                                    >
+                                        Buy 5,000 Credits
                                     </button>
-                                )
-                            ) : isCurrent('pro') ? (
-                                <button
-                                    type="button"
-                                    className="mt-8 block w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-indigo-600 hover:to-purple-600 transition-all"
-                                    onClick={() => window.location.href = route('checkout.subscription', { plan: 'pro', period: billing })}
-                                >
-                                    Switch to {billing === 'monthly' ? 'Monthly' : 'Yearly'}
-                                </button>
-                            ) : (
-                                <button
-                                    type="button"
-                                    className="mt-8 block w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-indigo-600 hover:to-purple-600 transition-all"
-                                    onClick={() => window.location.href = route('checkout.subscription', { plan: 'pro', period: billing })}
-                                >
-                                    Upgrade to Pro
-                                </button>
-                            )}
-                            <ul role="list" className="mt-8 space-y-3 text-sm text-gray-300">
-                                {plans.pro.features?.map((feature) => (
-                                    <li key={feature} className="flex gap-x-3 items-start">
-                                        <CheckIcon className="text-indigo-400" />
-                                        {feature}
+                                )}
+
+                                <ul role="list" className="mt-8 space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                                    <li className="flex gap-x-3 items-start">
+                                        <CheckIcon />
+                                        Adds 5,000 Credits instantly
                                     </li>
-                                ))}
-                            </ul>
-                        </div>
+                                    <li className="flex gap-x-3 items-start">
+                                        <CheckIcon />
+                                        Credits roll over and never expire
+                                    </li>
+                                    <li className="flex gap-x-3 items-start">
+                                        <CheckIcon />
+                                        Use alongside any plan
+                                    </li>
+                                </ul>
+                            </div>
 
                     </div>
                 </div>

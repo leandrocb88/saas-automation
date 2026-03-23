@@ -31,6 +31,9 @@ interface VideoResult {
     audio_url?: string;
     audio_duration?: number;
     summary_status?: 'pending' | 'processing' | 'completed' | 'failed' | null;
+    transcript_translate_status?: 'pending' | 'processing' | 'completed' | 'failed' | null;
+    summary_translate_status?: 'pending' | 'processing' | 'completed' | 'failed' | null;
+    translations?: Record<string, any>;
 }
 
 interface BatchSummaryProps {
@@ -70,6 +73,43 @@ function groupTranscriptSegments(transcript: TranscriptSegment[]): TranscriptSeg
 }
 
 export default function BatchSummary({ auth, results, isHistoryView = false }: BatchSummaryProps) {
+    const [localResults, setLocalResults] = useState<VideoResult[]>(() => {
+        return results.map(video => {
+            let initialTranscript = video.transcript;
+            let initialSummaryDetailed = video.summary_detailed;
+
+            if (typeof window !== 'undefined') {
+                try {
+                    const savedTranscriptLangs = JSON.parse(localStorage.getItem('transcriptLanguages') || '{}');
+                    const savedSummaryLangs = JSON.parse(localStorage.getItem('summaryLanguages') || '{}');
+                    
+                    const tLang = savedTranscriptLangs[video.id!];
+                    if (tLang && video.translations?.[tLang]) {
+                        const trans = video.translations[tLang];
+                        // Robust transcript extraction from translations
+                        if (Array.isArray(trans.transcript)) {
+                            initialTranscript = trans.transcript;
+                        } else if (trans.transcript && typeof trans.transcript === 'object') {
+                            initialTranscript = trans.transcript.transcript || trans.transcript.translatedTranscript || trans.transcript;
+                        }
+                    }
+                    
+                    const sLang = savedSummaryLangs[video.id!];
+                    if (sLang && video.translations?.[sLang]?.summary_detailed) {
+                        initialSummaryDetailed = video.translations[sLang].summary_detailed;
+                    }
+                } catch (e) {
+                    console.error('Failed to parse language preferences from localStorage', e);
+                }
+            }
+
+            return {
+                ...video,
+                transcript: initialTranscript,
+                summary_detailed: initialSummaryDetailed
+            };
+        });
+    });
     const [expandedIndex, setExpandedIndex] = useState<number | null>(isHistoryView ? 0 : null);
     const [maximizedSections, setMaximizedSections] = useState<Record<number, 'transcript' | 'summary' | null>>({});
 
@@ -91,14 +131,51 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
     const [copiedSegmentKey, setCopiedSegmentKey] = useState<string | null>(null);
     const [processingId, setProcessingId] = useState<number | null>(null);
+    const [isTranslating, setIsTranslating] = useState(false);
+    const [translatingTranscriptId, setTranslatingTranscriptId] = useState<number | null>(null);
     const [generationError, setGenerationError] = useState<{ id: number, message: string } | null>(null);
+    const [transcriptLanguages, setTranscriptLanguages] = useState<Record<number, string>>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const saved = localStorage.getItem('transcriptLanguages');
+                if (saved) return JSON.parse(saved);
+            } catch (e) {
+                console.error('Failed to parse transcript languages from localStorage', e);
+            }
+        }
+        return {};
+    });
+    
+    const [summaryLanguages, setSummaryLanguages] = useState<Record<number, string>>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const saved = localStorage.getItem('summaryLanguages');
+                if (saved) return JSON.parse(saved);
+            } catch (e) {
+                console.error('Failed to parse summary languages from localStorage', e);
+            }
+        }
+        return {};
+    });
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('transcriptLanguages', JSON.stringify(transcriptLanguages));
+        }
+    }, [transcriptLanguages]);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('summaryLanguages', JSON.stringify(summaryLanguages));
+        }
+    }, [summaryLanguages]);
 
     // --- Polling & Download Logic ---
     const [downloading, setDownloading] = useState<Record<string, boolean>>({});
     const pollingRefs = useRef<Record<string, NodeJS.Timeout>>({});
 
     useEffect(() => {
-        // Resume polling for any processing items on mount
+        // Resume polling for any processing items on mount or when props update
         results.forEach(video => {
             if (video.id) {
                 if (video.pdf_status === 'processing') {
@@ -111,31 +188,43 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                 }
                 if (video.summary_status === 'processing') {
                     setDownloading(prev => ({ ...prev, [`${video.id}-summary`]: true }));
-                    startPolling(video.id, 'summary', `${video.id}-summary`);
+                    startPolling(video.id!, 'summary', `${video.id}-summary`);
+                }
+                if (video.transcript_translate_status === 'processing') {
+                    startPolling(video.id, 'transcript_translate', `${video.id}-transcript_translate`);
+                }
+                if (video.summary_translate_status === 'processing') {
+                    startPolling(video.id, 'summary_translate', `${video.id}-summary_translate`);
                 }
             }
         });
+    }, [results]);
 
+    useEffect(() => {
         return () => {
             Object.values(pollingRefs.current).forEach(clearInterval);
         };
     }, []);
 
-    const startPolling = (videoId: number, type: 'pdf' | 'audio' | 'summary', key: string) => {
+    const startPolling = (videoId: number, type: 'pdf' | 'audio' | 'summary' | 'transcript_translate' | 'summary_translate', key: string) => {
         if (pollingRefs.current[key]) return;
         pollingRefs.current[key] = setInterval(() => {
             checkStatus(videoId, type, key);
         }, 3000);
     };
 
-    const checkStatus = async (videoId: number, type: 'pdf' | 'audio' | 'summary', key: string) => {
+    const checkStatus = async (videoId: number, type: 'pdf' | 'audio' | 'summary' | 'transcript_translate' | 'summary_translate', key: string) => {
         try {
             const response = await axios.get(route('video.status', videoId));
             let status;
-            let url;
+            let url: string | undefined;
 
             if (type === 'summary') {
                 status = response.data.summary_status;
+            } else if (type === 'transcript_translate') {
+                status = response.data.transcript_translate_status;
+            } else if (type === 'summary_translate') {
+                status = response.data.summary_translate_status;
             } else {
                 status = type === 'pdf' ? response.data.pdf_status : response.data.audio_status;
                 url = type === 'pdf' ? response.data.pdf_url : response.data.audio_url;
@@ -152,8 +241,29 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                 if (type !== 'summary' && url) {
                     window.location.href = url;
                 }
-                // Reload data to get the new duration or summary
-                router.reload({ only: ['results'] });
+                // Reload data to get the new duration or summary without re-posting the form
+                if (type === 'summary' || type === 'summary_translate' || type === 'transcript_translate') {
+                    // Fetch just this video's latest data to update local UI text
+                    axios.get(route('youtube.show', videoId)).then(res => {
+                        if (res.data.video) {
+                            setLocalResults(prev => prev.map(v => 
+                                v.id === videoId ? { 
+                                    ...v, 
+                                    summary: res.data.video.summary, 
+                                    summary_detailed: res.data.video.summary_detailed, 
+                                    summary_status: type === 'summary' ? 'completed' : v.summary_status,
+                                    transcript: type === 'transcript_translate' ? res.data.video.transcript : v.transcript,
+                                    summary_translate_status: type === 'summary_translate' ? 'completed' : v.summary_translate_status,
+                                    transcript_translate_status: type === 'transcript_translate' ? 'completed' : v.transcript_translate_status
+                                } : v
+                            ));
+                        }
+                    });
+                } else {
+                    setLocalResults(prev => prev.map(v => 
+                        v.id === videoId ? { ...v, [`${type}_status`]: 'completed', [`${type}_url`]: url } : v
+                    ));
+                }
             } else if (status === 'failed') {
                 if (pollingRefs.current[key]) {
                     clearInterval(pollingRefs.current[key]);
@@ -200,6 +310,72 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
         }
     };
 
+
+    const handleTranslate = async (videoId: number, language: string) => {
+        console.log(`Starting translation for video ${videoId} to ${language}`);
+        setGenerationError(null);
+        setTranscriptLanguages(prev => ({ ...prev, [videoId]: language }));
+
+        // Optimistically show processing status
+        setLocalResults(prev => prev.map(v => v.id === videoId ? { ...v, transcript_translate_status: 'processing' } : v));
+
+        try {
+            const response = await axios.post(route('youtube.translate', videoId), { language });
+            
+            if (response.data.success) {
+                if (response.data.status === 'processing') {
+                    const key = `${videoId}-transcript_translate`;
+                    startPolling(videoId, 'transcript_translate', key);
+                } else if (response.data.status === 'completed') {
+                    setLocalResults(prev => prev.map(v => 
+                        v.id === videoId ? { 
+                            ...v, 
+                            transcript: response.data.transcript,
+                            transcript_translate_status: 'completed'
+                        } : v
+                    ));
+                }
+            }
+        } catch (error: any) {
+            console.error("Translation failed", error);
+            const msg = error.response?.data?.error || "Translation failed. Please try again.";
+            setGenerationError({ id: videoId, message: msg });
+            setLocalResults(prev => prev.map(v => v.id === videoId ? { ...v, transcript_translate_status: 'failed' } : v));
+        }
+    };
+
+    const handleTranslateSummary = async (videoId: number, language: string) => {
+        console.log(`Starting summary translation for video ${videoId} to ${language}`);
+        setGenerationError(null);
+        setSummaryLanguages(prev => ({ ...prev, [videoId]: language }));
+
+        // Optimistically show processing status
+        setLocalResults(prev => prev.map(v => v.id === videoId ? { ...v, summary_translate_status: 'processing' } : v));
+
+        try {
+            const response = await axios.post(route('youtube.translate_summary', videoId), { language });
+            
+            if (response.data.success) {
+                if (response.data.status === 'processing') {
+                    const key = `${videoId}-summary_translate`;
+                    startPolling(videoId, 'summary_translate', key);
+                } else if (response.data.status === 'completed') {
+                    setLocalResults(prev => prev.map(v => 
+                        v.id === videoId ? { 
+                            ...v, 
+                            summary_detailed: response.data.summary_detailed,
+                            summary_translate_status: 'completed'
+                        } : v
+                    ));
+                }
+            }
+        } catch (error: any) {
+            console.error("Summary translation failed", error);
+            const msg = error.response?.data?.error || "Translation failed. Please try again.";
+            setGenerationError({ id: videoId, message: msg });
+            setLocalResults(prev => prev.map(v => v.id === videoId ? { ...v, summary_translate_status: 'failed' } : v));
+        }
+    };
 
     const copyToClipboard = async (text: string, index: number) => {
         try {
@@ -261,10 +437,11 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
     };
 
     const getExportText = (video: VideoResult, includeTimestamps: boolean) => {
+        const transcriptArray = Array.isArray(video.transcript) ? video.transcript : [];
         if (!includeTimestamps) {
-            return video.transcript.map(t => t.text).join(' ');
+            return transcriptArray.map(t => t.text || '').join(' ');
         }
-        const segments = groupTranscriptSegments(video.transcript);
+        const segments = groupTranscriptSegments(transcriptArray);
         return segments.map(s => {
             const time = new Date(s.start * 1000).toISOString().substr(11, 8);
             return `[${time}] ${s.text} `;
@@ -321,7 +498,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                     {isHistoryView ? 'Video Detail' : 'Batch Complete'}
                                 </div>
                                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                                    {isHistoryView ? results[0]?.title : `Processed ${results.length} Videos`}
+                                    {isHistoryView ? localResults[0]?.title : `Processed ${localResults.length} Videos`}
                                 </h1>
                             </div>
                             {isHistoryView ? (
@@ -348,16 +525,30 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
             </div>
 
             {/* Content */}
-            <div className="py-10 bg-gray-50 dark:bg-gray-900">
+            <div className="py-10">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="space-y-6">
-                        {results.filter(video => {
+                        {localResults.filter(video => {
                             const isGenericTitle = !video.title || ['N/A', 'Unknown Video', 'Unknown Title', 'Unknown'].includes(video.title);
-                            const hasNoTranscript = !video.transcript || video.transcript.length === 0;
+                            const hasNoTranscript = !video.transcript || (Array.isArray(video.transcript) && video.transcript.length === 0);
                             return !(isGenericTitle && hasNoTranscript);
                         }).map((video, index) => {
-                            const fullText = video.transcript.map(t => t.text).join(' ');
-                            const displaySegments = groupTranscriptSegments(video.transcript);
+                            // Helper to extract transcript array from potentially nested structures
+                            const getTranscriptArray = (raw: any): any[] => {
+                                if (Array.isArray(raw)) return raw;
+                                if (raw && typeof raw === 'object') {
+                                    if (Array.isArray(raw.transcript)) return raw.transcript;
+                                    if (Array.isArray(raw.translatedTranscript)) return raw.translatedTranscript;
+                                    // Handle cases where the object itself is what we want but might be mislabeled
+                                    const possibleArray = Object.values(raw).find(val => Array.isArray(val));
+                                    if (Array.isArray(possibleArray)) return possibleArray;
+                                }
+                                return [];
+                            };
+
+                            const transcriptArray = getTranscriptArray(video.transcript);
+                            const fullText = transcriptArray.map(t => t.text || '').join(' ');
+                            const displaySegments = groupTranscriptSegments(transcriptArray);
                             const isExpanded = expandedIndex === index;
 
                             // Statuses for this video
@@ -502,7 +693,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                 {/* Transcript Column */}
                                                 <div className={`${maximizedSections[index] === 'summary' ? 'hidden' : ''} ${maximizedSections[index] === 'transcript' ? 'w-full' : ''} `}>
                                                     <div className="rounded-2xl bg-white dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-700/50 shadow-sm overflow-hidden flex flex-col max-h-[600px]">
-                                                        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center shrink-0">
+                                                        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center shrink-0">
                                                             <div className="flex items-center gap-2">
                                                                 <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -525,6 +716,35 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                 </button>
                                                             </div>
                                                             <div className="flex items-center gap-2">
+                                                                {/* Translate Transcript Dropdown */}
+                                                                <div className="flex items-center gap-1 mr-2 px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
+                                                                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">Translate:</span>
+                                                                    <select 
+                                                                        className="bg-transparent border-0 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 focus:ring-0 p-0 cursor-pointer"
+                                                                        onChange={(e) => handleTranslate(video.id!, e.target.value)}
+                                                                        disabled={video.transcript_translate_status === 'processing'}
+                                                                        value={transcriptLanguages[video.id!] || ""}
+                                                                    >
+                                                                        <option value="" disabled>Choose...</option>
+                                                                        <option value="en">English</option>
+                                                                        <option value="es">Spanish</option>
+                                                                        <option value="fr">French</option>
+                                                                        <option value="de">German</option>
+                                                                        <option value="it">Italian</option>
+                                                                        <option value="pt">Portuguese</option>
+                                                                        <option value="hi">Hindi</option>
+                                                                        <option value="ja">Japanese</option>
+                                                                        <option value="ko">Korean</option>
+                                                                        <option value="zh">Chinese</option>
+                                                                    </select>
+                                                                    {video.transcript_translate_status === 'processing' && (
+                                                                        <svg className="animate-spin h-3 w-3 text-indigo-500 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                        </svg>
+                                                                    )}
+                                                                </div>
+
                                                                 <button
                                                                     onClick={() => copyToClipboard(getExportText(video, showTimestamps), index)}
                                                                     className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 bg-white dark:bg-gray-800 rounded-lg px-2.5 py-1.5 ring-1 ring-gray-200 dark:ring-gray-600 hover:ring-indigo-300 dark:hover:ring-indigo-600 transition-all shadow-sm"
@@ -561,16 +781,16 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                         <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                                                                         <button
                                                                             onClick={() => handleDownloadClick(video.id!, 'pdf')}
-                                                                            disabled={isPdfDownloading}
+                                                                            disabled={downloading[`${video.id}-pdf`]}
                                                                             className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between
-                                                                                ${isPdfDownloading
+                                                                                ${downloading[`${video.id}-pdf`]
                                                                                     ? 'text-gray-400 cursor-not-allowed'
                                                                                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                                                                                 }`}
                                                                         >
                                                                             <div className="flex items-center gap-2">
                                                                                 <span>PDF (Full Report)</span>
-                                                                                {isPdfDownloading && (
+                                                                                {downloading[`${video.id}-pdf`] && (
                                                                                     <svg className="animate-spin h-3 w-3 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -688,6 +908,34 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                         </button>
                                                                     </div>
                                                                     <div className="flex items-center gap-2">
+                                                                        <div className="flex items-center gap-1 mr-2 px-2 py-1 rounded-lg bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700/50">
+                                                                            <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500 uppercase">Translate:</span>
+                                                                            <select 
+                                                                                className="bg-transparent border-0 text-[11px] font-bold text-indigo-600 dark:text-indigo-300 focus:ring-0 p-0 cursor-pointer"
+                                                                                onChange={(e) => handleTranslateSummary(video.id!, e.target.value)}
+                                                                                disabled={video.summary_translate_status === 'processing'}
+                                                                                value={summaryLanguages[video.id!] || ""}
+                                                                            >
+                                                                                <option value="" disabled>Choose...</option>
+                                                                                <option value="en">English</option>
+                                                                                <option value="es">Spanish</option>
+                                                                                <option value="fr">French</option>
+                                                                                <option value="de">German</option>
+                                                                                <option value="it">Italian</option>
+                                                                                <option value="pt">Portuguese</option>
+                                                                                <option value="hi">Hindi</option>
+                                                                                <option value="ja">Japanese</option>
+                                                                                <option value="ko">Korean</option>
+                                                                                <option value="zh">Chinese</option>
+                                                                            </select>
+                                                                            {video.summary_translate_status === 'processing' && (
+                                                                                <svg className="animate-spin h-3 w-3 text-indigo-500 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                                </svg>
+                                                                            )}
+                                                                        </div>
+
                                                                         <button
                                                                             onClick={() => {
                                                                                 const content = video.summary_detailed;
@@ -835,13 +1083,13 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                 // If summary is null but NOT failed (e.g. pending/processing/null), what to show?
                                                                 // User said "only show THIS when there was an error".
                                                                 // If it's processing, maybe show a loader?
-                                                                video.summary_status === 'processing' || processingId === video.id ? (
+                                                                video.summary_status === 'processing' || processingId === video.id || video.summary_translate_status === 'processing' ? (
                                                                     <div className="flex flex-col items-center justify-center h-full p-8 text-center min-h-[300px]">
                                                                         <svg className="animate-spin h-8 w-8 text-indigo-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                                         </svg>
-                                                                        <p className="text-sm text-gray-500 animate-pulse">Generating Summary...</p>
+                                                                        <p className="text-sm text-gray-500 animate-pulse">{video.summary_translate_status === 'processing' ? 'Translating Summary...' : 'Generating Summary...'}</p>
                                                                     </div>
                                                                 ) : (
                                                                     // Default generic placeholder if user didn't request summary? 

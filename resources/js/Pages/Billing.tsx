@@ -7,6 +7,7 @@ interface UsageStats {
     period: string;
     is_pro: boolean;
     plan_name: string;
+    purchased_credits: number;
     next_reset_at?: string;
 }
 
@@ -97,16 +98,29 @@ export default function Billing({ auth, service, usageStats, subscription_ends_a
                                 <p className="text-xs text-gray-400 italic">Resets {usageStats.period}</p>
                             </div>
 
-                            {!usageStats.is_pro && (
-                                <div className="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 p-4 rounded-xl ring-1 ring-indigo-200/50 dark:ring-indigo-800/50">
-                                    <p className="text-sm text-indigo-700 dark:text-indigo-300">
-                                        You are on the Free tier. Upgrade to <strong>Pro</strong> for higher limits.
+                            {/* Additional Purchased Credits */}
+                            <div className="mt-6 flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl ring-1 ring-indigo-200/50 dark:ring-indigo-800/50">
+                                <div>
+                                    <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-100">Purchased Credits</p>
+                                    <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
+                                        Never expire. Used when plan limits are reached.
                                     </p>
-                                    <Link href="/plans" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 transition-colors">
-                                        Upgrade to Pro &rarr;
-                                    </Link>
                                 </div>
-                            )}
+                                <div className="text-right">
+                                    <span className="text-xl font-bold text-indigo-700 dark:text-indigo-300">
+                                        {usageStats.purchased_credits}
+                                    </span>
+                                    {usageStats.is_pro ? (
+                                        <Link href={route('checkout.credits')} className="block mt-1 text-xs font-semibold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+                                            Buy More &rarr;
+                                        </Link>
+                                    ) : (
+                                        <Link href={route('plans', { service })} className="block mt-1 text-xs font-semibold text-amber-500 hover:text-amber-600 dark:text-amber-400 transition-colors">
+                                            Upgrade to unlock &rarr;
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
 

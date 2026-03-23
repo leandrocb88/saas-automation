@@ -46,6 +46,10 @@ class ProcessCustomDigestJob implements ShouldQueue
         $sourceUrls = [];
         if ($digest->mode === 'channels' || $digest->mode === 'mixed') {
             foreach ($digest->channels as $channel) {
+                if ($channel->is_paused) {
+                    Log::info("Skipping paused channel '{$channel->name}' for digest '{$digest->name}'.");
+                    continue;
+                }
                 $sourceUrls[] = $channel->url;
             }
         }
@@ -56,22 +60,33 @@ class ProcessCustomDigestJob implements ShouldQueue
         }
 
         $remaining = $quotaManager->getRemainingQuota($user, 'youtube');
-        $maxVideosPerSource = min(50, (int)floor($remaining / count($sourceUrls)));
+        
+        $includeSummary = filter_var($digest->settings['include_summary'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $transcriptCost = $quotaManager->getCost($user, 'youtube', 'transcript');
+        $summaryCost = $includeSummary ? $quotaManager->getCost($user, 'youtube', 'ai_summary') : 0;
+        $costPerVideo = $transcriptCost + $summaryCost;
+
+        if ($costPerVideo > 0) {
+            $maxVideosPerSource = min(50, (int)floor($remaining / ($costPerVideo * count($sourceUrls))));
+        } else {
+            $maxVideosPerSource = 50;
+        }
 
         if ($maxVideosPerSource <= 0) {
             Log::warn("User {$user->email} has insufficient credits for custom digest. Skipping.");
             return;
         }
 
-        $estimatedCost = $maxVideosPerSource * count($sourceUrls);
-        $quotaManager->incrementUsage($user, 'youtube', $estimatedCost, 'custom_digest_freeze');
+        $estimatedCost = $maxVideosPerSource * count($sourceUrls) * $costPerVideo;
+        if ($estimatedCost > 0) {
+            $quotaManager->incrementUsage($user, 'youtube', $estimatedCost, 'custom_digest_freeze');
+        }
 
         $input = [
             'channelUrls' => $sourceUrls,
-            'dateFilterMode' => 'relative',
-            'daysBack' => 1,
+            'channelDateFilterMode' => 'relative',
+            'channelDaysBack' => 1,
             'downloadSubtitles' => true,
-            'enableSummary' => false,
             'includeTimestamps' => true,
             'maxShortsPerChannel' => 0,
             'maxStreamsPerChannel' => 0,
@@ -149,7 +164,7 @@ class ProcessCustomDigestJob implements ShouldQueue
             $video->save();
             $videosToSend[] = $video;
             
-            $shouldSummarize = !empty($digest->custom_prompt) || empty($video->summary_detailed);
+            $shouldSummarize = $includeSummary && (!empty($digest->custom_prompt) || empty($video->summary_detailed));
             
             if ($shouldSummarize) {
                  $fullText = collect($video->transcript)->pluck('text')->join(' ');

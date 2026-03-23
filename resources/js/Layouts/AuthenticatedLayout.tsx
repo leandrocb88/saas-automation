@@ -5,7 +5,7 @@ import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import ThemeToggle from '@/Components/ThemeToggle';
 import { Link, usePage } from '@inertiajs/react';
-import { PropsWithChildren, ReactNode, useState } from 'react';
+import { PropsWithChildren, ReactNode, useState, useEffect } from 'react';
 
 export default function Authenticated({
     header,
@@ -111,12 +111,7 @@ export default function Authenticated({
                                 >
                                     My Digests
                                 </NavLink>
-                                <NavLink
-                                    href={route('youtube.digest')}
-                                    active={route().current('youtube.digest')}
-                                >
-                                    Digest
-                                </NavLink>
+
                                 <NavLink
                                     href={route('plans')}
                                     active={route().current('plans')}
@@ -311,12 +306,7 @@ export default function Authenticated({
                         >
                             My Digests
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            href={route('youtube.digest')}
-                            active={route().current('youtube.digest')}
-                        >
-                            Digest
-                        </ResponsiveNavLink>
+
                         <ResponsiveNavLink
                             href={route('plans')}
                             active={route().current('plans')}
@@ -399,8 +389,59 @@ export default function Authenticated({
                     </div>
                 </header>
             )}
-            <main>{children}</main>
+            <main>
+                <FlashMessage />
+                {children}
+            </main>
             <Footer />
+        </div>
+    );
+}
+
+function FlashMessage() {
+    const { flash } = usePage().props as any;
+    const [visible, setVisible] = useState(false);
+    const [message, setMessage] = useState('');
+
+    // When flash success changes to a new truthy value, show it
+    useEffect(() => {
+        if (flash?.success) {
+            setMessage(flash.success);
+            setVisible(true);
+            
+            // Auto-dismiss after 5 seconds
+            const timer = setTimeout(() => {
+                setVisible(false);
+            }, 5000);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [flash?.success]);
+
+    if (!visible || !message) return null;
+
+    return (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+            <div className="bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/60 p-4 rounded-xl shadow-lg backdrop-blur-sm flex items-start gap-4 max-w-sm sm:max-w-md">
+                <div className="flex-shrink-0 mt-0.5">
+                    <svg className="h-5 w-5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                    </svg>
+                </div>
+                <div className="flex-1">
+                    <p className="text-sm text-emerald-800 dark:text-emerald-200 font-semibold tracking-wide uppercase">
+                        {message}
+                    </p>
+                </div>
+                <button
+                    onClick={() => setVisible(false)}
+                    className="flex-shrink-0 text-emerald-600/70 hover:text-emerald-600 dark:text-emerald-400/70 dark:hover:text-emerald-400 transition-colors"
+                >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
         </div>
     );
 }

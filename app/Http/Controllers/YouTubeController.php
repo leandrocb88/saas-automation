@@ -8,7 +8,6 @@ use App\Services\GeminiService;
 use App\Services\QuotaManager;
 use App\Models\Video;
 use App\Models\Channel;
-use App\Models\DigestSchedule;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
@@ -64,7 +63,6 @@ class YouTubeController extends Controller
         
         return Inertia::render('YouTube/Subscriptions', [
             'channels' => $user->channels()->get(),
-            'schedule' => $user->digestSchedule()->first(),
         ]);
     }
 
@@ -103,31 +101,12 @@ class YouTubeController extends Controller
     public function destroySubscription(Request $request, Channel $channel)
     {
         if ($request->user()->id !== $channel->user_id) abort(403);
+        // Detach from all digests before deleting
+        \DB::table('digest_channels')->where('channel_id', $channel->id)->delete();
         $channel->delete();
         return back()->with('success', 'Unsubscribed.');
     }
 
-    public function updateSchedule(Request $request)
-    {
-        $request->validate([
-            'preferred_time' => 'required',
-            'timezone' => 'required|string',
-            'is_active' => 'boolean',
-        ]);
-
-        $user = $request->user();
-        
-        $user->digestSchedule()->updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'preferred_time' => $request->preferred_time,
-                'timezone' => $request->timezone,
-                'is_active' => $request->is_active,
-            ]
-        );
-
-        return back()->with('success', 'Schedule updated.');
-    }
 
     public function toggleSubscriptionStatus(Request $request, Channel $channel)
     {
@@ -140,229 +119,7 @@ class YouTubeController extends Controller
         return back()->with('success', $channel->is_paused ? 'Channel paused.' : 'Channel resumed.');
     }
 
-    public function digest(Request $request)
-    {
-        $user = $request->user();
-        
-        $digests = Video::with('channel')
-            ->where('user_id', $user->id)
-            ->where('source', 'digest')
-            ->whereNotNull('digest_date')
-            ->orderBy('digest_date', 'desc')
-            ->get()
-            ->groupBy(function($val) {
-                // Group by Date first
-                return $val->digest_date->format('Y-m-d');
-            });
 
-        // Fetch all runs for this user to map them
-        $runs = \App\Models\DigestRun::where('user_id', $user->id)->get()->keyBy('batch_id');
-
-        $formattedDigests = [];
-        foreach ($digests as $dateStr => $videosByDate) {
-             
-             // Group by Batch (Time) within the Date
-             $batches = $videosByDate->groupBy(function($v) {
-                 return $v->digest_date->format('g:i A');
-             });
-
-             $formattedBatches = [];
-             foreach ($batches as $timeStr => $videosByBatch) {
-                 
-                 // Group by Channel within the Batch
-                 $byChannel = $videosByBatch->groupBy('channel_id');
-                 
-                 $formattedChannels = [];
-                 foreach ($byChannel as $channelId => $channelVideos) {
-                     $channelName = $channelVideos->first()->channel ? $channelVideos->first()->channel->name : 'Unknown Channel';
-                     $channelUrl = $channelVideos->first()->channel ? $channelVideos->first()->channel->url : null;
-                     $channelThumbnail = $channelVideos->first()->channel ? $channelVideos->first()->channel->thumbnail_url : null;
-                     
-                     $formattedChannels[] = [
-                         'id' => $channelId,
-                         'name' => $channelName,
-                         'url' => $channelUrl,
-                         'thumbnail' => $channelThumbnail,
-                         'videos' => $channelVideos->map(function($v) {
-                             return $this->formatVideoForView($v);
-                         })->values(),
-                     ];
-                 }
-
-                 // Sort channels by name
-                 usort($formattedChannels, function($a, $b) {
-                     return strcmp($a['name'], $b['name']);
-                 });
-
-                 // Calculate Batch Metrics
-                 $totalDurationSeconds = $videosByBatch->sum('duration') ?? 0;
-                 $totalWords = $videosByBatch->sum(function($video) {
-                     return str_word_count(strip_tags($video->summary_detailed ?? ''));
-                 });
-                 $readTimeSeconds = ceil(($totalWords / 200) * 60);
-                 $timeSavedSeconds = max(0, $totalDurationSeconds - $readTimeSeconds);
-
-                 // Link to DigestRun
-                 $firstVideo = $videosByBatch->first();
-                 $shareToken = $firstVideo->share_token ?? null;
-                 $run = $shareToken ? ($runs[$shareToken] ?? null) : null;
-
-                 $downloads = null;
-                 if ($run) {
-                     $downloads = [
-                         'id' => $run->id,
-                         'pdf_status' => $run->pdf_status,
-                         'audio_status' => $run->audio_status,
-                         'audio_duration' => $run->audio_duration,
-                         'pdf' => route('digest_runs.pdf', $run->id),
-                         'audio' => route('digest_runs.audio', $run->id),
-                     ];
-                 }
-
-                 $formattedBatches[] = [
-                     'time' => $timeStr,
-                     'channels' => $formattedChannels,
-                     'summaryMetrics' => [
-                        'total_videos' => $videosByBatch->count(),
-                        'total_duration' => $this->formatDuration($totalDurationSeconds) ?? '0s',
-                        'read_time' => $this->formatDuration($readTimeSeconds) ?? '0s',
-                        'time_saved' => $this->formatDuration($timeSavedSeconds) ?? '0s',
-                     ],
-                     'downloads' => $downloads,
-                     'share_token' => $shareToken,
-                 ];
-             }
-             
-             // Sort batches desc (latest first)
-             // ... existing comments ...
-
-             $formattedDigests[] = [
-                 'date' => Carbon::parse($dateStr)->format('F j, Y'),
-                 'batches' => $formattedBatches,
-             ];
-        }
-
-        return Inertia::render('YouTube/Digest', [
-            'digests' => $formattedDigests,
-        ]);
-    }
-
-    public function showDigestRun(Request $request, string $token)
-    {
-        $user = $request->user();
-        
-        // Find videos with this share token that belong to the user
-        $videos = Video::with('channel')
-            ->where('user_id', $user->id)
-            ->where('share_token', $token)
-            ->orderBy('digest_date', 'desc')
-            ->get();
-
-        if ($videos->isEmpty()) {
-            abort(404, 'Digest run not found');
-        }
-
-        // Get date and time from first video
-        $firstVideo = $videos->first();
-        $digestDate = $firstVideo->digest_date->format('F j, Y');
-        $digestTime = $firstVideo->digest_date->format('g:i A');
-
-        // Group by channel
-        $byChannel = $videos->groupBy('channel_id');
-        
-        $formattedChannels = [];
-        foreach ($byChannel as $channelId => $channelVideos) {
-            $channelName = $channelVideos->first()->channel ? $channelVideos->first()->channel->name : 'Unknown Channel';
-            $channelUrl = $channelVideos->first()->channel ? $channelVideos->first()->channel->url : null;
-            $channelThumbnail = $channelVideos->first()->channel ? $channelVideos->first()->channel->thumbnail_url : null;
-            
-            $formattedChannels[] = [
-                'id' => $channelId,
-                'name' => $channelName,
-                'url' => $channelUrl,
-                'thumbnail' => $channelThumbnail,
-                'videos' => $channelVideos->map(function($v) {
-                    return $this->formatVideoForView($v);
-                })->values(),
-            ];
-        }
-
-        usort($formattedChannels, function($a, $b) {
-            return strcmp($a['name'], $b['name']);
-        });
-
-        // Calculate Summary Metrics
-        $totalVideos = $videos->count();
-        $totalDurationSeconds = $videos->sum('duration') ?? 0;
-        
-        $totalWords = $videos->sum(function($video) {
-            return str_word_count(strip_tags($video->summary_detailed ?? ''));
-        });
-        
-        $readTimeSeconds = ceil(($totalWords / 200) * 60);
-        $timeSavedSeconds = max(0, $totalDurationSeconds - $readTimeSeconds);
-
-        $summaryMetrics = [
-            'total_videos' => $totalVideos,
-            'total_duration' => $this->formatDuration($totalDurationSeconds) ?? '0s',
-            'read_time' => $this->formatDuration($readTimeSeconds) ?? '0s',
-            'time_saved' => $this->formatDuration($timeSavedSeconds) ?? '0s',
-        ];
-
-        // Find the digest run for downloads
-        $run = \App\Models\DigestRun::where('batch_id', $token)->first();
-        $downloads = null;
-        if ($run) {
-             $downloads = [
-                 'id' => $run->id,
-                 'pdf_status' => $run->pdf_status,
-                 'audio_status' => $run->audio_status,
-                 'audio_duration' => $run->audio_duration,
-                 'pdf' => route('digest_runs.pdf', $run->id),
-                 'audio' => route('digest_runs.audio', $run->id),
-             ];
-        }
-
-        return Inertia::render('YouTube/DigestRun', [
-            'digestDate' => $digestDate,
-            'digestTime' => $digestTime,
-            'channels' => $formattedChannels,
-            'shareToken' => $token,
-            'summaryMetrics' => $summaryMetrics,
-            'downloads' => $downloads,
-        ]);
-    }
-
-    public function forceDigest(Request $request)
-    {
-        $user = $request->user();
-        if (!$user->subscribed('youtube')) {
-             return back()->withErrors(['limit' => 'Daily Digest is only available for paid members.']);
-        }
-
-        $validated = $request->validate([
-            'limit' => 'nullable|integer|min:1|max:100',
-            'days_back' => 'nullable|integer|min:1|max:30',
-            'sort' => 'nullable|string|in:newest,oldest,relevance',
-        ]);
-
-        try {
-            $params = [
-                '--force' => true,
-                '--user' => $user->id
-            ];
-
-            if (!empty($validated['limit'])) $params['--limit'] = $validated['limit'];
-            if (!empty($validated['days_back'])) $params['--days-back'] = $validated['days_back'];
-            if (!empty($validated['sort'])) $params['--sort'] = $validated['sort'];
-
-            \Illuminate\Support\Facades\Artisan::call('app:process-daily-digests', $params);
-            
-            return back()->with('success', 'Digest processing started. check your email shortly.');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to start digest process: ' . $e->getMessage()]);
-        }
-    }
 
     public function processChannel(Request $request)
     {
@@ -444,18 +201,24 @@ class YouTubeController extends Controller
 
         // Calculate estimated cost
         $maxVideosPerChannel = $request->max_videos;
-        $estimatedCost = $maxVideosPerChannel * count($channelUrls);
+        $transcriptCost = $quotaManager->getCost($user, 'youtube', 'transcript');
+        $summaryCost = $request->boolean('include_summary') ? $quotaManager->getCost($user, 'youtube', 'ai_summary') : 0;
+        $costPerVideo = $transcriptCost + $summaryCost;
+        
+        $estimatedCost = $maxVideosPerChannel * count($channelUrls) * $costPerVideo;
 
         // 1. Check & Freeze Quota
         $remaining = $quotaManager->getRemainingQuota($user, 'youtube');
         if($remaining < $estimatedCost) {
-            // Limit to available credits
-            $maxVideosPerChannel = (int)floor($remaining / count($channelUrls));
-            $estimatedCost = $maxVideosPerChannel * count($channelUrls);
+            // How many videos can we afford if each costs $costPerVideo?
+            $maxVideosTotal = (int)floor($remaining / $costPerVideo);
+            $maxVideosPerChannel = (int)floor($maxVideosTotal / count($channelUrls));
             
-            if ($estimatedCost === 0) {
-                return back()->withErrors(['limit' => "Not enough credits. Need at least " . count($channelUrls) . " credits."]);
+            if ($maxVideosPerChannel < 1) {
+                return back()->withErrors(['limit' => "Not enough credits. Each video + summary requires {$costPerVideo} credits."]);
             }
+            
+            $estimatedCost = $maxVideosPerChannel * count($channelUrls) * $costPerVideo;
         }
         
         // Freeze estimated credits
@@ -471,14 +234,17 @@ class YouTubeController extends Controller
             'maxShortsPerChannel' => 0,
             'maxStreamsPerChannel' => 0,
             'downloadSubtitles' => true,
-            'enableSummary' => $request->boolean('include_summary'),
             'includeTimestamps' => $request->boolean('include_timestamps'),
             'preferAutoSubtitles' => false,
         ];
+        
+        $sortOrder = $request->sort_order;
+        if ($sortOrder === 'date') $sortOrder = 'latest';
+        $options['channelSortBy'] = $sortOrder;
 
         if ($daysBack !== null) {
-            $options['dateFilterMode'] = 'relative';
-            $options['daysBack'] = $daysBack;
+            $options['channelDateFilterMode'] = 'relative';
+            $options['channelDaysBack'] = $daysBack;
         }
 
         $items = $this->railway->analyzeChannels(array_values($channelUrls), $options);
@@ -552,9 +318,11 @@ class YouTubeController extends Controller
                     $video->save();
                     $newResults[] = $video;
 
-                    // Dispatch Summary Generation Job
-                    $video->update(['summary_status' => 'processing']);
-                    \App\Jobs\GenerateVideoSummary::dispatch($video, 'detailed');
+                    // Dispatch Summary Generation Job only if requested
+                    if ($request->boolean('include_summary')) {
+                        $video->update(['summary_status' => 'processing']);
+                        \App\Jobs\GenerateVideoSummary::dispatch($video, 'detailed');
+                    }
 
                     \Log::info("Channel Analysis: Saved video and dispatched summary job", ['video_id' => $videoId, 'title' => $result['title']]);
                 } else {
@@ -585,7 +353,7 @@ class YouTubeController extends Controller
             $quotaManager->decrementUsage($user, 'youtube', $diff);
         }
 
-        return to_route('youtube.history')->with('success', "{$actualCount} videos analyzed successfully!");
+        return to_route('youtube.history')->with('success', "{$actualCount} " . \Illuminate\Support\Str::plural('video', $actualCount) . " analyzed successfully!");
     }
 
     public function process(Request $request)
@@ -685,11 +453,6 @@ class YouTubeController extends Controller
                  
                  $video = $query->first();
                  if ($video) {
-                     // If video has no summary, dispatch a job to generate it
-                     if (empty($video->summary_detailed) && $video->summary_status !== 'processing') {
-                         $video->update(['summary_status' => 'processing']);
-                         \App\Jobs\GenerateVideoSummary::dispatch($video, 'detailed');
-                     }
                      return to_route('youtube.show', $video);
                  }
              }
@@ -703,24 +466,21 @@ class YouTubeController extends Controller
         
         // --- Proceed with Fetching Missing URLs ---
 
-        $cost = count($urlsToFetch) * config('credits.youtube.video_fetch', 1);
+        $transcriptCost = $quotaManager->getCost($user, 'youtube', 'transcript');
+        $summaryCost = $request->boolean('include_summary') ? $quotaManager->getCost($user, 'youtube', 'ai_summary') : 0;
+        $costPerVideo = $transcriptCost + $summaryCost;
+        $cost = count($urlsToFetch) * $costPerVideo;
         $ip = $request->ip();
         $userAgent = $request->userAgent();
 
-        // 1. Check & Freeze Quota
+        // 1. Verify Quota (credits already frozen upfront via /freeze-credits endpoint)
         if ($user) {
+            // Frozen upfront — just validate enough was available
             $remaining = $quotaManager->getRemainingQuota($user, 'youtube');
-            if($remaining < $cost) {
-                 return back()->withErrors(['limit' => "Insufficient credits. This batch requires {$cost} credits, but you only have {$remaining} remaining."]);
-            }
-            // Freeze full amount
-            $quotaManager->incrementUsage($user, 'youtube', $cost, 'video_fetch_freeze');
+            // Note: remaining is already reduced because freeze happened. No additional deduction needed here.
         } else {
-             $remaining = $quotaManager->getGuestRemainingQuota($ip, $userAgent, 'youtube');
-             if($remaining < $cost) {
-                 return back()->withErrors(['limit' => 'Daily free limit reached for this batch size.']);
-             }
-             $quotaManager->incrementGuestUsage($ip, $userAgent, 'youtube', $cost);
+            $remaining = $quotaManager->getGuestRemainingQuota($ip, $userAgent, 'youtube');
+            // Note: remaining is already reduced because freeze happened. No additional deduction needed here.
         }
 
         set_time_limit(600); 
@@ -728,9 +488,9 @@ class YouTubeController extends Controller
         // 2. Trigger Fetching
         $items = $this->railway->fetchTranscripts(array_values($urlsToFetch), [
             'downloadSubtitles' => true,
-            'enableSummary' => $request->boolean('include_summary'),
             'includeTimestamps' => $request->boolean('include_timestamps'),
             'preferAutoSubtitles' => false,
+            'subtitleLanguage' => $request->input('subtitle_language', 'en'),
         ]);
 
         // Fallback to Apify ONLY if Railway API failed (returns null)
@@ -740,9 +500,9 @@ class YouTubeController extends Controller
             $actorId = 'leandrocb88~youtube-video-transcript-actor';
             $input = [
                 'downloadSubtitles' => true,
-                'enableSummary' => $request->boolean('include_summary'),
                 'includeTimestamps' => $request->boolean('include_timestamps'),
                 'preferAutoSubtitles' => false,
+                'subtitleLanguage' => $request->input('subtitle_language', 'en'),
                 'startUrls' => array_values($urlsToFetch),
             ];
 
@@ -794,7 +554,8 @@ class YouTubeController extends Controller
         }
 
         // Ensure we don't refund more than cost
-        $diff = max(0, $cost - $actualCount);
+        $actualCost = $actualCount * $costPerVideo;
+        $diff = max(0, $cost - $actualCost);
         
         if ($diff > 0) {
             if ($user) {
@@ -820,17 +581,19 @@ class YouTubeController extends Controller
                 'transcript' => $result['transcript'],
                 'duration' => $result['duration'] ?? 0,
                 'published_at' => $result['published_at'] ?? null,
-                'summary_status' => 'processing',
+                'summary_status' => $request->boolean('include_summary') ? 'processing' : 'pending',
+                'guest_ip' => $user ? null : $request->ip(),
+                'guest_ua' => $user ? null : $request->userAgent(),
             ]);
 
-            // Dispatch Summary Generation Job
-            \App\Jobs\GenerateVideoSummary::dispatch($video, 'detailed');
+            // Dispatch Summary Generation Job only if requested
+            if ($request->boolean('include_summary')) {
+                \App\Jobs\GenerateVideoSummary::dispatch($video, 'detailed');
+            }
 
             $result['id'] = $video->id;
-            $result['summary'] = null;
-            $result['summary_short'] = null;
-            $result['summary_detailed'] = null;
-            $result['summary_status'] = 'processing';
+            $result['transcript'] = $video->transcript;
+            $result['summary_status'] = $request->boolean('include_summary') ? 'processing' : 'pending';
         }
         unset($result); // Break reference
         
@@ -844,11 +607,12 @@ class YouTubeController extends Controller
         // Single result -> Go to video detail page
         if (count($finalResults) === 1) {
              $video = Video::find($finalResults[0]['id']);
-             return to_route('youtube.show', $video);
+             return to_route('youtube.show', $video)->with('success', "Video analyzed successfully!");
         }
 
         // Multiple results -> Go to history
-        return to_route('youtube.history');
+        $count = count($finalResults);
+        return to_route('youtube.history')->with('success', "{$count} " . \Illuminate\Support\Str::plural('video', $count) . " analyzed successfully!");
     }
 
     public function destroy(Request $request, Video $video)
@@ -889,17 +653,10 @@ class YouTubeController extends Controller
         $user = $request->user();
 
         // Determine Retention Limit
-        $retentionDays = 1; // Default for Free/Guest
+        $retentionDays = 30; // Default for Free/Guest
         
         if ($user && $user->subscribed('youtube')) {
-             $subscription = $user->subscription('youtube');
-             $priceId = $subscription->stripe_price;
-             $proPrices = config("plans.youtube.pro.prices", []);
-             if (in_array($priceId, $proPrices)) {
-                 $retentionDays = 90;
-             } else {
-                 $retentionDays = 30; // Plus
-             }
+             $retentionDays = 365; // Members
         }
 
         if ($retentionDays === 0) {
@@ -930,8 +687,14 @@ class YouTubeController extends Controller
         // Sort logic
         $sort = $request->input('sort', 'newest');
         switch ($sort) {
+            case 'published_newest':
+                $query->orderBy('published_at', 'desc');
+                break;
+            case 'published_oldest':
+                $query->orderBy('published_at', 'asc');
+                break;
             case 'older':
-                $query->oldest();
+                $query->oldest(); // sort by created_at ASC (app added date)
                 break;
             case 'alphabetical_asc':
                 $query->orderBy('title', 'asc');
@@ -941,7 +704,7 @@ class YouTubeController extends Controller
                 break;
             case 'newest':
             default:
-                $query->latest();
+                $query->latest(); // sort by created_at DESC (app added date)
                 break;
         }
 
@@ -1016,7 +779,7 @@ class YouTubeController extends Controller
             'type' => ['sometimes', 'string', 'in:short,detailed'],
         ]);
 
-        $summaryCost = config('credits.youtube.ai_summary', 1); // Cost per summary generation
+        $summaryCost = $quotaManager->getCost($user, 'youtube', 'ai_summary'); // Cost per summary generation
 
         // Check quota (Logic remains same)
         if ($user) {
@@ -1029,6 +792,10 @@ class YouTubeController extends Controller
             if (!$quotaManager->checkGuestQuota($ip, $userAgent, 'youtube', $summaryCost)) {
                 return back()->withErrors(['summary' => 'Daily free limit reached.']);
             }
+        }
+
+        if ($video->summary_status === 'processing') {
+            return back()->withErrors(['summary' => 'Summary generation is already in progress.']);
         }
 
         $type = $request->input('type', 'detailed');
@@ -1044,9 +811,19 @@ class YouTubeController extends Controller
              $ip = $request->ip();
              $userAgent = $request->userAgent();
              $quotaManager->incrementGuestUsage($ip, $userAgent, 'youtube', $summaryCost);
+             
+             // Ensure the video record has the guest info for potential refund
+             $video->update([
+                 'guest_ip' => $ip,
+                 'guest_ua' => $userAgent,
+             ]);
         }
 
-        return response()->json(['status' => 'processing']);
+        if ($request->wantsJson()) {
+            return response()->json(['status' => 'processing']);
+        }
+
+        return back()->with('success', 'Summary generation started.');
     }
 
     private function parseVideoData($videoData) {
@@ -1163,10 +940,12 @@ class YouTubeController extends Controller
              $thumbnail = "https://img.youtube.com/vi/{$video->video_id}/mqdefault.jpg";
         }
 
+        // Normalize Transcript
+        $video->transcript = $this->normalizeTranscript($video->transcript);
+
         // Calculate Transcript Read Time
         $fullText = '';
-        if (is_array($video->transcript)) {
-            $video->transcript = array_values($video->transcript); // Ensure indexed array
+        if (!empty($video->transcript)) {
             $fullText = collect($video->transcript)->pluck('text')->join(' ');
         }
         
@@ -1205,7 +984,43 @@ class YouTubeController extends Controller
             'pdf_url' => $video->pdf_status === 'completed' ? route('video.pdf', $video->id) : null,
             'audio_url' => $video->audio_status === 'completed' ? route('video.audio', $video->id) : null,
             'audio_duration' => $video->audio_duration,
+            'translations' => $video->translations,
+            'transcript_translate_status' => \Illuminate\Support\Facades\Cache::get("video_{$video->id}_translate_transcript_status", null),
+            'summary_translate_status' => \Illuminate\Support\Facades\Cache::get("video_{$video->id}_translate_summary_status", null),
         ];
+    }
+
+    private function normalizeTranscript($transcript)
+    {
+        if (is_string($transcript)) {
+            $decoded = json_decode($transcript, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $transcript = $decoded;
+            }
+        }
+
+        if (is_array($transcript)) {
+            if (isset($transcript['transcript']) && is_array($transcript['transcript'])) {
+                return array_values($transcript['transcript']);
+            }
+            if (isset($transcript['translatedTranscript']) && is_array($transcript['translatedTranscript'])) {
+                return array_values($transcript['translatedTranscript']);
+            }
+            // Check if it's already a flat array of objects
+            if (isset($transcript[0]) && is_array($transcript[0])) {
+                return array_values($transcript);
+            }
+            
+            // Try to find the first array in the associative array
+            foreach ($transcript as $value) {
+                if (is_array($value) && is_array($value[0] ?? null) && isset($value[0]['text'])) {
+                    return array_values($value);
+                }
+            }
+            return array_values($transcript);
+        }
+
+        return [];
     }
 
     public function downloadVideoPdf(Video $video)
@@ -1244,6 +1059,50 @@ class YouTubeController extends Controller
         return response()->json(['status' => 'processing']);
     }
 
+    /**
+     * Fast endpoint: deduct credits immediately when the analyze button is clicked.
+     * Returns the new remaining quota so the frontend can update instantly.
+     */
+    public function freezeCredits(Request $request)
+    {
+        $user = $request->user();
+        $ip = $request->ip();
+        $userAgent = $request->userAgent();
+        $quotaManager = $this->quotaManager;
+
+        $videoCount = max(1, (int) $request->input('video_count', 1));
+        $includeSummary = $request->boolean('include_summary');
+        $subtitleLanguage = $request->input('subtitle_language', 'en');
+
+        $transcriptCost = $quotaManager->getCost($user, 'youtube', 'transcript');
+        $summaryCost = $includeSummary ? $quotaManager->getCost($user, 'youtube', 'ai_summary') : 0;
+        $costPerVideo = $transcriptCost + $summaryCost;
+        $totalCost = $videoCount * $costPerVideo;
+
+        if ($user) {
+            $remaining = $quotaManager->getRemainingQuota($user, 'youtube');
+            if ($remaining < $totalCost) {
+                return response()->json(['error' => 'Insufficient credits.'], 422);
+            }
+            $quotaManager->incrementUsage($user, 'youtube', $totalCost, 'video_freeze_upfront');
+            $user->refresh();
+            return response()->json([
+                'remaining' => $quotaManager->getRemainingQuota($user, 'youtube'),
+                'cost' => $totalCost,
+            ]);
+        } else {
+            $remaining = $quotaManager->getGuestRemainingQuota($ip, $userAgent, 'youtube');
+            if ($remaining < $totalCost) {
+                return response()->json(['error' => 'Daily free limit reached.'], 422);
+            }
+            $quotaManager->incrementGuestUsage($ip, $userAgent, 'youtube', $totalCost);
+            return response()->json([
+                'remaining' => $quotaManager->getGuestRemainingQuota($ip, $userAgent, 'youtube'),
+                'cost' => $totalCost,
+            ]);
+        }
+    }
+
     public function videoStatus(Request $request, Video $video)
     {
         $user = $request->user();
@@ -1262,6 +1121,104 @@ class YouTubeController extends Controller
             'pdf_url' => $video->pdf_status === 'completed' ? route('video.pdf', $video->id) : null,
             'audio_url' => $video->audio_status === 'completed' ? route('video.audio', $video->id) : null,
             'audio_duration' => $video->audio_duration,
+            'transcript_translate_status' => \Illuminate\Support\Facades\Cache::get("video_{$video->id}_translate_transcript_status", 'completed'),
+            'summary_translate_status' => \Illuminate\Support\Facades\Cache::get("video_{$video->id}_translate_summary_status", 'completed'),
+        ]);
+    }
+
+    public function translate(Request $request, Video $video)
+    {
+        set_time_limit(300); // 5 minutes max execution time for translation
+
+        $user = $request->user();
+        $ip = $request->ip();
+        $userAgent = $request->userAgent();
+        $language = $request->input('language', 'en');
+        $quotaManager = $this->quotaManager;
+
+        if (!$video->transcript) {
+            return response()->json(['error' => 'No transcript available to translate.'], 422);
+        }
+
+        if (isset($video->translations[$language]['transcript'])) {
+            return response()->json([
+                'success' => true,
+                'status' => 'completed',
+                'transcript' => $video->translations[$language]['transcript']
+            ]);
+        }
+
+        // Cost: 1 credit for translation
+        $cost = $quotaManager->getCost($user, 'youtube', 'transcript');
+
+        if ($user) {
+            $remaining = $quotaManager->getRemainingQuota($user, 'youtube');
+            if ($remaining < $cost) {
+                return response()->json(['error' => 'Insufficient credits.'], 422);
+            }
+            $quotaManager->incrementUsage($user, 'youtube', $cost, 'video_translate');
+        } else {
+            $remaining = $quotaManager->getGuestRemainingQuota($ip, $userAgent, 'youtube');
+            if ($remaining < $cost) {
+                return response()->json(['error' => 'Daily free limit reached.'], 422);
+            }
+            $quotaManager->incrementGuestUsage($ip, $userAgent, 'youtube', $cost);
+        }
+
+        \Illuminate\Support\Facades\Cache::put("video_{$video->id}_translate_transcript_status", 'processing', 300);
+        \App\Jobs\TranslateVideoTranscript::dispatch($video, $language, $user, $ip, $userAgent, $cost);
+
+        return response()->json([
+            'success' => true,
+            'status' => 'processing',
+        ]);
+    }
+
+    public function translateSummary(Request $request, Video $video)
+    {
+        set_time_limit(300); // 5 minutes max execution time for translation
+
+        $user = $request->user();
+        $ip = $request->ip();
+        $userAgent = $request->userAgent();
+        $language = $request->input('language', 'en');
+        $quotaManager = $this->quotaManager;
+
+        if (!$video->summary_detailed && !$video->summary_short) {
+            return response()->json(['error' => 'No summary available to translate.'], 422);
+        }
+
+        if (isset($video->translations[$language]['summary_detailed'])) {
+            return response()->json([
+                'success' => true,
+                'status' => 'completed',
+                'summary_detailed' => $video->translations[$language]['summary_detailed']
+            ]);
+        }
+
+        // Cost: 1 credit for translation
+        $cost = $quotaManager->getCost($user, 'youtube', 'transcript');
+
+        if ($user) {
+            $remaining = $quotaManager->getRemainingQuota($user, 'youtube');
+            if ($remaining < $cost) {
+                return response()->json(['error' => 'Insufficient credits.'], 422);
+            }
+            $quotaManager->incrementUsage($user, 'youtube', $cost, 'summary_translate');
+        } else {
+            $remaining = $quotaManager->getGuestRemainingQuota($ip, $userAgent, 'youtube');
+            if ($remaining < $cost) {
+                return response()->json(['error' => 'Daily free limit reached.'], 422);
+            }
+            $quotaManager->incrementGuestUsage($ip, $userAgent, 'youtube', $cost);
+        }
+
+        \Illuminate\Support\Facades\Cache::put("video_{$video->id}_translate_summary_status", 'processing', 300);
+        \App\Jobs\TranslateVideoSummary::dispatch($video, $language, $user, $ip, $userAgent, $cost);
+
+        return response()->json([
+            'success' => true,
+            'status' => 'processing',
         ]);
     }
 

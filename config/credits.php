@@ -2,8 +2,9 @@
 
 return [
     'youtube' => [
-        'video_fetch' => 1,
+        'transcript' => 0,
         'ai_summary' => 1,
+        'audio' => 1,
     ],
     'zillow' => [
         'property_fetch' => 1,

@@ -3,18 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\User;
-use App\Models\Video;
-use App\Models\Channel;
-use App\Services\ApifyService;
-use App\Services\OpenAIService;
-use App\Services\GeminiService;
-use App\Services\QuotaManager;
-use App\Mail\DailyDigest;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Client\Pool;
+use App\Models\Digest;
 use Carbon\Carbon;
 
 class ProcessDailyDigests extends Command
@@ -24,48 +13,51 @@ class ProcessDailyDigests extends Command
                             {--user= : Process only for specific user ID}
                             {--limit= : Total max videos to fetch across all channels}
                             {--sort= : Sort order (newest, oldest, relevance)}
-                            {--days-back= : Number of days to look back}';
-    protected $description = 'Process and send daily email digests for subscribed channels.';
+                            {--days-back= : Number of days to look back}
+                            {--include-summary= : Whether to include AI Summaries}';
+    protected $description = 'Process and send daily email digests for all active custom Digests.';
 
     public function handle()
     {
-        $this->info('Identifying users for Daily Digest...');
+        $this->info('Identifying active Digests for processing...');
 
-        $currentHour = Carbon::now()->format('H'); // 00-23
+        $currentHour = Carbon::now()->format('H:i'); // e.g. "09:00"
         $force = $this->option('force');
         $userId = $this->option('user');
-        
-        $query = User::query();
+
+        $query = Digest::query()->where('is_active', true)->with('user', 'channels');
 
         if ($userId) {
-            $query->where('id', $userId);
-        } else {
-             $query->whereHas('digestSchedule', function($q) use ($currentHour, $force) {
-                $q->where('is_active', true);
-                if (!$force) {
-                    $q->where('preferred_time', 'like', "{$currentHour}:%");
-                }
-            });
+            $query->where('user_id', $userId);
+        } elseif (!$force) {
+            // Match digests scheduled for the current hour
+            $query->where('frequency', 'daily')
+                  ->where('scheduled_at', 'like', substr($currentHour, 0, 2) . ':%');
         }
 
-        $users = $query->get();
+        $digests = $query->get();
 
-        if ($users->isEmpty()) {
-             $this->info($force ? 'No active users found.' : 'No users scheduled for this hour.');
-             return;
+        if ($digests->isEmpty()) {
+            $this->info($force ? 'No active digests found.' : 'No digests scheduled for this hour.');
+            return;
         }
 
-        $options = [
-            'limit' => $this->option('limit'),
-            'sort' => $this->option('sort'),
-            'days_back' => $this->option('days-back') ?? 1,
-        ];
+        $includeSummaryOverride = $this->option('include-summary');
 
-        foreach ($users as $user) {
-            $this->info("Dispatching digest job for user: {$user->email}");
-            \App\Jobs\ProcessUserDigestJob::dispatch($user, $options);
+        foreach ($digests as $digest) {
+            $options = [
+                'limit'    => $this->option('limit'),
+                'sort'     => $this->option('sort'),
+                'days_back' => $this->option('days-back') ?? 1,
+                'include_summary' => $includeSummaryOverride !== null
+                    ? filter_var($includeSummaryOverride, FILTER_VALIDATE_BOOLEAN)
+                    : true,
+            ];
+
+            $this->info("Dispatching custom digest job for digest #{$digest->id} (User: {$digest->user->email})");
+            \App\Jobs\ProcessCustomDigestJob::dispatch($digest, $options);
         }
 
-        $this->info('Daily Digest Jobs Dispatched.');
+        $this->info('Digest Jobs Dispatched.');
     }
 }

@@ -1,0 +1,2881 @@
+{
+    "id": 539,
+    "user_id": 4,
+    "video_id": "4V6wxSHIw-o",
+    "title": "AI Agent Tips for Home Services | Quo\/OpenPhone Sona Review",
+    "thumbnail_url": "https:\/\/img.youtube.com\/vi\/4V6wxSHIw-o\/mqdefault.jpg",
+    "transcript": [
+        {
+            "text": "There is too much confusing content",
+            "start": 0.08,
+            "duration": 3.599
+        },
+        {
+            "text": " talking about AI and most claim to do",
+            "start": 1.429,
+            "duration": 6.17
+        },
+        {
+            "text": " the same. So, it\u2019s difficult for many",
+            "start": 3.669,
+            "duration": 4.731
+        },
+        {
+            "text": " home service business owners",
+            "start": 5.349,
+            "duration": 4.651
+        },
+        {
+            "text": " to understand what really works and what",
+            "start": 6.71,
+            "duration": 5.928
+        },
+        {
+            "text": " doesn\u2019t. Well, if you\u2019re in that situation,",
+            "start": 8.629,
+            "duration": 5.691
+        },
+        {
+            "text": " you\u2019re in the right place because in",
+            "start": 10.709,
+            "duration": 4.812
+        },
+        {
+            "text": " this video, we\u2019re going to talk about a",
+            "start": 12.23,
+            "duration": 5.53
+        },
+        {
+            "text": " high-level and low-risk way to implement AI",
+            "start": 13.99,
+            "duration": 5.77
+        },
+        {
+            "text": " in your field service business.",
+            "start": 15.99,
+            "duration": 5.129
+        },
+        {
+            "text": " Learn to choose what type",
+            "start": 17.75,
+            "duration": 5.208
+        },
+        {
+            "text": " is really suitable for you and what",
+            "start": 19.349,
+            "duration": 5.371
+        },
+        {
+            "text": " situations you might want to",
+            "start": 21.349,
+            "duration": 4.972
+        },
+        {
+            "text": " avoid using AI altogether. Welcome",
+            "start": 22.71,
+            "duration": 6.01
+        },
+        {
+            "text": " back to the channel. My name is Joe and",
+            "start": 24.95,
+            "duration": 4.81
+        },
+        {
+            "text": " I am a systems architect and founder of",
+            "start": 26.47,
+            "duration": 5.69
+        },
+        {
+            "text": " Rehash Digital where we have helped over",
+            "start": 28.23,
+            "duration": 6.009
+        },
+        {
+            "text": " 150 home and field service businesses",
+            "start": 30.39,
+            "duration": 5.929
+        },
+        {
+            "text": " find, implement, and optimize the best",
+            "start": 32.069,
+            "duration": 7.051
+        },
+        {
+            "text": " software to help you get more leads and",
+            "start": 34.63,
+            "duration": 5.289
+        },
+        {
+            "text": " make your business more efficient. We\u2019ve",
+            "start": 36.549,
+            "duration": 4.172
+        },
+        {
+            "text": " been busy testing and comparing",
+            "start": 37.99,
+            "duration": 4.41
+        },
+        {
+            "text": " different AI solutions for home service",
+            "start": 39.27,
+            "duration": 5.69
+        },
+        {
+            "text": " businesses, both small",
+            "start": 41.11,
+            "duration": 5.53
+        },
+        {
+            "text": " and large. So,",
+            "start": 43.11,
+            "duration": 5.53
+        },
+        {
+            "text": " let\u2019s take a look at one solution in",
+            "start": 44.63,
+            "duration": 6.889
+        },
+        {
+            "text": " particular, Quo, formerly Open Phones,",
+            "start": 47.11,
+            "duration": 6.009
+        },
+        {
+            "text": " the latest offering, which is an AI",
+            "start": 49.029,
+            "duration": 5.851
+        },
+        {
+            "text": " receptionist called Sona, and how it",
+            "start": 51.19,
+            "duration": 5.129
+        },
+        {
+            "text": " compares to some of the other solutions",
+            "start": 52.709,
+            "duration": 6.251
+        },
+        {
+            "text": " on the market, and compared to having no",
+            "start": 54.79,
+            "duration": 6.168
+        },
+        {
+            "text": " AI agent at all. Let\u2019s get into it.",
+            "start": 56.869,
+            "duration": 6.01
+        },
+        {
+            "text": " First, let\u2019s talk about AI since there is",
+            "start": 58.869,
+            "duration": 6.091
+        },
+        {
+            "text": " a lot of confusion about what AI claims it",
+            "start": 60.869,
+            "duration": 6.172
+        },
+        {
+            "text": " can do, what it actually does, what",
+            "start": 62.95,
+            "duration": 6.01
+        },
+        {
+            "text": " it does well, and everything else.",
+            "start": 64.95,
+            "duration": 5.45
+        },
+        {
+            "text": " A complete simplification, but it\u2019s",
+            "start": 66.95,
+            "duration": 4.81
+        },
+        {
+            "text": " better to categorize two types of",
+            "start": 68.39,
+            "duration": 6.25
+        },
+        {
+            "text": " relevant commercial AI solutions for the",
+            "start": 70.31,
+            "duration": 8.01
+        },
+        {
+            "text": " home services. First are generative AI models",
+            "start": 72.71,
+            "duration": 8.17
+        },
+        {
+            "text": " like chatpt, anthropic, Google Gemini and",
+            "start": 75.91,
+            "duration": 6.09
+        },
+        {
+            "text": " voice models that take the same",
+            "start": 77.67,
+            "duration": 7.61
+        },
+        {
+            "text": " generative AI and leverage voice input",
+            "start": 80.23,
+            "duration": 7.369
+        },
+        {
+            "text": " so that consumers or staff can",
+            "start": 82.71,
+            "duration": 6.808
+        },
+        {
+            "text": " perform tasks or interact with data in a new",
+            "start": 85.109,
+            "duration": 6.251
+        },
+        {
+            "text": " way. So, what should business owners care",
+            "start": 87.109,
+            "duration": 7.611
+        },
+        {
+            "text": " about when it comes to AI? One way to",
+            "start": 89.35,
+            "duration": 7.928
+        },
+        {
+            "text": " view AI is as a 24\/7 assistant with",
+            "start": 92.469,
+            "duration": 5.37
+        },
+        {
+            "text": " an incredible memory and a store of",
+            "start": 94.149,
+            "duration": 5.61
+        },
+        {
+            "text": " knowledge. It has general background knowledge",
+            "start": 96.149,
+            "duration": 5.131
+        },
+        {
+            "text": " trained from all corners of",
+            "start": 97.749,
+            "duration": 6.412
+        },
+        {
+            "text": " the internet and then enhanced with what",
+            "start": 99.67,
+            "duration": 6.57
+        },
+        {
+            "text": " I call tribal knowledge that you feed",
+            "start": 102.23,
+            "duration": 5.05
+        },
+        {
+            "text": " about your business, how to interact, how",
+            "start": 103.67,
+            "duration": 6.01
+        },
+        {
+            "text": " to do certain things, how",
+            "start": 105.83,
+            "duration": 4.89
+        },
+        {
+            "text": " you want it to act and operate. I\u2019ll expand",
+            "start": 107.51,
+            "duration": 4.65
+        },
+        {
+            "text": " on this much more in a future video,",
+            "start": 109.03,
+            "duration": 5.29
+        },
+        {
+            "text": " but for this, we\u2019ll focus on the",
+            "start": 110.63,
+            "duration": 6.41
+        },
+        {
+            "text": " subset of four categories of voice AI solutions.",
+            "start": 112.71,
+            "duration": 7.13
+        },
+        {
+            "text": " voice agents that respond",
+            "start": 114.95,
+            "duration": 8.089
+        },
+        {
+            "text": " to calls, human response services with AI",
+            "start": 117.59,
+            "duration": 8.249
+        },
+        {
+            "text": " assistant, phone systems with generative AI",
+            "start": 120.389,
+            "duration": 7.212
+        },
+        {
+            "text": " add-ons, and complete business platforms",
+            "start": 123.03,
+            "duration": 6.009
+        },
+        {
+            "text": " with built-in AI that include solutions",
+            "start": 124.95,
+            "duration": 6.729
+        },
+        {
+            "text": " like Jobber, Zuper, and Service. The",
+            "start": 127.109,
+            "duration": 6.652
+        },
+        {
+            "text": " most successful AI use cases in trades",
+            "start": 129.51,
+            "duration": 5.69
+        },
+        {
+            "text": " that are relatively easy to test and",
+            "start": 131.35,
+            "duration": 6.33
+        },
+        {
+            "text": " implement are text or voice responses",
+            "start": 133.35,
+            "duration": 6.81
+        },
+        {
+            "text": " that take that general and",
+            "start": 135.67,
+            "duration": 6.57
+        },
+        {
+            "text": " personalized knowledge and give you or your",
+            "start": 137.83,
+            "duration": 6.41
+        },
+        {
+            "text": " clients quick answers, capture and",
+            "start": 140.07,
+            "duration": 5.61
+        },
+        {
+            "text": " qualify leads, and pass them to",
+            "start": 141.99,
+            "duration": 5.61
+        },
+        {
+            "text": " the right team members. This solves",
+            "start": 143.75,
+            "duration": 6.649
+        },
+        {
+            "text": " very few common problems that home service",
+            "start": 145.83,
+            "duration": 6.409
+        },
+        {
+            "text": " businesses face, like the speed to capture clients",
+            "start": 148.309,
+            "duration": 4.492
+        },
+        {
+            "text": " handling surge events like for",
+            "start": 149.75,
+            "duration": 4.809
+        },
+        {
+            "text": " generators, landscaping, and roofing",
+            "start": 151.35,
+            "duration": 4.969
+        },
+        {
+            "text": " where you typically receive a",
+            "start": 152.949,
+            "duration": 5.372
+        },
+        {
+            "text": " surge of requests in a very short",
+            "start": 154.71,
+            "duration": 6.009
+        },
+        {
+            "text": " period of time due to some type of",
+            "start": 156.55,
+            "duration": 6.569
+        },
+        {
+            "text": " triggering event or seasonality, as well as",
+            "start": 158.869,
+            "duration": 5.612
+        },
+        {
+            "text": " reducing human errors where you have",
+            "start": 160.79,
+            "duration": 6.17
+        },
+        {
+            "text": " a tool in your business that trained",
+            "start": 162.55,
+            "duration": 7.53
+        },
+        {
+            "text": " correctly should consistently provide the",
+            "start": 165.19,
+            "duration": 6.649
+        },
+        {
+            "text": " correct answers if set up properly. Quo,",
+            "start": 167.43,
+            "duration": 6.089
+        },
+        {
+            "text": " which recently rebranded from Open Phone,",
+            "start": 169.589,
+            "duration": 5.532
+        },
+        {
+            "text": " launched a solution called Sona, which",
+            "start": 171.35,
+            "duration": 6.569
+        },
+        {
+            "text": " falls under the category of an AI",
+            "start": 173.35,
+            "duration": 7.29
+        },
+        {
+            "text": " phone assistant. It\u2019s an AI agent that is",
+            "start": 175.91,
+            "duration": 6.25
+        },
+        {
+            "text": " integrated into your phone system, which by itself",
+            "start": 178.07,
+            "duration": 5.69
+        },
+        {
+            "text": " tends to be a great option for startups and",
+            "start": 179.99,
+            "duration": 5.449
+        },
+        {
+            "text": " small home service businesses. Check",
+            "start": 181.83,
+            "duration": 6.329
+        },
+        {
+            "text": " out our video review of their system here.",
+            "start": 183.589,
+            "duration": 8.012
+        },
+        {
+            "text": " But they built Sona as a",
+            "start": 186.39,
+            "duration": 6.889
+        },
+        {
+            "text": " natural AI add-on for those who want",
+            "start": 188.79,
+            "duration": 6.729
+        },
+        {
+            "text": " to test AI agents without restructuring",
+            "start": 190.869,
+            "duration": 7.052
+        },
+        {
+            "text": " your entire customer service workflow or",
+            "start": 193.43,
+            "duration": 5.85
+        },
+        {
+            "text": " building something from scratch. Instead of",
+            "start": 195.35,
+            "duration": 6.65
+        },
+        {
+            "text": " completely replacing how you answer calls",
+            "start": 197.35,
+            "duration": 7.85
+        },
+        {
+            "text": " today like other AI solutions, you",
+            "start": 199.99,
+            "duration": 6.889
+        },
+        {
+            "text": " would just introduce Sona where you think",
+            "start": 202.55,
+            "duration": 5.209
+        },
+        {
+            "text": " you need it in your workflow. The",
+            "start": 204.309,
+            "duration": 4.971
+        },
+        {
+            "text": " recommendation I make for most of my",
+            "start": 205.99,
+            "duration": 5.928
+        },
+        {
+            "text": " clients, especially in the startup phase,",
+            "start": 207.589,
+            "duration": 8.411
+        },
+        {
+            "text": " is simply to replace a voicemail",
+            "start": 210.309,
+            "duration": 7.932
+        },
+        {
+            "text": " and after-hours calls with Sona and she",
+            "start": 213.27,
+            "duration": 6.41
+        },
+        {
+            "text": " can automatically classify and redirect",
+            "start": 215.27,
+            "duration": 6.41
+        },
+        {
+            "text": " emergency calls to One Path or respond",
+            "start": 217.67,
+            "duration": 5.13
+        },
+        {
+            "text": " to any basic questions you might receive from",
+            "start": 219.27,
+            "duration": 5.69
+        },
+        {
+            "text": " those who aren\u2019t ready to buy and then",
+            "start": 221.19,
+            "duration": 6.169
+        },
+        {
+            "text": " prioritize clients who are actively",
+            "start": 223.03,
+            "duration": 7.129
+        },
+        {
+            "text": " looking for services, including taking",
+            "start": 225.509,
+            "duration": 6.251
+        },
+        {
+            "text": " their information directly into your",
+            "start": 227.67,
+            "duration": 6.249
+        },
+        {
+            "text": " field service management system. So, how does it work?",
+            "start": 229.589,
+            "duration": 6.252
+        },
+        {
+            "text": " Well, one way is that when you don\u2019t have someone",
+            "start": 231.99,
+            "duration": 5.049
+        },
+        {
+            "text": " available to answer a call, it can",
+            "start": 233.43,
+            "duration": 6.409
+        },
+        {
+            "text": " greet the caller. It will answer common questions that",
+            "start": 235.589,
+            "duration": 6.651
+        },
+        {
+            "text": " you pre-load into the system and then will ask for key details",
+            "start": 237.67,
+            "duration": 7.449
+        },
+        {
+            "text": " like name, address, job details, or",
+            "start": 240.149,
+            "duration": 7.131
+        },
+        {
+            "text": " take a complete message and can even go as",
+            "start": 242.63,
+            "duration": 6.249
+        },
+        {
+            "text": " far as sending a text with a",
+            "start": 244.789,
+            "duration": 5.772
+        },
+        {
+            "text": " scheduling link or transferring it directly",
+            "start": 246.71,
+            "duration": 5.85
+        },
+        {
+            "text": " to a human. That data can then be",
+            "start": 248.63,
+            "duration": 5.37
+        },
+        {
+            "text": " integrated into your field service management platform",
+            "start": 250.63,
+            "duration": 4.65
+        },
+        {
+            "text": " like its active integration with Jobber or even Zapier",
+            "start": 251.99,
+            "duration": 6.33
+        },
+        {
+            "text": " if you want to connect it to more than 30,000",
+            "start": 253.91,
+            "duration": 6.809
+        },
+        {
+            "text": " other systems. So you don\u2019t have to type",
+            "start": 256.39,
+            "duration": 5.928
+        },
+        {
+            "text": " all that information. But the most",
+            "start": 258.229,
+            "duration": 6.251
+        },
+        {
+            "text": " important thing, you don\u2019t lose track of",
+            "start": 260.469,
+            "duration": 5.612
+        },
+        {
+            "text": " those valuable leads. As field service software specialists, if you need help",
+            "start": 262.23,
+            "duration": 6.25
+        },
+        {
+            "text": " figuring this part out or seeing if Quo",
+            "start": 264.31,
+            "duration": 5.85
+        },
+        {
+            "text": " or other field service platforms like",
+            "start": 266.39,
+            "duration": 5.53
+        },
+        {
+            "text": " Jobber, House Pro, or Service Titan are",
+            "start": 268.07,
+            "duration": 6.009
+        },
+        {
+            "text": " suitable for you and how they can work",
+            "start": 270.23,
+            "duration": 5.689
+        },
+        {
+            "text": " together, you can book a free 15-minute consultation",
+            "start": 271.909,
+            "duration": 6.171
+        },
+        {
+            "text": " with me at the link in the",
+            "start": 274.23,
+            "duration": 4.969
+        },
+        {
+            "text": " description below or on our website",
+            "start": 275.749,
+            "duration": 5.612
+        },
+        {
+            "text": " www.rehash.te.",
+            "start": 277.67,
+            "duration": 5.609
+        },
+        {
+            "text": " Since we are certified technology partners",
+            "start": 279.43,
+            "duration": 4.73
+        },
+        {
+            "text": " with Quo, they have provided",
+            "start": 284.87,
+            "duration": 5.53
+        },
+        {
+            "text": " our viewers both a free trial and",
+            "start": 286.71,
+            "duration": 5.37
+        },
+        {
+            "text": " a discount if you use the link in the",
+            "start": 288.55,
+            "duration": 5.21
+        },
+        {
+            "text": " description below. So you can try it",
+            "start": 290.23,
+            "duration": 5.21
+        },
+        {
+            "text": " to see if it makes sense for your",
+            "start": 292.07,
+            "duration": 4.49
+        },
+        {
+            "text": " business. If you have more complex requirements",
+            "start": 293.59,
+            "duration": 4.489
+        },
+        {
+            "text": " or want alternatives and",
+            "start": 295.03,
+            "duration": 5.129
+        },
+        {
+            "text": " comparisons, you can still book",
+            "start": 296.629,
+            "duration": 6.012
+        },
+        {
+            "text": " that free consultation with us and we can",
+            "start": 298.55,
+            "duration": 6.57
+        },
+        {
+            "text": " talk about your specific needs.",
+            "start": 300.71,
+            "duration": 6.57
+        },
+        {
+            "text": " So, when does it make sense to use an AI agent",
+            "start": 302.95,
+            "duration": 6.09
+        },
+        {
+            "text": " like this? Well, if you have a",
+            "start": 305.03,
+            "duration": 5.77
+        },
+        {
+            "text": " fairly high call volume and you\u2019re",
+            "start": 306.95,
+            "duration": 6.009
+        },
+        {
+            "text": " in a situation where whether you\u2019re alone",
+            "start": 308.87,
+            "duration": 6.249
+        },
+        {
+            "text": " or have a team that is missing client calls",
+            "start": 311.029,
+            "duration": 6.091
+        },
+        {
+            "text": " or not keeping good track of the",
+            "start": 312.95,
+            "duration": 6.569
+        },
+        {
+            "text": " data you\u2019re receiving or spending too much",
+            "start": 315.189,
+            "duration": 6.412
+        },
+        {
+            "text": " time manually entering that data into a",
+            "start": 317.27,
+            "duration": 6.97
+        },
+        {
+            "text": " spreadsheet or your field service or",
+            "start": 319.51,
+            "duration": 8.09
+        },
+        {
+            "text": " CRM, then an AI agent like Sona could be",
+            "start": 321.99,
+            "duration": 8.41
+        },
+        {
+            "text": " a good option compared to hiring",
+            "start": 325.11,
+            "duration": 6.41
+        },
+        {
+            "text": " another full-time service coordinator or",
+            "start": 327.27,
+            "duration": 5.93
+        },
+        {
+            "text": " in some cases hiring an offshore agent",
+            "start": 329.35,
+            "duration": 5.53
+        },
+        {
+            "text": " to answer calls. Just for numbers,",
+            "start": 331.11,
+            "duration": 6.17
+        },
+        {
+            "text": " if you receive 300 incoming calls a month and",
+            "start": 333.11,
+            "duration": 6.809
+        },
+        {
+            "text": " lose 27% to voicemail, which is the",
+            "start": 335.27,
+            "duration": 7.449
+        },
+        {
+            "text": " average for small businesses, that\u2019s 81",
+            "start": 337.749,
+            "duration": 7.292
+        },
+        {
+            "text": " missed calls. As most of you know, the speed",
+            "start": 340.23,
+            "duration": 6.09
+        },
+        {
+            "text": " to capture clients is one of the most important",
+            "start": 342.55,
+            "duration": 4.649
+        },
+        {
+            "text": " metrics in the home service industry.",
+            "start": 343.99,
+            "duration": 4.968
+        },
+        {
+            "text": " And your likelihood of converting those",
+            "start": 345.749,
+            "duration": 5.45
+        },
+        {
+            "text": " voicemails into jobs is statistically",
+            "start": 347.189,
+            "duration": 7.451
+        },
+        {
+            "text": " more than 50% less than if you had",
+            "start": 349.749,
+            "duration": 5.932
+        },
+        {
+            "text": " answered within the first 5",
+            "start": 352.07,
+            "duration": 4.33
+        },
+        {
+            "text": " minutes. If an agent like Sona allows",
+            "start": 353.35,
+            "duration": 5.049
+        },
+        {
+            "text": " your team to increase your response rates",
+            "start": 355.11,
+            "duration": 6.009
+        },
+        {
+            "text": " to just half of these at a closing rate of 20%,",
+            "start": 356.629,
+            "duration": 8.492
+        },
+        {
+            "text": " let\u2019s assume an average ticket price of 450 dollars,",
+            "start": 359.59,
+            "duration": 7.609
+        },
+        {
+            "text": " that\u2019s eight extra jobs a month or 3,600",
+            "start": 362.15,
+            "duration": 8.009
+        },
+        {
+            "text": " in additional monthly revenue for a very",
+            "start": 364.629,
+            "duration": 6.328
+        },
+        {
+            "text": " low cost. That said, if you\u2019re not",
+            "start": 367.67,
+            "duration": 5.451
+        },
+        {
+            "text": " facing volume or call tracking issues,",
+            "start": 369.909,
+            "duration": 5.612
+        },
+        {
+            "text": " then the downside of",
+            "start": 371.749,
+            "duration": 6.329
+        },
+        {
+            "text": " spending time managing an AI solution",
+            "start": 373.51,
+            "duration": 6.089
+        },
+        {
+            "text": " probably isn\u2019t worth it yet and your",
+            "start": 377.749,
+            "duration": 5.292
+        },
+        {
+            "text": " best option is to spend more time and",
+            "start": 379.51,
+            "duration": 5.289
+        },
+        {
+            "text": " effort improving your lead generation",
+            "start": 381.27,
+            "duration": 5.609
+        },
+        {
+            "text": " process. If that\u2019s you, then you can",
+            "start": 383.029,
+            "duration": 5.691
+        },
+        {
+            "text": " check out our local marketing and SEO",
+            "start": 385.11,
+            "duration": 4.728
+        },
+        {
+            "text": " guides in the description below or on",
+            "start": 386.629,
+            "duration": 6.571
+        },
+        {
+            "text": " our website www.rehash.te\/marketing.",
+            "start": 388.309,
+            "duration": 8.012
+        },
+        {
+            "text": " Now, obviously, you have options and",
+            "start": 391.51,
+            "duration": 5.53
+        },
+        {
+            "text": " Sona is not the only solution out there.",
+            "start": 393.11,
+            "duration": 6.409
+        },
+        {
+            "text": " Almost all field service platforms and",
+            "start": 395.43,
+            "duration": 5.609
+        },
+        {
+            "text": " other VoIP providers are starting to",
+            "start": 397.189,
+            "duration": 5.931
+        },
+        {
+            "text": " introduce their own versions of AI for",
+            "start": 399.27,
+            "duration": 5.688
+        },
+        {
+            "text": " call handling, but most of these are",
+            "start": 401.029,
+            "duration": 6.89
+        },
+        {
+            "text": " add-ons built on legacy systems.",
+            "start": 403.189,
+            "duration": 6.57
+        },
+        {
+            "text": " This is the key difference between the",
+            "start": 405.749,
+            "duration": 4.33
+        },
+        {
+            "text": " two main implementation models",
+            "start": 407.189,
+            "duration": 5.131
+        },
+        {
+            "text": " regardless of the platform, all-in-one or",
+            "start": 408.629,
+            "duration": 6.651
+        },
+        {
+            "text": " best of breed and the trend in the",
+            "start": 410.87,
+            "duration": 6.249
+        },
+        {
+            "text": " last few years due to this kind of",
+            "start": 413.029,
+            "duration": 6.572
+        },
+        {
+            "text": " specialization is that best of breed has",
+            "start": 414.95,
+            "duration": 7.529
+        },
+        {
+            "text": " started to gain traction due to how",
+            "start": 417.67,
+            "duration": 5.929
+        },
+        {
+            "text": " easy it is now to integrate platforms",
+            "start": 419.749,
+            "duration": 5.771
+        },
+        {
+            "text": " together. Let me explain. A big advantage",
+            "start": 421.51,
+            "duration": 6.328
+        },
+        {
+            "text": " of using fully integrated systems is",
+            "start": 423.749,
+            "duration": 5.611
+        },
+        {
+            "text": " that it minimizes the need to have to",
+            "start": 425.589,
+            "duration": 5.852
+        },
+        {
+            "text": " set up integrations and you can generally",
+            "start": 427.51,
+            "duration": 6.49
+        },
+        {
+            "text": " get pop-up data windows when you receive",
+            "start": 429.51,
+            "duration": 6.81
+        },
+        {
+            "text": " incoming calls with just one solution of",
+            "start": 431.99,
+            "duration": 5.85
+        },
+        {
+            "text": " phone and have more ability to",
+            "start": 433.83,
+            "duration": 6.33
+        },
+        {
+            "text": " customize when an AI solution is actually activated.",
+            "start": 435.99,
+            "duration": 6.649
+        },
+        {
+            "text": " That said, for approximately",
+            "start": 437.99,
+            "duration": 7.369
+        },
+        {
+            "text": " 70% of the use cases I\u2019ve found,",
+            "start": 440.629,
+            "duration": 6.091
+        },
+        {
+            "text": " you can reflect this kind of fluidity",
+            "start": 442.71,
+            "duration": 6.569
+        },
+        {
+            "text": " with open APIs and integration models",
+            "start": 444.629,
+            "duration": 7.932
+        },
+        {
+            "text": " like Zapier or make.com. On the flip",
+            "start": 447.35,
+            "duration": 7.21
+        },
+        {
+            "text": " side, the big disadvantage is that these",
+            "start": 449.83,
+            "duration": 6.49
+        },
+        {
+            "text": " solutions generally don\u2019t develop as",
+            "start": 452.07,
+            "duration": 6.17
+        },
+        {
+            "text": " quickly as specialized VOIP and AI",
+            "start": 454.07,
+            "duration": 6.65
+        },
+        {
+            "text": " solutions like Quill. They generally cost more",
+            "start": 456.23,
+            "duration": 6.97
+        },
+        {
+            "text": " for the same call volume. And if you ever",
+            "start": 458.55,
+            "duration": 6.73
+        },
+        {
+            "text": " need to switch solutions, it can be",
+            "start": 460.87,
+            "duration": 6.17
+        },
+        {
+            "text": " harder to move and maintain all",
+            "start": 462.95,
+            "duration": 6.41
+        },
+        {
+            "text": " that data your system collects.",
+            "start": 464.95,
+            "duration": 6.81
+        },
+        {
+            "text": " This then puts an artificial ceiling on",
+            "start": 467.35,
+            "duration": 5.61
+        },
+        {
+            "text": " your business and puts you at risk of",
+            "start": 469.35,
+            "duration": 5.849
+        },
+        {
+            "text": " vendor lock-in if you ever plan to scale",
+            "start": 470.95,
+            "duration": 7.689
+        },
+        {
+            "text": " or grow in the future. So, if you\u2019re in",
+            "start": 473.589,
+            "duration": 6.972
+        },
+        {
+            "text": " the situation of being ready to try Sona or",
+            "start": 475.99,
+            "duration": 6.57
+        },
+        {
+            "text": " any other AI agent solution, here are",
+            "start": 478.15,
+            "duration": 5.93
+        },
+        {
+            "text": " some best practices you should",
+            "start": 480.39,
+            "duration": 5.05
+        },
+        {
+            "text": " follow. Keep your knowledge base short",
+            "start": 481.83,
+            "duration": 6.41
+        },
+        {
+            "text": " and specific. Make sure not to write",
+            "start": 483.99,
+            "duration": 5.93
+        },
+        {
+            "text": " entire paragraphs. Try to keep it in bullet",
+            "start": 486.07,
+            "duration": 6.09
+        },
+        {
+            "text": " form so that the AI can easily access",
+            "start": 487.83,
+            "duration": 7.13
+        },
+        {
+            "text": " the information. Less is always more when it",
+            "start": 490.39,
+            "duration": 6.089
+        },
+        {
+            "text": " comes to AI. Sona actually makes this a",
+            "start": 492.39,
+            "duration": 6.089
+        },
+        {
+            "text": " little easier because they have another AI model",
+            "start": 494.469,
+            "duration": 5.692
+        },
+        {
+            "text": " that can optimize your request to",
+            "start": 496.39,
+            "duration": 5.209
+        },
+        {
+            "text": " ensure it\u2019s structured correctly",
+            "start": 498.23,
+            "duration": 4.649
+        },
+        {
+            "text": " within the platform. Make sure that",
+            "start": 499.749,
+            "duration": 5.051
+        },
+        {
+            "text": " you include your service areas, your hours",
+            "start": 501.35,
+            "duration": 6.329
+        },
+        {
+            "text": " of operation, answers to the top 10 questions",
+            "start": 503.189,
+            "duration": 6.812
+        },
+        {
+            "text": " that you typically receive by",
+            "start": 505.83,
+            "duration": 5.85
+        },
+        {
+            "text": " phone, emergency dispatch policies, and",
+            "start": 507.35,
+            "duration": 7.53
+        },
+        {
+            "text": " sometimes even price ranges if you have",
+            "start": 510.15,
+            "duration": 5.21
+        },
+        {
+            "text": " published prices. There are also",
+            "start": 512.07,
+            "duration": 4.49
+        },
+        {
+            "text": " things to keep in mind when using these",
+            "start": 513.43,
+            "duration": 5.369
+        },
+        {
+            "text": " solutions. Make sure to have a",
+            "start": 515.19,
+            "duration": 6.248
+        },
+        {
+            "text": " path to escalate to a human on any",
+            "start": 517.029,
+            "duration": 8.411
+        },
+        {
+            "text": " urgent matter, related to elderly, safety, or high",
+            "start": 519.589,
+            "duration": 8.332
+        },
+        {
+            "text": " cost. Especially if you have a hybrid service",
+            "start": 522.87,
+            "duration": 6.01
+        },
+        {
+            "text": " residential commercial business, you definitely want",
+            "start": 524.63,
+            "duration": 6.97
+        },
+        {
+            "text": " to have separate service flows for both lines of",
+            "start": 527.11,
+            "duration": 5.93
+        },
+        {
+            "text": " service. If you\u2019re in the testing phase,",
+            "start": 531.03,
+            "duration": 5.929
+        },
+        {
+            "text": " use the trial below and distribute your calls",
+            "start": 533.03,
+            "duration": 7.049
+        },
+        {
+            "text": " 50\/50 between Sona or another AI agent",
+            "start": 534.949,
+            "duration": 8.012
+        },
+        {
+            "text": " and track your response rates, lead",
+            "start": 538.15,
+            "duration": 5.77
+        },
+        {
+            "text": " capture rates, your booked jobs, refunds",
+            "start": 539.75,
+            "duration": 7.369
+        },
+        {
+            "text": " and complaints, and cost per answered calls.",
+            "start": 542.31,
+            "duration": 6.889
+        },
+        {
+            "text": " Compare these calls side by side",
+            "start": 544.55,
+            "duration": 6.329
+        },
+        {
+            "text": " against what you\u2019re doing today and",
+            "start": 546.949,
+            "duration": 5.052
+        },
+        {
+            "text": " see if the effort is worth it.",
+            "start": 548.47,
+            "duration": 5.85
+        },
+        {
+            "text": " Lastly, keep track of when this video is published.",
+            "start": 550.47,
+            "duration": 7.369
+        },
+        {
+            "text": " January 2026. AI solutions",
+            "start": 552.31,
+            "duration": 9.53
+        },
+        {
+            "text": " are evolving rapidly month by month.",
+            "start": 555.99,
+            "duration": 5.85
+        },
+        {
+            "text": " So, I can see there will be some",
+            "start": 558.15,
+            "duration": 4.57
+        },
+        {
+            "text": " improvements in things like multilingual support,",
+            "start": 559.67,
+            "duration": 5.29
+        },
+        {
+            "text": " deeper integrations,",
+            "start": 561.19,
+            "duration": 7.05
+        },
+        {
+            "text": " access to smarter quotes, and capabilities of",
+            "start": 563.43,
+            "duration": 6.89
+        },
+        {
+            "text": " more natural conversations across all these",
+            "start": 565.99,
+            "duration": 5.69
+        },
+        {
+            "text": " agents in the future in just a few",
+            "start": 567.75,
+            "duration": 5.53
+        },
+        {
+            "text": " months. So, if you want to stay",
+            "start": 569.91,
+            "duration": 4.49
+        },
+        {
+            "text": " updated on the latest in marketing and",
+            "start": 571.11,
+            "duration": 5.929
+        },
+        {
+            "text": " business technology for home services like AI agents",
+            "start": 573.19,
+            "duration": 5.848
+        },
+        {
+            "text": " and software, then definitely hit",
+            "start": 574.949,
+            "duration": 6.731
+        },
+        {
+            "text": " that like button and subscribe or check",
+            "start": 577.269,
+            "duration": 5.692
+        },
+        {
+            "text": " out this playlist if you want more",
+            "start": 579.35,
+            "duration": 4.97
+        },
+        {
+            "text": " ideas on how to get more leads and make",
+            "start": 580.87,
+            "duration": 5.37
+        },
+        {
+            "text": " your business more efficient. Thank you for",
+            "start": 582.79,
+            "duration": 4.65
+        },
+        {
+            "text": " watching. This is Joe signing off and",
+            "start": 584.31,
+            "duration": 6.49
+        },
+        {
+            "text": " I\u2019ll see you in the next one",
+            "start": 585.91,
+            "duration": 6.57
+        }
+    ],
+    "summary_short": null,
+    "summary_detailed": "### Summary\nThe video demystifies AI for home and field service businesses and presents a high-leverage, low-risk path to adoption. It uses Quo\/Sona as a case study, compares different AI approaches, and offers practical best practices for testing, integration, and ROI.\n\n### Key Takeaways\n- AI for home services falls into two practical categories (generative models and voice-enabled interactions), with clear use cases like fast responses, lead capture, and accurate data handling to reduce human error.\n- Sona by Quo\/OpenPhone is explored as an AI receptionist that augments rather than replaces existing workflows, highlighting integration with Jobber, Zapier, and other systems for scalable data capture and routing.\n- Tradeoffs between all-in-one versus best-of-breed AI solutions are discussed, emphasizing the importance of testing, keeping knowledge bases concise, establishing escalation paths, and measuring metrics (lead capture, booked jobs, cost per call) before committing to a full rollout.\n\n### Detailed Analysis\n# Overview\nThis video explains how home service and field service businesses can adopt AI in a high-leverage, low-risk way. It emphasizes practical, testable use cases and clarifies the differences between general generative AI and voice-enabled AI for customer interactions.\n\n## AI categories for home services\n- Generative AI models (text) and voice AI inputs\/outputs\n- Practical uses: fast responses, lead capture, qualification, and handoff\n- Four buckets of voice AI: AI call agents, AI-assisted human answering, AI-enabled phone systems, and full AI-driven platforms with Jobber, Zuper, ServiceTitan, etc.\n\n## Case study: Sona by Quo\/Open Phone\n- Sona is an AI receptionist integrated into a phone system, designed for startups and small businesses to augment, not replace, current workflows\n- Best use: replace voicemail\/after-hours with Sona, triage calls, answer common questions, collect details, and transfer to humans when needed\n- Integrates with Jobber or Zapier to push data into field service systems; supports 30k+ integrations\n\n## All-in-one vs best-of-breed and vendor considerations\n- Fully integrated systems simplify setup but may limit flexibility and incur higher costs; porting data can be hard\n- Best-of-breed solutions offer easier integration via open APIs (Zapier\/make.com) but can require more setup\n- Portability and vendor lock-in are important considerations for scaling\n\n## Best practices for testing and rollout\n- Keep knowledge bases concise and structured for AI access\n- Define escalation paths for urgent\/high-ticket scenarios\n- Run 50\/50 trials, measure lead capture, calls answered, booked jobs, refunds, and cost per call\n- Track service flows separately for residential vs commercial\n- Begin with free trials and professional consultations to tailor to needs\n\n## Outlook\n- AI solutions are rapidly evolving; expect improvements in multi-language support, deeper integrations, smarter quoting, and more natural conversations.\n\n**Sentiment:** Positive",
+    "created_at": "2026-02-22T05:42:51.000000Z",
+    "updated_at": "2026-03-22T01:19:48.000000Z",
+    "session_id": null,
+    "channel_id": null,
+    "digest_date": null,
+    "source": "manual",
+    "share_token": null,
+    "channel_title": "Joe Guevara",
+    "duration": 592.48,
+    "pdf_path": null,
+    "audio_path": null,
+    "pdf_status": "pending",
+    "audio_status": "pending",
+    "audio_duration": null,
+    "summary_status": "completed",
+    "published_at": "2026-02-17T08:43:40.000000Z",
+    "guest_ip": null,
+    "guest_ua": null,
+    "translations": {
+        "es": {
+            "transcript": {
+                "translatedTranscript": [
+                    {
+                        "text": "Hay demasiado contenido confuso",
+                        "start": 0.08,
+                        "duration": 3.599
+                    },
+                    {
+                        "text": " hablando sobre IA y la mayor\u00eda afirma hacer",
+                        "start": 1.429,
+                        "duration": 6.17
+                    },
+                    {
+                        "text": " lo mismo. As\u00ed que, es dif\u00edcil para muchos",
+                        "start": 3.669,
+                        "duration": 4.731
+                    },
+                    {
+                        "text": " propietarios de negocios de servicios a domicilio",
+                        "start": 5.349,
+                        "duration": 4.651
+                    },
+                    {
+                        "text": " entender qu\u00e9 realmente funciona y qu\u00e9",
+                        "start": 6.71,
+                        "duration": 5.928
+                    },
+                    {
+                        "text": " no. Bueno, si est\u00e1s en esa situaci\u00f3n,",
+                        "start": 8.629,
+                        "duration": 5.691
+                    },
+                    {
+                        "text": " est\u00e1s en el lugar correcto porque en",
+                        "start": 10.709,
+                        "duration": 4.812
+                    },
+                    {
+                        "text": " este video, vamos a hablar sobre una",
+                        "start": 12.23,
+                        "duration": 5.53
+                    },
+                    {
+                        "text": " forma de alto nivel y bajo riesgo de implementar IA",
+                        "start": 13.99,
+                        "duration": 5.77
+                    },
+                    {
+                        "text": " en tu negocio de servicios de campo.",
+                        "start": 15.99,
+                        "duration": 5.129
+                    },
+                    {
+                        "text": " Aprende a elegir qu\u00e9 tipo",
+                        "start": 17.75,
+                        "duration": 5.208
+                    },
+                    {
+                        "text": " es realmente adecuado para ti y qu\u00e9",
+                        "start": 19.349,
+                        "duration": 5.371
+                    },
+                    {
+                        "text": " situaciones podr\u00edas querer",
+                        "start": 21.349,
+                        "duration": 4.972
+                    },
+                    {
+                        "text": " evitar usar IA por completo. Bienvenido",
+                        "start": 22.71,
+                        "duration": 6.01
+                    },
+                    {
+                        "text": " de nuevo al canal. Mi nombre es Joe y",
+                        "start": 24.95,
+                        "duration": 4.81
+                    },
+                    {
+                        "text": " soy arquitecto de sistemas y fundador de",
+                        "start": 26.47,
+                        "duration": 5.69
+                    },
+                    {
+                        "text": " Rehash Digital, donde hemos ayudado a m\u00e1s de",
+                        "start": 28.23,
+                        "duration": 6.009
+                    },
+                    {
+                        "text": " 150 negocios de servicios a domicilio y de campo",
+                        "start": 30.39,
+                        "duration": 5.929
+                    },
+                    {
+                        "text": " a encontrar, implementar y optimizar el mejor",
+                        "start": 32.069,
+                        "duration": 7.051
+                    },
+                    {
+                        "text": " software para ayudarte a obtener m\u00e1s clientes potenciales y",
+                        "start": 34.63,
+                        "duration": 5.289
+                    },
+                    {
+                        "text": " hacer que tu negocio sea m\u00e1s eficiente. Hemos",
+                        "start": 36.549,
+                        "duration": 4.172
+                    },
+                    {
+                        "text": " estado ocupados probando y comparando",
+                        "start": 37.99,
+                        "duration": 4.41
+                    },
+                    {
+                        "text": " diferentes soluciones de IA para servicios a domicilio",
+                        "start": 39.27,
+                        "duration": 5.69
+                    },
+                    {
+                        "text": " tanto peque\u00f1as",
+                        "start": 41.11,
+                        "duration": 5.53
+                    },
+                    {
+                        "text": " como grandes. As\u00ed que,",
+                        "start": 43.11,
+                        "duration": 5.53
+                    },
+                    {
+                        "text": " echemos un vistazo a una soluci\u00f3n en",
+                        "start": 44.63,
+                        "duration": 6.889
+                    },
+                    {
+                        "text": " particular, Quo, anteriormente Open Phones,",
+                        "start": 47.11,
+                        "duration": 6.009
+                    },
+                    {
+                        "text": " la \u00faltima oferta, que es una IA",
+                        "start": 49.029,
+                        "duration": 5.851
+                    },
+                    {
+                        "text": " recepcionista llamada Sona, y c\u00f3mo se",
+                        "start": 51.19,
+                        "duration": 5.129
+                    },
+                    {
+                        "text": " compara con algunas de las otras soluciones",
+                        "start": 52.709,
+                        "duration": 6.251
+                    },
+                    {
+                        "text": " en el mercado, y comparado con no tener ning\u00fan",
+                        "start": 54.79,
+                        "duration": 6.168
+                    },
+                    {
+                        "text": " agente de IA en absoluto. Vamos a ello.",
+                        "start": 56.869,
+                        "duration": 6.01
+                    },
+                    {
+                        "text": " Primero, hablemos de IA ya que hay",
+                        "start": 58.869,
+                        "duration": 6.091
+                    },
+                    {
+                        "text": " mucha confusi\u00f3n sobre lo que la IA afirma que",
+                        "start": 60.869,
+                        "duration": 6.172
+                    },
+                    {
+                        "text": " puede hacer, lo que realmente hace, lo que",
+                        "start": 62.95,
+                        "duration": 6.01
+                    },
+                    {
+                        "text": " hace bien, y todo lo dem\u00e1s.",
+                        "start": 64.95,
+                        "duration": 5.45
+                    },
+                    {
+                        "text": " Una simplificaci\u00f3n completa, pero es",
+                        "start": 66.95,
+                        "duration": 4.81
+                    },
+                    {
+                        "text": " mejor categorizar dos tipos de",
+                        "start": 68.39,
+                        "duration": 6.25
+                    },
+                    {
+                        "text": " soluciones comerciales de IA relevantes para los",
+                        "start": 70.31,
+                        "duration": 8.01
+                    },
+                    {
+                        "text": " servicios a domicilio. Primero est\u00e1n los modelos de IA generativa",
+                        "start": 72.71,
+                        "duration": 8.17
+                    },
+                    {
+                        "text": " como chatpt, anthropic, Google Gemini y",
+                        "start": 75.91,
+                        "duration": 6.09
+                    },
+                    {
+                        "text": " modelos de voz que toman la misma",
+                        "start": 77.67,
+                        "duration": 7.61
+                    },
+                    {
+                        "text": " IA generativa y aprovechan la entrada de voz",
+                        "start": 80.23,
+                        "duration": 7.369
+                    },
+                    {
+                        "text": " para que los consumidores o el personal puedan",
+                        "start": 82.71,
+                        "duration": 6.808
+                    },
+                    {
+                        "text": " realizar tareas o interactuar con datos de una nueva",
+                        "start": 85.109,
+                        "duration": 6.251
+                    },
+                    {
+                        "text": " manera. Entonces, \u00bfqu\u00e9 deber\u00edan importarles a los propietarios de negocios",
+                        "start": 87.109,
+                        "duration": 7.611
+                    },
+                    {
+                        "text": " cuando se trata de IA? Una forma de",
+                        "start": 89.35,
+                        "duration": 7.928
+                    },
+                    {
+                        "text": " ver la IA es como un asistente 24\/7 con",
+                        "start": 92.469,
+                        "duration": 5.37
+                    },
+                    {
+                        "text": " una memoria incre\u00edble y un almac\u00e9n de",
+                        "start": 94.149,
+                        "duration": 5.61
+                    },
+                    {
+                        "text": " conocimiento. Tiene un conocimiento general de fondo",
+                        "start": 96.149,
+                        "duration": 5.131
+                    },
+                    {
+                        "text": " entrenado desde todos los rincones de",
+                        "start": 97.749,
+                        "duration": 6.412
+                    },
+                    {
+                        "text": " internet y luego mejorado con lo que",
+                        "start": 99.67,
+                        "duration": 6.57
+                    },
+                    {
+                        "text": " yo llamo conocimiento tribal que t\u00fa alimentas",
+                        "start": 102.23,
+                        "duration": 5.05
+                    },
+                    {
+                        "text": " sobre tu negocio, c\u00f3mo interactuar, c\u00f3mo",
+                        "start": 103.67,
+                        "duration": 6.01
+                    },
+                    {
+                        "text": " hacer ciertas cosas, c\u00f3mo",
+                        "start": 105.83,
+                        "duration": 4.89
+                    },
+                    {
+                        "text": " quieres que act\u00fae y opere. Ampliar\u00e9",
+                        "start": 107.51,
+                        "duration": 4.65
+                    },
+                    {
+                        "text": " esto mucho m\u00e1s en un video futuro,",
+                        "start": 109.03,
+                        "duration": 5.29
+                    },
+                    {
+                        "text": " pero para esto, nos centraremos en el",
+                        "start": 110.63,
+                        "duration": 6.41
+                    },
+                    {
+                        "text": " subconjunto de cuatro categor\u00edas de soluciones de IA de voz.",
+                        "start": 112.71,
+                        "duration": 7.13
+                    },
+                    {
+                        "text": " agentes de voz que responden",
+                        "start": 114.95,
+                        "duration": 8.089
+                    },
+                    {
+                        "text": " a llamadas, servicios de respuesta humana con IA",
+                        "start": 117.59,
+                        "duration": 8.249
+                    },
+                    {
+                        "text": " asistente, sistemas telef\u00f3nicos con IA generativa",
+                        "start": 120.389,
+                        "duration": 7.212
+                    },
+                    {
+                        "text": " complementos, y plataformas comerciales completas",
+                        "start": 123.03,
+                        "duration": 6.009
+                    },
+                    {
+                        "text": " con IA incorporada que incluyen soluciones",
+                        "start": 124.95,
+                        "duration": 6.729
+                    },
+                    {
+                        "text": " como Jobber, Zuper y Service. Los",
+                        "start": 127.109,
+                        "duration": 6.652
+                    },
+                    {
+                        "text": " casos de uso de IA m\u00e1s exitosos en oficios",
+                        "start": 129.51,
+                        "duration": 5.69
+                    },
+                    {
+                        "text": " que son relativamente f\u00e1ciles de probar y",
+                        "start": 131.35,
+                        "duration": 6.33
+                    },
+                    {
+                        "text": " implementar son respuestas de texto o voz",
+                        "start": 133.35,
+                        "duration": 6.81
+                    },
+                    {
+                        "text": " que toman ese conocimiento general y",
+                        "start": 135.67,
+                        "duration": 6.57
+                    },
+                    {
+                        "text": " personalizado y te dan a ti o a tus",
+                        "start": 137.83,
+                        "duration": 6.41
+                    },
+                    {
+                        "text": " clientes respuestas r\u00e1pidas, capturan y",
+                        "start": 140.07,
+                        "duration": 5.61
+                    },
+                    {
+                        "text": " califican clientes potenciales, y los pasan a",
+                        "start": 141.99,
+                        "duration": 5.61
+                    },
+                    {
+                        "text": " los miembros del equipo adecuados. Esto resuelve",
+                        "start": 143.75,
+                        "duration": 6.649
+                    },
+                    {
+                        "text": " muy pocos problemas comunes que enfrentan los negocios de servicios a domicilio,",
+                        "start": 145.83,
+                        "duration": 6.409
+                    },
+                    {
+                        "text": " como la velocidad para captar clientes",
+                        "start": 148.309,
+                        "duration": 4.492
+                    },
+                    {
+                        "text": " manejando eventos de aumento como para",
+                        "start": 149.75,
+                        "duration": 4.809
+                    },
+                    {
+                        "text": " generadores, paisajismo y techado",
+                        "start": 151.35,
+                        "duration": 4.969
+                    },
+                    {
+                        "text": " donde t\u00edpicamente recibes un",
+                        "start": 152.949,
+                        "duration": 5.372
+                    },
+                    {
+                        "text": " aumento de solicitudes en un muy corto",
+                        "start": 154.71,
+                        "duration": 6.009
+                    },
+                    {
+                        "text": " per\u00edodo de tiempo debido a alg\u00fan tipo de",
+                        "start": 156.55,
+                        "duration": 6.569
+                    },
+                    {
+                        "text": " evento desencadenante o estacionalidad, as\u00ed como",
+                        "start": 158.869,
+                        "duration": 5.612
+                    },
+                    {
+                        "text": " reducir errores humanos donde tienes",
+                        "start": 160.79,
+                        "duration": 6.17
+                    },
+                    {
+                        "text": " una herramienta en tu negocio que entrenada",
+                        "start": 162.55,
+                        "duration": 7.53
+                    },
+                    {
+                        "text": " correctamente deber\u00eda proporcionar consistentemente las",
+                        "start": 165.19,
+                        "duration": 6.649
+                    },
+                    {
+                        "text": " respuestas correctas si se configura adecuadamente. Quo,",
+                        "start": 167.43,
+                        "duration": 6.089
+                    },
+                    {
+                        "text": " que recientemente cambi\u00f3 de marca de Open Phone,",
+                        "start": 169.589,
+                        "duration": 5.532
+                    },
+                    {
+                        "text": " lanz\u00f3 una soluci\u00f3n llamada Sona, que",
+                        "start": 171.35,
+                        "duration": 6.569
+                    },
+                    {
+                        "text": " cae bajo la categor\u00eda de un asistente",
+                        "start": 173.35,
+                        "duration": 7.29
+                    },
+                    {
+                        "text": " telef\u00f3nico de IA. Es un agente de IA que est\u00e1",
+                        "start": 175.91,
+                        "duration": 6.25
+                    },
+                    {
+                        "text": " integrado en tu sistema telef\u00f3nico, que por s\u00ed mismo",
+                        "start": 178.07,
+                        "duration": 5.69
+                    },
+                    {
+                        "text": " tiende a ser una gran opci\u00f3n para startups y",
+                        "start": 179.99,
+                        "duration": 5.449
+                    },
+                    {
+                        "text": " peque\u00f1os negocios de servicios a domicilio. Revisa",
+                        "start": 181.83,
+                        "duration": 6.329
+                    },
+                    {
+                        "text": " nuestra revisi\u00f3n en video de su sistema aqu\u00ed.",
+                        "start": 183.589,
+                        "duration": 8.012
+                    },
+                    {
+                        "text": " Pero construyeron Sona como un",
+                        "start": 186.39,
+                        "duration": 6.889
+                    },
+                    {
+                        "text": " complemento de IA natural para aquellos que quieren",
+                        "start": 188.79,
+                        "duration": 6.729
+                    },
+                    {
+                        "text": " probar agentes de IA sin reestructurar",
+                        "start": 190.869,
+                        "duration": 7.052
+                    },
+                    {
+                        "text": " todo tu flujo de trabajo de servicio al cliente o",
+                        "start": 193.43,
+                        "duration": 5.85
+                    },
+                    {
+                        "text": " construir algo desde cero. En lugar de",
+                        "start": 195.35,
+                        "duration": 6.65
+                    },
+                    {
+                        "text": " reemplazar completamente c\u00f3mo respondes llamadas",
+                        "start": 197.35,
+                        "duration": 7.85
+                    },
+                    {
+                        "text": " hoy como otras soluciones de IA, t\u00fa",
+                        "start": 199.99,
+                        "duration": 6.889
+                    },
+                    {
+                        "text": " solo introducir\u00edas Sona donde crees",
+                        "start": 202.55,
+                        "duration": 5.209
+                    },
+                    {
+                        "text": " que la necesitas en tu flujo de trabajo. La",
+                        "start": 204.309,
+                        "duration": 4.971
+                    },
+                    {
+                        "text": " recomendaci\u00f3n que hago para la mayor\u00eda de mis",
+                        "start": 205.99,
+                        "duration": 5.928
+                    },
+                    {
+                        "text": " clientes, especialmente en la fase de inicio,",
+                        "start": 207.589,
+                        "duration": 8.411
+                    },
+                    {
+                        "text": " es simplemente reemplazar un buz\u00f3n de voz",
+                        "start": 210.309,
+                        "duration": 7.932
+                    },
+                    {
+                        "text": " y llamadas fuera de horario con Sona y ella",
+                        "start": 213.27,
+                        "duration": 6.41
+                    },
+                    {
+                        "text": " puede clasificar y redirigir autom\u00e1ticamente",
+                        "start": 215.27,
+                        "duration": 6.41
+                    },
+                    {
+                        "text": " llamadas de emergencia a One Path o responder",
+                        "start": 217.67,
+                        "duration": 5.13
+                    },
+                    {
+                        "text": " a cualquier pregunta b\u00e1sica que puedas recibir de",
+                        "start": 219.27,
+                        "duration": 5.69
+                    },
+                    {
+                        "text": " aquellos que no est\u00e1n listos para comprar y luego",
+                        "start": 221.19,
+                        "duration": 6.169
+                    },
+                    {
+                        "text": " priorizar a los clientes que est\u00e1n activamente",
+                        "start": 223.03,
+                        "duration": 7.129
+                    },
+                    {
+                        "text": " buscando servicios, incluyendo tomar",
+                        "start": 225.509,
+                        "duration": 6.251
+                    },
+                    {
+                        "text": " su informaci\u00f3n directamente en tu",
+                        "start": 227.67,
+                        "duration": 6.249
+                    },
+                    {
+                        "text": " sistema de gesti\u00f3n de servicios de campo. Entonces, \u00bfc\u00f3mo funciona?",
+                        "start": 229.589,
+                        "duration": 6.252
+                    },
+                    {
+                        "text": " Bueno, una forma es que cuando no tienes a alguien",
+                        "start": 231.99,
+                        "duration": 5.049
+                    },
+                    {
+                        "text": " disponible para responder una llamada, puede",
+                        "start": 233.43,
+                        "duration": 6.409
+                    },
+                    {
+                        "text": " saludar al llamante. Responder\u00e1 preguntas comunes que",
+                        "start": 235.589,
+                        "duration": 6.651
+                    },
+                    {
+                        "text": " t\u00fa precargas en el sistema y luego pedir\u00e1 detalles clave",
+                        "start": 237.67,
+                        "duration": 7.449
+                    },
+                    {
+                        "text": " como nombre, direcci\u00f3n, detalles del trabajo, o",
+                        "start": 240.149,
+                        "duration": 7.131
+                    },
+                    {
+                        "text": " tomar un mensaje completo y puede incluso ir tan",
+                        "start": 242.63,
+                        "duration": 6.249
+                    },
+                    {
+                        "text": " lejos como enviar un texto con un",
+                        "start": 244.789,
+                        "duration": 5.772
+                    },
+                    {
+                        "text": " enlace de programaci\u00f3n o transferirlo directamente",
+                        "start": 246.71,
+                        "duration": 5.85
+                    },
+                    {
+                        "text": " a un humano. Esos datos pueden luego ser",
+                        "start": 248.63,
+                        "duration": 5.37
+                    },
+                    {
+                        "text": " integrados en tu plataforma de gesti\u00f3n de servicios de campo",
+                        "start": 250.63,
+                        "duration": 4.65
+                    },
+                    {
+                        "text": " como su integraci\u00f3n activa con Jobber o incluso Zapier",
+                        "start": 251.99,
+                        "duration": 6.33
+                    },
+                    {
+                        "text": " si quieres conectarlo a m\u00e1s de 30,000",
+                        "start": 253.91,
+                        "duration": 6.809
+                    },
+                    {
+                        "text": " otros sistemas. As\u00ed que no tienes que escribir",
+                        "start": 256.39,
+                        "duration": 5.928
+                    },
+                    {
+                        "text": " toda esa informaci\u00f3n. Pero lo m\u00e1s",
+                        "start": 258.229,
+                        "duration": 6.251
+                    },
+                    {
+                        "text": " importante, no pierdes el rastro de",
+                        "start": 260.469,
+                        "duration": 5.612
+                    },
+                    {
+                        "text": " esos valiosos clientes potenciales. Como especialistas en software de servicios de campo, si necesitas ayuda",
+                        "start": 262.23,
+                        "duration": 6.25
+                    },
+                    {
+                        "text": " para resolver esta parte o ver si Quo",
+                        "start": 264.31,
+                        "duration": 5.85
+                    },
+                    {
+                        "text": " u otras plataformas de servicios de campo como",
+                        "start": 266.39,
+                        "duration": 5.53
+                    },
+                    {
+                        "text": " Jobber, House Pro o Service Titan son",
+                        "start": 268.07,
+                        "duration": 6.009
+                    },
+                    {
+                        "text": " adecuadas para ti y c\u00f3mo pueden trabajar",
+                        "start": 270.23,
+                        "duration": 5.689
+                    },
+                    {
+                        "text": " juntas, puedes reservar una consulta gratuita de 15 minutos",
+                        "start": 271.909,
+                        "duration": 6.171
+                    },
+                    {
+                        "text": " conmigo en el enlace en la",
+                        "start": 274.23,
+                        "duration": 4.969
+                    },
+                    {
+                        "text": " descripci\u00f3n a continuaci\u00f3n o en nuestro sitio web",
+                        "start": 275.749,
+                        "duration": 5.612
+                    },
+                    {
+                        "text": " www.rehash.te.",
+                        "start": 277.67,
+                        "duration": 5.609
+                    },
+                    {
+                        "text": " Dado que somos socios tecnol\u00f3gicos certificados",
+                        "start": 279.43,
+                        "duration": 4.73
+                    },
+                    {
+                        "text": " con Quo, ellos han proporcionado",
+                        "start": 284.87,
+                        "duration": 5.53
+                    },
+                    {
+                        "text": " a nuestros espectadores tanto una prueba gratuita como",
+                        "start": 286.71,
+                        "duration": 5.37
+                    },
+                    {
+                        "text": " un descuento si usas el enlace en la",
+                        "start": 288.55,
+                        "duration": 5.21
+                    },
+                    {
+                        "text": " descripci\u00f3n a continuaci\u00f3n. As\u00ed que puedes probarlo",
+                        "start": 290.23,
+                        "duration": 5.21
+                    },
+                    {
+                        "text": " para ver si tiene sentido para tu",
+                        "start": 292.07,
+                        "duration": 4.49
+                    },
+                    {
+                        "text": " negocio. Si tienes requisitos m\u00e1s complejos",
+                        "start": 293.59,
+                        "duration": 4.489
+                    },
+                    {
+                        "text": " o quieres alternativas y",
+                        "start": 295.03,
+                        "duration": 5.129
+                    },
+                    {
+                        "text": " comparaciones, a\u00fan puedes reservar",
+                        "start": 296.629,
+                        "duration": 6.012
+                    },
+                    {
+                        "text": " esa consulta gratuita con nosotros y podemos",
+                        "start": 298.55,
+                        "duration": 6.57
+                    },
+                    {
+                        "text": " hablar sobre tus necesidades espec\u00edficas.",
+                        "start": 300.71,
+                        "duration": 6.57
+                    },
+                    {
+                        "text": " Entonces, \u00bfcu\u00e1ndo tiene sentido usar un agente de IA",
+                        "start": 302.95,
+                        "duration": 6.09
+                    },
+                    {
+                        "text": " como este? Bueno, si tienes un",
+                        "start": 305.03,
+                        "duration": 5.77
+                    },
+                    {
+                        "text": " volumen de llamadas bastante alto y est\u00e1s",
+                        "start": 306.95,
+                        "duration": 6.009
+                    },
+                    {
+                        "text": " en una situaci\u00f3n donde ya sea que est\u00e9s solo",
+                        "start": 308.87,
+                        "duration": 6.249
+                    },
+                    {
+                        "text": " o tengas un equipo que est\u00e1 perdiendo llamadas de clientes",
+                        "start": 311.029,
+                        "duration": 6.091
+                    },
+                    {
+                        "text": " o no llevando un buen control de los",
+                        "start": 312.95,
+                        "duration": 6.569
+                    },
+                    {
+                        "text": " datos que est\u00e1s recibiendo o gastando demasiado",
+                        "start": 315.189,
+                        "duration": 6.412
+                    },
+                    {
+                        "text": " tiempo ingresando esos datos manualmente en una",
+                        "start": 317.27,
+                        "duration": 6.97
+                    },
+                    {
+                        "text": " hoja de c\u00e1lculo o tu servicio de campo o",
+                        "start": 319.51,
+                        "duration": 8.09
+                    },
+                    {
+                        "text": " CRM, entonces un agente de IA como Sona podr\u00eda ser",
+                        "start": 321.99,
+                        "duration": 8.41
+                    },
+                    {
+                        "text": " una buena opci\u00f3n en comparaci\u00f3n con contratar",
+                        "start": 325.11,
+                        "duration": 6.41
+                    },
+                    {
+                        "text": " a otro coordinador de servicio a tiempo completo o",
+                        "start": 327.27,
+                        "duration": 5.93
+                    },
+                    {
+                        "text": " en algunos casos contratar a un agente offshore",
+                        "start": 329.35,
+                        "duration": 5.53
+                    },
+                    {
+                        "text": " para responder llamadas. Solo por n\u00fameros,",
+                        "start": 331.11,
+                        "duration": 6.17
+                    },
+                    {
+                        "text": " si recibes 300 llamadas entrantes al mes y",
+                        "start": 333.11,
+                        "duration": 6.809
+                    },
+                    {
+                        "text": " pierdes el 27% a buz\u00f3n de voz, que es el",
+                        "start": 335.27,
+                        "duration": 7.449
+                    },
+                    {
+                        "text": " promedio para peque\u00f1as empresas, eso son 81",
+                        "start": 337.749,
+                        "duration": 7.292
+                    },
+                    {
+                        "text": " llamadas perdidas. Como la mayor\u00eda de ustedes saben, la velocidad",
+                        "start": 340.23,
+                        "duration": 6.09
+                    },
+                    {
+                        "text": " para captar clientes es uno de los m\u00e1s importantes",
+                        "start": 342.55,
+                        "duration": 4.649
+                    },
+                    {
+                        "text": " m\u00e9tricas en la industria de servicios a domicilio.",
+                        "start": 343.99,
+                        "duration": 4.968
+                    },
+                    {
+                        "text": " Y tu probabilidad de convertir esos",
+                        "start": 345.749,
+                        "duration": 5.45
+                    },
+                    {
+                        "text": " buzones de voz en trabajos es estad\u00edsticamente",
+                        "start": 347.189,
+                        "duration": 7.451
+                    },
+                    {
+                        "text": " m\u00e1s del 50% menos que si hubieras",
+                        "start": 349.749,
+                        "duration": 5.932
+                    },
+                    {
+                        "text": " respondido dentro de los primeros 5",
+                        "start": 352.07,
+                        "duration": 4.33
+                    },
+                    {
+                        "text": " minutos. Si un agente como Sona permite",
+                        "start": 353.35,
+                        "duration": 5.049
+                    },
+                    {
+                        "text": " que tu equipo aumente tus tasas de respuesta",
+                        "start": 355.11,
+                        "duration": 6.009
+                    },
+                    {
+                        "text": " a solo la mitad de estas con una tasa de cierre del 20%,",
+                        "start": 356.629,
+                        "duration": 8.492
+                    },
+                    {
+                        "text": " supongamos un precio promedio de ticket de 450 d\u00f3lares,",
+                        "start": 359.59,
+                        "duration": 7.609
+                    },
+                    {
+                        "text": " eso son ocho trabajos adicionales al mes o 3,600",
+                        "start": 362.15,
+                        "duration": 8.009
+                    },
+                    {
+                        "text": " en ingresos mensuales adicionales por un muy",
+                        "start": 364.629,
+                        "duration": 6.328
+                    },
+                    {
+                        "text": " bajo costo. Dicho esto, si no est\u00e1s",
+                        "start": 367.67,
+                        "duration": 5.451
+                    },
+                    {
+                        "text": " enfrentando problemas de volumen o seguimiento de llamadas,",
+                        "start": 369.909,
+                        "duration": 5.612
+                    },
+                    {
+                        "text": " entonces el inconveniente de",
+                        "start": 371.749,
+                        "duration": 6.329
+                    },
+                    {
+                        "text": " gastar tiempo gestionando una soluci\u00f3n de IA",
+                        "start": 373.51,
+                        "duration": 6.089
+                    },
+                    {
+                        "text": " probablemente no valga la pena a\u00fan y tu",
+                        "start": 377.749,
+                        "duration": 5.292
+                    },
+                    {
+                        "text": " mejor opci\u00f3n es dedicar m\u00e1s tiempo y",
+                        "start": 379.51,
+                        "duration": 5.289
+                    },
+                    {
+                        "text": " esfuerzo a mejorar tu generaci\u00f3n de clientes potenciales",
+                        "start": 381.27,
+                        "duration": 5.609
+                    },
+                    {
+                        "text": " proceso. Si ese eres t\u00fa, entonces puedes",
+                        "start": 383.029,
+                        "duration": 5.691
+                    },
+                    {
+                        "text": " consultar nuestras gu\u00edas de marketing local y SEO",
+                        "start": 385.11,
+                        "duration": 4.728
+                    },
+                    {
+                        "text": " en la descripci\u00f3n a continuaci\u00f3n o en",
+                        "start": 386.629,
+                        "duration": 6.571
+                    },
+                    {
+                        "text": " nuestro sitio web www.rehash.te\/marketing.",
+                        "start": 388.309,
+                        "duration": 8.012
+                    },
+                    {
+                        "text": " Ahora, obviamente, tienes opciones y",
+                        "start": 391.51,
+                        "duration": 5.53
+                    },
+                    {
+                        "text": " Sona no es la \u00fanica soluci\u00f3n que existe.",
+                        "start": 393.11,
+                        "duration": 6.409
+                    },
+                    {
+                        "text": " Casi todas las plataformas de servicios de campo y",
+                        "start": 395.43,
+                        "duration": 5.609
+                    },
+                    {
+                        "text": " otros proveedores de VoIP est\u00e1n comenzando a",
+                        "start": 397.189,
+                        "duration": 5.931
+                    },
+                    {
+                        "text": " introducir sus propias versiones de IA para",
+                        "start": 399.27,
+                        "duration": 5.688
+                    },
+                    {
+                        "text": " manejo de llamadas, pero la mayor\u00eda de estas son",
+                        "start": 401.029,
+                        "duration": 6.89
+                    },
+                    {
+                        "text": " complementos construidos sobre sistemas heredados.",
+                        "start": 403.189,
+                        "duration": 6.57
+                    },
+                    {
+                        "text": " Esta es la clave diferencia entre los",
+                        "start": 405.749,
+                        "duration": 4.33
+                    },
+                    {
+                        "text": " dos principales modelos de implementaci\u00f3n",
+                        "start": 407.189,
+                        "duration": 5.131
+                    },
+                    {
+                        "text": " independientemente de la plataforma, todo en uno o",
+                        "start": 408.629,
+                        "duration": 6.651
+                    },
+                    {
+                        "text": " lo mejor de su clase y la tendencia en los",
+                        "start": 410.87,
+                        "duration": 6.249
+                    },
+                    {
+                        "text": " \u00faltimos a\u00f1os debido a este tipo de",
+                        "start": 413.029,
+                        "duration": 6.572
+                    },
+                    {
+                        "text": " especializaci\u00f3n es que lo mejor de su clase ha",
+                        "start": 414.95,
+                        "duration": 7.529
+                    },
+                    {
+                        "text": " comenzado a ganar tracci\u00f3n debido a lo",
+                        "start": 417.67,
+                        "duration": 5.929
+                    },
+                    {
+                        "text": " f\u00e1cil que es ahora integrar plataformas",
+                        "start": 419.749,
+                        "duration": 5.771
+                    },
+                    {
+                        "text": " juntas. D\u00e9jame explicar. Una gran ventaja",
+                        "start": 421.51,
+                        "duration": 6.328
+                    },
+                    {
+                        "text": " de usar sistemas completamente integrados es",
+                        "start": 423.749,
+                        "duration": 5.611
+                    },
+                    {
+                        "text": " que minimiza la necesidad de tener que",
+                        "start": 425.589,
+                        "duration": 5.852
+                    },
+                    {
+                        "text": " configurar integraciones y generalmente puedes",
+                        "start": 427.51,
+                        "duration": 6.49
+                    },
+                    {
+                        "text": " obtener ventanas de datos emergentes cuando recibes",
+                        "start": 429.51,
+                        "duration": 6.81
+                    },
+                    {
+                        "text": " llamadas entrantes con solo una soluci\u00f3n de",
+                        "start": 431.99,
+                        "duration": 5.85
+                    },
+                    {
+                        "text": " tel\u00e9fono y tener m\u00e1s capacidad para",
+                        "start": 433.83,
+                        "duration": 6.33
+                    },
+                    {
+                        "text": " personalizar cu\u00e1ndo se activa realmente una soluci\u00f3n de IA.",
+                        "start": 435.99,
+                        "duration": 6.649
+                    },
+                    {
+                        "text": " Dicho esto, para aproximadamente",
+                        "start": 437.99,
+                        "duration": 7.369
+                    },
+                    {
+                        "text": " el 70% de los casos de uso que he encontrado,",
+                        "start": 440.629,
+                        "duration": 6.091
+                    },
+                    {
+                        "text": " puedes reflejar este tipo de fluidez",
+                        "start": 442.71,
+                        "duration": 6.569
+                    },
+                    {
+                        "text": " con APIs abiertas y modelos de integraci\u00f3n",
+                        "start": 444.629,
+                        "duration": 7.932
+                    },
+                    {
+                        "text": " como Zapier o make.com. En el lado opuesto,",
+                        "start": 447.35,
+                        "duration": 7.21
+                    },
+                    {
+                        "text": " la gran desventaja es que estas",
+                        "start": 449.83,
+                        "duration": 6.49
+                    },
+                    {
+                        "text": " soluciones generalmente no se desarrollan tan",
+                        "start": 452.07,
+                        "duration": 6.17
+                    },
+                    {
+                        "text": " r\u00e1pido como soluciones especializadas de VOIP y IA",
+                        "start": 454.07,
+                        "duration": 6.65
+                    },
+                    {
+                        "text": " como Quill. Generalmente cuestan m\u00e1s",
+                        "start": 456.23,
+                        "duration": 6.97
+                    },
+                    {
+                        "text": " por el mismo volumen de llamadas. Y si alguna vez",
+                        "start": 458.55,
+                        "duration": 6.73
+                    },
+                    {
+                        "text": " necesitas cambiar de soluciones, puede ser",
+                        "start": 460.87,
+                        "duration": 6.17
+                    },
+                    {
+                        "text": " m\u00e1s dif\u00edcil mover y mantener todos",
+                        "start": 462.95,
+                        "duration": 6.41
+                    },
+                    {
+                        "text": " esos datos que tu sistema recopila.",
+                        "start": 464.95,
+                        "duration": 6.81
+                    },
+                    {
+                        "text": " Esto luego pone un techo artificial en",
+                        "start": 467.35,
+                        "duration": 5.61
+                    },
+                    {
+                        "text": " tu negocio y te pone en riesgo de",
+                        "start": 469.35,
+                        "duration": 5.849
+                    },
+                    {
+                        "text": " bloqueo de proveedor si alguna vez planeas escalar",
+                        "start": 470.95,
+                        "duration": 7.689
+                    },
+                    {
+                        "text": " o crecer en el futuro. As\u00ed que, si est\u00e1s en",
+                        "start": 473.589,
+                        "duration": 6.972
+                    },
+                    {
+                        "text": " la situaci\u00f3n de estar listo para probar Sona o",
+                        "start": 475.99,
+                        "duration": 6.57
+                    },
+                    {
+                        "text": " cualquier otra soluci\u00f3n de agente de IA, aqu\u00ed hay",
+                        "start": 478.15,
+                        "duration": 5.93
+                    },
+                    {
+                        "text": " algunas mejores pr\u00e1cticas que deber\u00edas",
+                        "start": 480.39,
+                        "duration": 5.05
+                    },
+                    {
+                        "text": " seguir. Mant\u00e9n tu base de conocimiento corta",
+                        "start": 481.83,
+                        "duration": 6.41
+                    },
+                    {
+                        "text": " y espec\u00edfica. Aseg\u00farate de no escribir",
+                        "start": 483.99,
+                        "duration": 5.93
+                    },
+                    {
+                        "text": " p\u00e1rrafos enteros. Intenta mantenerlo en forma de vi\u00f1etas",
+                        "start": 486.07,
+                        "duration": 6.09
+                    },
+                    {
+                        "text": " para que la IA pueda acceder f\u00e1cilmente",
+                        "start": 487.83,
+                        "duration": 7.13
+                    },
+                    {
+                        "text": " a la informaci\u00f3n. Menos siempre es m\u00e1s cuando se",
+                        "start": 490.39,
+                        "duration": 6.089
+                    },
+                    {
+                        "text": " trata de IA. Sona en realidad hace esto un",
+                        "start": 492.39,
+                        "duration": 6.089
+                    },
+                    {
+                        "text": " poco m\u00e1s f\u00e1cil porque tienen otro modelo de IA",
+                        "start": 494.469,
+                        "duration": 5.692
+                    },
+                    {
+                        "text": " que puede optimizar tu solicitud para",
+                        "start": 496.39,
+                        "duration": 5.209
+                    },
+                    {
+                        "text": " asegurarse de que est\u00e9 estructurada correctamente",
+                        "start": 498.23,
+                        "duration": 4.649
+                    },
+                    {
+                        "text": " dentro de la plataforma. Aseg\u00farate de que",
+                        "start": 499.749,
+                        "duration": 5.051
+                    },
+                    {
+                        "text": " incluyas tus \u00e1reas de servicio, tus horas",
+                        "start": 501.35,
+                        "duration": 6.329
+                    },
+                    {
+                        "text": " de operaci\u00f3n, respuestas a las 10 preguntas principales",
+                        "start": 503.189,
+                        "duration": 6.812
+                    },
+                    {
+                        "text": " que normalmente recibes por",
+                        "start": 505.83,
+                        "duration": 5.85
+                    },
+                    {
+                        "text": " tel\u00e9fono, pol\u00edticas de despacho de emergencia, y",
+                        "start": 507.35,
+                        "duration": 7.53
+                    },
+                    {
+                        "text": " a veces incluso rangos de precios si tienes",
+                        "start": 510.15,
+                        "duration": 5.21
+                    },
+                    {
+                        "text": " precios publicados. Tambi\u00e9n hay",
+                        "start": 512.07,
+                        "duration": 4.49
+                    },
+                    {
+                        "text": " cosas a tener en cuenta al usar estas",
+                        "start": 513.43,
+                        "duration": 5.369
+                    },
+                    {
+                        "text": " soluciones. Aseg\u00farate de tener un",
+                        "start": 515.19,
+                        "duration": 6.248
+                    },
+                    {
+                        "text": " camino para escalar a un humano en cualquier",
+                        "start": 517.029,
+                        "duration": 8.411
+                    },
+                    {
+                        "text": " asunto urgente, relacionado con ancianos, seguridad, o alto",
+                        "start": 519.589,
+                        "duration": 8.332
+                    },
+                    {
+                        "text": " costo. Especialmente si tienes un servicio h\u00edbrido",
+                        "start": 522.87,
+                        "duration": 6.01
+                    },
+                    {
+                        "text": " residencial comercial, definitivamente quieres",
+                        "start": 524.63,
+                        "duration": 6.97
+                    },
+                    {
+                        "text": " tener flujos de servicio separados para ambas l\u00edneas de",
+                        "start": 527.11,
+                        "duration": 5.93
+                    },
+                    {
+                        "text": " servicio. Si est\u00e1s en la fase de prueba,",
+                        "start": 531.03,
+                        "duration": 5.929
+                    },
+                    {
+                        "text": " utiliza la prueba a continuaci\u00f3n y distribuye tus llamadas",
+                        "start": 533.03,
+                        "duration": 7.049
+                    },
+                    {
+                        "text": " 50\/50 entre Sona u otro agente de IA",
+                        "start": 534.949,
+                        "duration": 8.012
+                    },
+                    {
+                        "text": " y rastrea tus tasas de respuesta, tasas de",
+                        "start": 538.15,
+                        "duration": 5.77
+                    },
+                    {
+                        "text": " captura de clientes potenciales, tus trabajos reservados, reembolsos",
+                        "start": 539.75,
+                        "duration": 7.369
+                    },
+                    {
+                        "text": " y quejas, y costo por llamadas respondidas.",
+                        "start": 542.31,
+                        "duration": 6.889
+                    },
+                    {
+                        "text": " Compara estas llamadas lado a lado",
+                        "start": 544.55,
+                        "duration": 6.329
+                    },
+                    {
+                        "text": " con lo que est\u00e1s haciendo hoy y",
+                        "start": 546.949,
+                        "duration": 5.052
+                    },
+                    {
+                        "text": " ve si el esfuerzo vale la pena.",
+                        "start": 548.47,
+                        "duration": 5.85
+                    },
+                    {
+                        "text": " Por \u00faltimo, mant\u00e9n un registro de cu\u00e1ndo se publica este video.",
+                        "start": 550.47,
+                        "duration": 7.369
+                    },
+                    {
+                        "text": " Enero de 2026. Las soluciones de IA",
+                        "start": 552.31,
+                        "duration": 9.53
+                    },
+                    {
+                        "text": " est\u00e1n evolucionando r\u00e1pidamente mes a mes.",
+                        "start": 555.99,
+                        "duration": 5.85
+                    },
+                    {
+                        "text": " As\u00ed que, puedo ver que habr\u00e1 algunas",
+                        "start": 558.15,
+                        "duration": 4.57
+                    },
+                    {
+                        "text": " mejoras en cosas como soporte multiling\u00fce,",
+                        "start": 559.67,
+                        "duration": 5.29
+                    },
+                    {
+                        "text": " integraciones m\u00e1s profundas,",
+                        "start": 561.19,
+                        "duration": 7.05
+                    },
+                    {
+                        "text": " acceso a cotizaciones m\u00e1s inteligentes, y capacidades de",
+                        "start": 563.43,
+                        "duration": 6.89
+                    },
+                    {
+                        "text": " conversaciones m\u00e1s naturales a trav\u00e9s de todos estos",
+                        "start": 565.99,
+                        "duration": 5.69
+                    },
+                    {
+                        "text": " agentes en el futuro en solo unos pocos",
+                        "start": 567.75,
+                        "duration": 5.53
+                    },
+                    {
+                        "text": " meses. As\u00ed que, si quieres mantenerte",
+                        "start": 569.91,
+                        "duration": 4.49
+                    },
+                    {
+                        "text": " actualizado sobre lo \u00faltimo en marketing y",
+                        "start": 571.11,
+                        "duration": 5.929
+                    },
+                    {
+                        "text": " tecnolog\u00eda empresarial para servicios a domicilio como agentes de IA",
+                        "start": 573.19,
+                        "duration": 5.848
+                    },
+                    {
+                        "text": " y software, entonces definitivamente presiona",
+                        "start": 574.949,
+                        "duration": 6.731
+                    },
+                    {
+                        "text": " ese bot\u00f3n de me gusta y suscr\u00edbete o revisa",
+                        "start": 577.269,
+                        "duration": 5.692
+                    },
+                    {
+                        "text": " esta lista de reproducci\u00f3n si quieres m\u00e1s",
+                        "start": 579.35,
+                        "duration": 4.97
+                    },
+                    {
+                        "text": " ideas sobre c\u00f3mo obtener m\u00e1s clientes potenciales y hacer",
+                        "start": 580.87,
+                        "duration": 5.37
+                    },
+                    {
+                        "text": " que tu negocio sea m\u00e1s eficiente. Gracias por",
+                        "start": 582.79,
+                        "duration": 4.65
+                    },
+                    {
+                        "text": " ver. Este es Joe despidi\u00e9ndose y",
+                        "start": 584.31,
+                        "duration": 6.49
+                    },
+                    {
+                        "text": " nos vemos en el pr\u00f3ximo video",
+                        "start": 585.91,
+                        "duration": 6.57
+                    }
+                ]
+            },
+            "summary_detailed": "### Resumen\nEl video desmitifica la IA para negocios de servicios en el hogar y en el campo y presenta un camino de adopci\u00f3n de alto rendimiento y bajo riesgo. Utiliza Quo\/Sona como un estudio de caso, compara diferentes enfoques de IA y ofrece pr\u00e1cticas recomendadas pr\u00e1cticas para pruebas, integraci\u00f3n y retorno de inversi\u00f3n.\n\n### Puntos Clave\n- La IA para servicios en el hogar se divide en dos categor\u00edas pr\u00e1cticas (modelos generativos e interacciones habilitadas por voz), con casos de uso claros como respuestas r\u00e1pidas, captura de leads y manejo preciso de datos para reducir errores humanos.\n- Sona de Quo\/OpenPhone se explora como una recepcionista de IA que complementa en lugar de reemplazar los flujos de trabajo existentes, destacando la integraci\u00f3n con Jobber, Zapier y otros sistemas para la captura y enrutamiento de datos escalables.\n- Se discuten los compromisos entre soluciones de IA todo en uno versus las mejores de su clase, enfatizando la importancia de las pruebas, mantener las bases de conocimiento concisas, establecer caminos de escalaci\u00f3n y medir m\u00e9tricas (captura de leads, trabajos reservados, costo por llamada) antes de comprometerse a un despliegue completo.\n\n### An\u00e1lisis Detallado\n# Visi\u00f3n General\nEste video explica c\u00f3mo los negocios de servicios en el hogar y en el campo pueden adoptar la IA de manera de alto rendimiento y bajo riesgo. Enfatiza casos de uso pr\u00e1cticos y comprobables y aclara las diferencias entre la IA generativa general y la IA habilitada por voz para interacciones con clientes.\n\n## Categor\u00edas de IA para servicios en el hogar\n- Modelos de IA generativa (texto) y entradas\/salidas de IA de voz\n- Usos pr\u00e1cticos: respuestas r\u00e1pidas, captura de leads, calificaci\u00f3n y transferencia\n- Cuatro categor\u00edas de IA de voz: agentes de llamada de IA, respuesta humana asistida por IA, sistemas telef\u00f3nicos habilitados por IA y plataformas completamente impulsadas por IA con Jobber, Zuper, ServiceTitan, etc.\n\n## Estudio de caso: Sona de Quo\/Open Phone\n- Sona es una recepcionista de IA integrada en un sistema telef\u00f3nico, dise\u00f1ada para startups y peque\u00f1as empresas para complementar, no reemplazar, los flujos de trabajo actuales\n- Mejor uso: reemplazar el correo de voz\/fuera de horas con Sona, triage de llamadas, responder preguntas comunes, recopilar detalles y transferir a humanos cuando sea necesario\n- Se integra con Jobber o Zapier para enviar datos a sistemas de servicios en el campo; soporta m\u00e1s de 30,000 integraciones\n\n## Todo en uno vs mejores de su clase y consideraciones de proveedores\n- Los sistemas totalmente integrados simplifican la configuraci\u00f3n pero pueden limitar la flexibilidad e incurrir en costos m\u00e1s altos; transferir datos puede ser complicado\n- Las soluciones de mejores de su clase ofrecen una integraci\u00f3n m\u00e1s f\u00e1cil a trav\u00e9s de APIs abiertas (Zapier\/make.com) pero pueden requerir m\u00e1s configuraci\u00f3n\n- La portabilidad y el bloqueo del proveedor son consideraciones importantes para la escalabilidad\n\n## Mejores pr\u00e1cticas para pruebas y despliegue\n- Mantener las bases de conocimiento concisas y estructuradas para el acceso de IA\n- Definir caminos de escalaci\u00f3n para escenarios urgentes\/de alto costo\n- Realizar pruebas 50\/50, medir captura de leads, llamadas respondidas, trabajos reservados, reembolsos y costo por llamada\n- Rastrear flujos de servicio por separado para residencial vs comercial\n- Comenzar con pruebas gratuitas y consultas profesionales para adaptar a las necesidades\n\n## Perspectivas\n- Las soluciones de IA est\u00e1n evolucionando r\u00e1pidamente; se esperan mejoras en el soporte multiling\u00fce, integraciones m\u00e1s profundas, cotizaciones m\u00e1s inteligentes y conversaciones m\u00e1s naturales.\n\n**Sentimiento:** Positivo"
+        },
+        "en": {
+            "summary_detailed": "### Summary\nThe video demystifies AI for home and field service businesses and presents a high-leverage, low-risk path to adoption. It uses Quo\/Sona as a case study, compares different AI approaches, and offers practical best practices for testing, integration, and ROI.\n\n### Key Takeaways\n- AI for home services falls into two practical categories (generative models and voice-enabled interactions), with clear use cases like fast responses, lead capture, and accurate data handling to reduce human error.\n- Sona by Quo\/OpenPhone is explored as an AI receptionist that augments rather than replaces existing workflows, highlighting integration with Jobber, Zapier, and other systems for scalable data capture and routing.\n- Tradeoffs between all-in-one versus best-of-breed AI solutions are discussed, emphasizing the importance of testing, keeping knowledge bases concise, establishing escalation paths, and measuring metrics (lead capture, booked jobs, cost per call) before committing to a full rollout.\n\n### Detailed Analysis\n# Overview\nThis video explains how home service and field service businesses can adopt AI in a high-leverage, low-risk way. It emphasizes practical, testable use cases and clarifies the differences between general generative AI and voice-enabled AI for customer interactions.\n\n## AI categories for home services\n- Generative AI models (text) and voice AI inputs\/outputs\n- Practical uses: fast responses, lead capture, qualification, and handoff\n- Four buckets of voice AI: AI call agents, AI-assisted human answering, AI-enabled phone systems, and full AI-driven platforms with Jobber, Zuper, ServiceTitan, etc.\n\n## Case study: Sona by Quo\/Open Phone\n- Sona is an AI receptionist integrated into a phone system, designed for startups and small businesses to augment, not replace, current workflows\n- Best use: replace voicemail\/after-hours with Sona, triage calls, answer common questions, collect details, and transfer to humans when needed\n- Integrates with Jobber or Zapier to push data into field service systems; supports 30k+ integrations\n\n## All-in-one vs best-of-breed and vendor considerations\n- Fully integrated systems simplify setup but may limit flexibility and incur higher costs; porting data can be hard\n- Best-of-breed solutions offer easier integration via open APIs (Zapier\/make.com) but can require more setup\n- Portability and vendor lock-in are important considerations for scaling\n\n## Best practices for testing and rollout\n- Keep knowledge bases concise and structured for AI access\n- Define escalation paths for urgent\/high-ticket scenarios\n- Run 50\/50 trials, measure lead capture, calls answered, booked jobs, refunds, and cost per call\n- Track service flows separately for residential vs commercial\n- Begin with free trials and professional consultations to tailor to needs\n\n## Outlook\n- AI solutions are rapidly evolving; expect improvements in multi-language support, deeper integrations, smarter quoting, and more natural conversations.\n\n**Sentiment:** Positive"
+        }
+    }
+}

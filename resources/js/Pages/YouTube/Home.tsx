@@ -1,19 +1,45 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import FreqAskedQuestions from '@/Components/FreqAskedQuestions';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import axios from 'axios';
 
 export default function YouTubeHome({ auth, errors: propErrors, plan, user }: { auth: any, errors: any, plan: string, user: any }) {
     const isPaid = auth.user && auth.user.stripe_id;
     const [batchMode, setBatchMode] = useState(false);
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, setError } = useForm({
         urls: '',
+        include_summary: false,
     });
 
-    const submit: FormEventHandler = (e) => {
+    const submit: FormEventHandler = async (e) => {
         e.preventDefault();
-        post(route('youtube.process'));
+
+        // Count the number of URLs
+        const urlList = data.urls.split('\n').map(u => u.trim()).filter(Boolean);
+        const videoCount = batchMode ? urlList.length : 1;
+
+        try {
+            // 1. Freeze credits immediately (fast API call)
+            await axios.post(route('youtube.freeze_credits'), {
+                video_count: videoCount,
+                include_summary: data.include_summary,
+            });
+        } catch (err: any) {
+            const msg = err?.response?.data?.error ?? 'Insufficient credits.';
+            setError('urls', msg);
+            return;
+        }
+
+        // 2. Reload auth props first (to update header credit count), then submit
+        router.reload({
+            only: ['auth'],
+            onFinish: () => {
+                // 3. Now submit the main analysis form
+                post(route('youtube.process'));
+            },
+        });
     };
 
     return (
@@ -53,8 +79,23 @@ export default function YouTubeHome({ auth, errors: propErrors, plan, user }: { 
                             {/* Input Card */}
                             <div className="max-w-xl mx-auto bg-white/50 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10 p-6 shadow-2xl dark:shadow-none">
                                 <form onSubmit={submit}>
-                                    {/* Batch Mode Toggle */}
-                                    <div className="flex justify-end mb-3">
+                                    {/* Action Toggles */}
+                                    <div className="flex justify-between items-center mb-3">
+                                        {/* AI Summary Toggle */}
+                                        <label className="relative inline-flex items-center cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={data.include_summary}
+                                                onChange={(e) => setData('include_summary', e.target.checked)}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-white/10 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-500"></div>
+                                            <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                                                AI Summary <span className="text-gray-400 text-xs ml-1 font-normal">(1 credit)</span>
+                                            </span>
+                                        </label>
+
+                                        {/* Batch Mode Toggle */}
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
                                                 type="checkbox"
@@ -97,6 +138,7 @@ export default function YouTubeHome({ auth, errors: propErrors, plan, user }: { 
                                                     onChange={(e) => setData('urls', e.target.value)}
                                                     required={!batchMode}
                                                 />
+
                                                 <button
                                                     type="submit"
                                                     disabled={processing}
@@ -116,6 +158,7 @@ export default function YouTubeHome({ auth, errors: propErrors, plan, user }: { 
                                                     onChange={(e) => setData('urls', e.target.value)}
                                                     required={batchMode}
                                                 />
+
                                                 <button
                                                     type="submit"
                                                     disabled={processing}
