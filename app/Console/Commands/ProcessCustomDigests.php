@@ -26,8 +26,9 @@ class ProcessCustomDigests extends Command
         $this->info('Identifying custom digests for processing...');
 
         $now = Carbon::now();
-        $currentTime = $now->format('H:i');
-        $currentDay = strtolower($now->format('D')); // mon, tue, etc.
+        $startTime = $now->copy()->subMinutes(10)->format('H:i');
+        $endTime = $now->format('H:i');
+        $currentDay = strtolower($now->format('D'));
         
         $force = $this->option('force');
         $digestId = $this->option('digest');
@@ -37,14 +38,20 @@ class ProcessCustomDigests extends Command
         if ($digestId) {
             $query->where('id', $digestId);
         } elseif (!$force) {
-            $query->where('scheduled_at', $currentTime);
-            $query->where(function($q) use ($currentDay) {
-                $q->where('frequency', 'daily')
-                  ->orWhere(function($sub) use ($currentDay) {
-                      $sub->where('frequency', 'weekly')
-                          ->where('day_of_week', $currentDay);
+            // Check for digests scheduled within the last 10 minutes
+            // AND not run in the last 20 hours (to prevent duplicate daily runs)
+            $query->whereBetween('scheduled_at', [$startTime, $endTime])
+                  ->where(function($q) {
+                      $q->whereNull('last_run_at')
+                        ->orWhere('last_run_at', '<', Carbon::now()->subHours(20));
+                  })
+                  ->where(function($q) use ($currentDay) {
+                      $q->where('frequency', 'daily')
+                        ->orWhere(function($sub) use ($currentDay) {
+                            $sub->where('frequency', 'weekly')
+                                ->where('day_of_week', $currentDay);
+                        });
                   });
-            });
         }
 
         $digests = $query->get();
@@ -57,6 +64,7 @@ class ProcessCustomDigests extends Command
         foreach ($digests as $digest) {
             $this->info("Dispatching custom digest job: {$digest->name}");
             \App\Jobs\ProcessCustomDigestJob::dispatch($digest);
+            $digest->update(['last_run_at' => now()]);
         }
 
         $this->info('Custom Digest Jobs Dispatched.');

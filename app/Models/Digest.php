@@ -20,10 +20,12 @@ class Digest extends Model
         'mode',
         'search_term',
         'is_active',
+        'last_run_at',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'last_run_at' => 'datetime',
     ];
 
     public function user()

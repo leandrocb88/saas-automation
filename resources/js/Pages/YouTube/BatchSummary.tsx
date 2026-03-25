@@ -42,6 +42,49 @@ interface BatchSummaryProps {
     isHistoryView?: boolean;
 }
 
+const SUPPORTED_LANGUAGES = [
+    { code: 'en', label: 'English' },
+    { code: 'es', label: 'Spanish' },
+    { code: 'fr', label: 'French' },
+    { code: 'de', label: 'German' },
+    { code: 'it', label: 'Italian' },
+    { code: 'pt', label: 'Portuguese' },
+    { code: 'hi', label: 'Hindi' },
+    { code: 'ja', label: 'Japanese' },
+    { code: 'ko', label: 'Korean' },
+    { code: 'zh', label: 'Chinese' },
+];
+
+const detectLanguage = (text: string): string | null => {
+    if (!text || text.trim().length < 10) return null;
+    const sample = text.substring(0, 1000).toLowerCase();
+    
+    const scores: Record<string, number> = {
+        en: (sample.match(/\b(the|and|in|of|to|a|is|that|it|for|on)\b/g) || []).length,
+        es: (sample.match(/\b(de|la|que|el|en|y|a|los|se|del|las)\b/g) || []).length,
+        fr: (sample.match(/\b(de|la|le|et|les|des|en|un|du|une|que)\b/g) || []).length,
+        de: (sample.match(/\b(der|die|und|in|den|von|zu|das|mit|sich)\b/g) || []).length,
+        it: (sample.match(/\b(di|e|il|la|che|in|un|per|a|una|non)\b/g) || []).length,
+        pt: (sample.match(/\b(de|a|que|o|e|do|da|em|um|para|com)\b/g) || []).length,
+        zh: (sample.match(/(的|是|在|我|有|和|就|不|人|都)/g) || []).length * 2,
+        ja: (sample.match(/(の|に|は|を|た|が|で|て|と|し)/g) || []).length * 2,
+        ko: (sample.match(/(에|의|가|은|를|는|이|도|로|다)/g) || []).length * 2,
+        hi: (sample.match(/\b(है|के|में|की|और|से|को|का|एक|पर)\b/g) || []).length,
+    };
+    
+    let maxLanguage = 'en';
+    let maxScore = 0;
+    
+    for (const [langKey, score] of Object.entries(scores)) {
+        if (score > maxScore) {
+            maxScore = score;
+            maxLanguage = langKey;
+        }
+    }
+    
+    return maxScore >= 3 ? maxLanguage : null;
+};
+
 function groupTranscriptSegments(transcript: TranscriptSegment[]): TranscriptSegment[] {
     const grouped: TranscriptSegment[] = [];
     let current: TranscriptSegment | null = null;
@@ -72,7 +115,34 @@ function groupTranscriptSegments(transcript: TranscriptSegment[]): TranscriptSeg
     return grouped;
 }
 
+const getTranscriptArray = (raw: any): any[] => {
+    if (Array.isArray(raw)) return raw;
+    if (raw && typeof raw === 'object') {
+        if (Array.isArray(raw.transcript)) return raw.transcript;
+        if (Array.isArray(raw.translatedTranscript)) return raw.translatedTranscript;
+        // Handle cases where the object itself is what we want but might be mislabeled
+        const possibleArray = Object.values(raw).find(val => Array.isArray(val));
+        if (Array.isArray(possibleArray)) return possibleArray;
+    }
+    return [];
+};
+
 export default function BatchSummary({ auth, results, isHistoryView = false }: BatchSummaryProps) {
+    const originalLanguages = React.useMemo(() => {
+        const langs: Record<number, { transcript: string | null, summary: string | null }> = {};
+        results.forEach(video => {
+            if (!video.id) return;
+            const tArray = getTranscriptArray(video.transcript);
+            const tText = tArray.map(t => t.text || '').join(' ');
+            const transcriptLang = detectLanguage(tText);
+            langs[video.id] = {
+                transcript: transcriptLang,
+                summary: video.summary_detailed ? detectLanguage(video.summary_detailed) : transcriptLang
+            };
+        });
+        return langs;
+    }, [results]);
+
     const [localResults, setLocalResults] = useState<VideoResult[]>(() => {
         return results.map(video => {
             let initialTranscript = video.transcript;
@@ -238,6 +308,10 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                     pollingRefs.current = newRefs;
                 }
                 setDownloading(prev => ({ ...prev, [key]: false }));
+                if (type === 'summary' && processingId === videoId) {
+                    setProcessingId(null);
+                }
+                
                 if (type !== 'summary' && url) {
                     window.location.href = url;
                 }
@@ -245,18 +319,40 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                 if (type === 'summary' || type === 'summary_translate' || type === 'transcript_translate') {
                     // Fetch just this video's latest data to update local UI text
                     axios.get(route('youtube.show', videoId)).then(res => {
-                        if (res.data.video) {
-                            setLocalResults(prev => prev.map(v => 
-                                v.id === videoId ? { 
+                        if (res.data.results?.[0]) {
+                            const video = res.data.results[0];
+                            setLocalResults(prev => prev.map(v => {
+                                if (v.id !== videoId) return v;
+
+                                // Determine which transcript and summary to show based on user's current selection
+                                let displayTranscript = video.transcript;
+                                let displaySummary = video.summary_detailed;
+
+                                const tLang = transcriptLanguages[videoId];
+                                if (tLang && video.translations?.[tLang]) {
+                                    const trans = video.translations[tLang];
+                                    if (Array.isArray(trans.transcript)) {
+                                        displayTranscript = trans.transcript;
+                                    } else if (trans.transcript && typeof trans.transcript === 'object') {
+                                        displayTranscript = trans.transcript.transcript || trans.transcript.translatedTranscript || trans.transcript;
+                                    }
+                                }
+
+                                const sLang = summaryLanguages[videoId];
+                                if (sLang && video.translations?.[sLang]?.summary_detailed) {
+                                    displaySummary = video.translations[sLang].summary_detailed;
+                                }
+
+                                return { 
                                     ...v, 
-                                    summary: res.data.video.summary, 
-                                    summary_detailed: res.data.video.summary_detailed, 
-                                    summary_status: type === 'summary' ? 'completed' : v.summary_status,
-                                    transcript: type === 'transcript_translate' ? res.data.video.transcript : v.transcript,
-                                    summary_translate_status: type === 'summary_translate' ? 'completed' : v.summary_translate_status,
-                                    transcript_translate_status: type === 'transcript_translate' ? 'completed' : v.transcript_translate_status
-                                } : v
-                            ));
+                                    ...video,
+                                    transcript: displayTranscript,
+                                    summary_detailed: displaySummary,
+                                    summary_status: type === 'summary' ? 'completed' : video.summary_status,
+                                    summary_translate_status: type === 'summary_translate' ? 'completed' : video.summary_translate_status,
+                                    transcript_translate_status: type === 'transcript_translate' ? 'completed' : video.transcript_translate_status
+                                };
+                            }));
                         }
                     });
                 } else {
@@ -272,6 +368,9 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                     pollingRefs.current = newRefs;
                 }
                 setDownloading(prev => ({ ...prev, [key]: false }));
+                if (type === 'summary' && processingId === videoId) {
+                    setProcessingId(null);
+                }
                 alert(`Generation of ${type.toUpperCase()} failed.`);
             }
         } catch (error) {
@@ -311,7 +410,34 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
     };
 
 
-    const handleTranslate = async (videoId: number, language: string) => {
+    const handleTranslate = async (videoId: number, language: string, originalLang?: string) => {
+        const currentLang = transcriptLanguages[videoId] || originalLang;
+        
+        if (language === currentLang) {
+            return;
+        }
+
+        if (originalLang && language === originalLang) {
+            // Revert to original
+            const originalVideo = results.find(v => v.id === videoId);
+            if (originalVideo) {
+                setLocalResults(prev => prev.map(v => 
+                    v.id === videoId ? { 
+                        ...v, 
+                        transcript: originalVideo.transcript,
+                        transcript_translate_status: 'completed'
+                    } : v
+                ));
+                // Clear the override so it shows as original
+                setTranscriptLanguages(prev => {
+                    const next = { ...prev };
+                    delete next[videoId];
+                    return next;
+                });
+                return;
+            }
+        }
+        
         console.log(`Starting translation for video ${videoId} to ${language}`);
         setGenerationError(null);
         setTranscriptLanguages(prev => ({ ...prev, [videoId]: language }));
@@ -344,7 +470,34 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
         }
     };
 
-    const handleTranslateSummary = async (videoId: number, language: string) => {
+    const handleTranslateSummary = async (videoId: number, language: string, originalLang?: string) => {
+        const currentLang = summaryLanguages[videoId] || originalLang;
+        
+        if (language === currentLang) {
+            return;
+        }
+
+        if (originalLang && language === originalLang) {
+            // Revert to original
+            const originalVideo = results.find(v => v.id === videoId);
+            if (originalVideo) {
+                setLocalResults(prev => prev.map(v => 
+                    v.id === videoId ? { 
+                        ...v, 
+                        summary_detailed: originalVideo.summary_detailed,
+                        summary_translate_status: 'completed'
+                    } : v
+                ));
+                // Clear the override
+                setSummaryLanguages(prev => {
+                    const next = { ...prev };
+                    delete next[videoId];
+                    return next;
+                });
+                return;
+            }
+        }
+
         console.log(`Starting summary translation for video ${videoId} to ${language}`);
         setGenerationError(null);
         setSummaryLanguages(prev => ({ ...prev, [videoId]: language }));
@@ -533,21 +686,10 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                             const hasNoTranscript = !video.transcript || (Array.isArray(video.transcript) && video.transcript.length === 0);
                             return !(isGenericTitle && hasNoTranscript);
                         }).map((video, index) => {
-                            // Helper to extract transcript array from potentially nested structures
-                            const getTranscriptArray = (raw: any): any[] => {
-                                if (Array.isArray(raw)) return raw;
-                                if (raw && typeof raw === 'object') {
-                                    if (Array.isArray(raw.transcript)) return raw.transcript;
-                                    if (Array.isArray(raw.translatedTranscript)) return raw.translatedTranscript;
-                                    // Handle cases where the object itself is what we want but might be mislabeled
-                                    const possibleArray = Object.values(raw).find(val => Array.isArray(val));
-                                    if (Array.isArray(possibleArray)) return possibleArray;
-                                }
-                                return [];
-                            };
-
                             const transcriptArray = getTranscriptArray(video.transcript);
                             const fullText = transcriptArray.map(t => t.text || '').join(' ');
+                            const detectedTranscriptLang = originalLanguages[video.id!]?.transcript;
+                            const detectedSummaryLang = video.summary_detailed ? originalLanguages[video.id!]?.summary : detectedTranscriptLang;
                             const displaySegments = groupTranscriptSegments(transcriptArray);
                             const isExpanded = expandedIndex === index;
 
@@ -721,21 +863,24 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                     <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">Translate:</span>
                                                                     <select 
                                                                         className="bg-transparent border-0 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 focus:ring-0 p-0 cursor-pointer"
-                                                                        onChange={(e) => handleTranslate(video.id!, e.target.value)}
+                                                                        onChange={(e) => handleTranslate(video.id!, e.target.value, detectedTranscriptLang || undefined)}
                                                                         disabled={video.transcript_translate_status === 'processing'}
-                                                                        value={transcriptLanguages[video.id!] || ""}
+                                                                        value={transcriptLanguages[video.id!] || (detectedTranscriptLang || "")}
                                                                     >
                                                                         <option value="" disabled>Choose...</option>
-                                                                        <option value="en">English</option>
-                                                                        <option value="es">Spanish</option>
-                                                                        <option value="fr">French</option>
-                                                                        <option value="de">German</option>
-                                                                        <option value="it">Italian</option>
-                                                                        <option value="pt">Portuguese</option>
-                                                                        <option value="hi">Hindi</option>
-                                                                        <option value="ja">Japanese</option>
-                                                                        <option value="ko">Korean</option>
-                                                                        <option value="zh">Chinese</option>
+                                                                        {SUPPORTED_LANGUAGES.map(l => {
+                                                                            const isCurrent = (transcriptLanguages[video.id!] || detectedTranscriptLang) === l.code;
+                                                                            const isOriginal = detectedTranscriptLang === l.code;
+                                                                            return (
+                                                                                <option 
+                                                                                    key={l.code} 
+                                                                                    value={l.code} 
+                                                                                    disabled={isCurrent}
+                                                                                >
+                                                                                    {isOriginal ? `${l.label} (Original)` : l.label}
+                                                                                </option>
+                                                                            );
+                                                                        })}
                                                                     </select>
                                                                     {video.transcript_translate_status === 'processing' && (
                                                                         <svg className="animate-spin h-3 w-3 text-indigo-500 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -912,21 +1057,24 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                             <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500 uppercase">Translate:</span>
                                                                             <select 
                                                                                 className="bg-transparent border-0 text-[11px] font-bold text-indigo-600 dark:text-indigo-300 focus:ring-0 p-0 cursor-pointer"
-                                                                                onChange={(e) => handleTranslateSummary(video.id!, e.target.value)}
+                                                                                onChange={(e) => handleTranslateSummary(video.id!, e.target.value, detectedSummaryLang || undefined)}
                                                                                 disabled={video.summary_translate_status === 'processing'}
-                                                                                value={summaryLanguages[video.id!] || ""}
+                                                                                value={summaryLanguages[video.id!] || (detectedSummaryLang || "")}
                                                                             >
                                                                                 <option value="" disabled>Choose...</option>
-                                                                                <option value="en">English</option>
-                                                                                <option value="es">Spanish</option>
-                                                                                <option value="fr">French</option>
-                                                                                <option value="de">German</option>
-                                                                                <option value="it">Italian</option>
-                                                                                <option value="pt">Portuguese</option>
-                                                                                <option value="hi">Hindi</option>
-                                                                                <option value="ja">Japanese</option>
-                                                                                <option value="ko">Korean</option>
-                                                                                <option value="zh">Chinese</option>
+                                                                                {SUPPORTED_LANGUAGES.map(l => {
+                                                                                    const isCurrent = (summaryLanguages[video.id!] || detectedSummaryLang) === l.code;
+                                                                                    const isOriginal = detectedSummaryLang === l.code;
+                                                                                    return (
+                                                                                        <option 
+                                                                                            key={l.code} 
+                                                                                            value={l.code} 
+                                                                                            disabled={isCurrent}
+                                                                                        >
+                                                                                            {isOriginal ? `${l.label} (Original)` : l.label}
+                                                                                        </option>
+                                                                                    );
+                                                                                })}
                                                                             </select>
                                                                             {video.summary_translate_status === 'processing' && (
                                                                                 <svg className="animate-spin h-3 w-3 text-indigo-500 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -1152,7 +1300,8 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                     </div>
                                                                 )
                                                             )
-                                                        )}
+                                                        )
+                                                    }
                                                     </div>
                                                 </div>
                                             </div>

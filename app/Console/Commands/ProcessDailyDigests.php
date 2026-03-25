@@ -30,9 +30,13 @@ class ProcessDailyDigests extends Command
         if ($userId) {
             $query->where('user_id', $userId);
         } elseif (!$force) {
-            // Match digests scheduled for the current hour
+            // Match digests scheduled for the current hour AND not run in the last 20 hours
             $query->where('frequency', 'daily')
-                  ->where('scheduled_at', 'like', substr($currentHour, 0, 2) . ':%');
+                  ->where('scheduled_at', 'like', substr($currentHour, 0, 2) . ':%')
+                  ->where(function($q) {
+                      $q->whereNull('last_run_at')
+                        ->orWhere('last_run_at', '<', Carbon::now()->subHours(20));
+                  });
         }
 
         $digests = $query->get();
@@ -56,6 +60,7 @@ class ProcessDailyDigests extends Command
 
             $this->info("Dispatching custom digest job for digest #{$digest->id} (User: {$digest->user->email})");
             \App\Jobs\ProcessCustomDigestJob::dispatch($digest, $options);
+            $digest->update(['last_run_at' => now()]);
         }
 
         $this->info('Digest Jobs Dispatched.');
