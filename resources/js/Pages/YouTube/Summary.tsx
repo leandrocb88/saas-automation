@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
+import { formatLocalDate } from '@/utils/date';
 
 interface TranscriptItem {
     text: string;
@@ -19,9 +20,10 @@ interface SummaryProps {
         limit: number;
         is_guest?: boolean;
     };
+    published_at?: string;
 }
 
-export default function Summary({ auth, videoUrl, transcript, hasSummary, includeTimestamps, usage }: SummaryProps) {
+export default function Summary({ auth, videoUrl, transcript, hasSummary, includeTimestamps, usage, published_at }: SummaryProps) {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async () => {
@@ -98,6 +100,14 @@ export default function Summary({ auth, videoUrl, transcript, hasSummary, includ
                                 <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-emerald-300/80 hover:text-emerald-200 truncate block max-w-lg transition-colors">
                                     {videoUrl}
                                 </a>
+                                {published_at && (
+                                    <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-emerald-300/60">
+                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        Published: {formatLocalDate(published_at)}
+                                    </div>
+                                )}
                             </div>
                             <Link href={route('youtube.home')} className="flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 ring-1 ring-white/10 hover:ring-white/20 transition-all">
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

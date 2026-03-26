@@ -18,7 +18,15 @@ use Carbon\Carbon;
 
 class ProcessCustomDigests extends Command
 {
-    protected $signature = 'app:process-custom-digests {--force : Run immediately for all active digests} {--digest= : Process specific digest ID}';
+    protected $signature = 'app:process-custom-digests 
+                            {--force : Run immediately for all active digests} 
+                            {--digest= : Process specific digest ID}
+                            {--limit= : Total max videos to fetch across all channels}
+                            {--sort= : Sort order (newest, oldest, relevance)}
+                            {--days-back= : Number of days to look back}
+                            {--include-summary= : Whether to include AI Summaries}
+                            {--sync : Run synchronously instead of queueing}
+                            {--bypass-quota : Bypass credit check for testing}';
     protected $description = 'Process and send custom email digests.';
 
     public function handle()
@@ -70,9 +78,33 @@ class ProcessCustomDigests extends Command
             return;
         }
 
+        $includeSummaryOverride = $this->option('include-summary');
+
         foreach ($toProcess as $digest) {
-            $this->info("Dispatching custom digest job: {$digest->name}");
-            \App\Jobs\ProcessCustomDigestJob::dispatch($digest);
+            $options = [
+                'limit'    => $this->option('limit'),
+                'sort'     => $this->option('sort'),
+                'days_back' => $this->option('days-back') ?? 1,
+                'include_summary' => $includeSummaryOverride !== null
+                    ? filter_var($includeSummaryOverride, FILTER_VALIDATE_BOOLEAN)
+                    : true,
+                'bypass_quota' => $this->option('bypass-quota'),
+            ];
+
+            $this->info("--------------------------------------------------");
+            $this->info("Processing Digest #{$digest->id}: {$digest->name}");
+            $this->info("User: {$digest->user->email}");
+            $this->info("Options: " . json_encode($options));
+
+            if ($this->option('sync')) {
+                $this->info("Running synchronously...");
+                \App\Jobs\ProcessCustomDigestJob::dispatchSync($digest, $options);
+                $this->info("SUCCESS: Digest #{$digest->id} processed.");
+            } else {
+                \App\Jobs\ProcessCustomDigestJob::dispatch($digest, $options);
+                $this->info("QUEUED: Digest job dispatched to background.");
+            }
+
             $digest->update(['last_run_at' => now()]);
         }
 

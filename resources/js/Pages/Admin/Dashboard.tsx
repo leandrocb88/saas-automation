@@ -9,6 +9,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import DangerButton from '@/Components/DangerButton';
 import Toggle from '@/Components/Toggle';
+import { formatLocalDate } from '@/utils/date';
 
 interface User {
     id: number;
@@ -270,7 +271,7 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {new Date(user.created_at).toLocaleDateString()}
+                                                {formatLocalDate(user.created_at)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${user.is_blocked ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}>

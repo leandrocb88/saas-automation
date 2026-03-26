@@ -22,11 +22,13 @@ class Digest extends Model
         'is_active',
         'last_run_at',
         'timezone',
+        'video_types',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'last_run_at' => 'datetime',
+        'video_types' => 'array',
     ];
 
     public function user()

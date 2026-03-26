@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { formatLocalDateTime } from '@/utils/date';
 
 interface DigestRun {
     id: number;
@@ -41,15 +42,6 @@ export default function Show({ auth, digest, runs }: Props) {
         return `${minutes}m`;
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString(undefined, {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
 
     const [downloading, setDownloading] = useState<Record<string, boolean>>({});
     const pollingRefs = useRef<Record<string, NodeJS.Timeout>>({});
@@ -200,7 +192,7 @@ export default function Show({ auth, digest, runs }: Props) {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-3 mb-1">
                                                     <h4 className="text-base font-bold text-gray-900 dark:text-white truncate">
-                                                        {formatDate(run.created_at)}
+                                                        {formatLocalDateTime(run.created_at)}
                                                     </h4>
                                                     {run.completed_at ? (
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">

@@ -726,8 +726,8 @@ class YouTubeController extends Controller
                     'title' => $video->title,
                     'channel' => $video->channel_title,
                     'thumbnail' => $thumbnail,
-                    'date' => ($video->published_at ?? $video->created_at)->format('M d, Y'),
-                    'published_at' => $video->published_at ? $video->published_at->format('M j, Y') : null,
+                    'date' => $video->created_at->toIso8601String(),
+                    'published_at' => $video->published_at ? $video->published_at->toIso8601String() : null,
                     'duration_timestamp' => $this->formatDurationTimestamp($video->duration ?? 0),
                      // 'relative_date' => $video->created_at->diffForHumans(),
                 ];
@@ -882,7 +882,14 @@ class YouTubeController extends Controller
             'thumbnail' => $thumbnail ?? '',
             'transcript' => $transcript,
             'duration' => $duration,
-            'published_at' => $this->parseDate($videoData['publishedDate'] ?? $videoData['date'] ?? $videoData['published_at'] ?? null),
+            'published_at' => $this->parseDate(
+                $videoData['publishedTimeText'] ??
+                $videoData['publishedAt'] ??
+                $videoData['publishedDate'] ??
+                $videoData['date'] ??
+                $videoData['published_at'] ??
+                null
+            ),
         ];
     }
 
@@ -893,7 +900,10 @@ class YouTubeController extends Controller
         }
 
         try {
-            return Carbon::parse($dateString);
+            // Convert to UTC so the stored value is timezone-aware.
+            // Without this, Carbon strips the offset (e.g. -07:00) and stores
+            // the raw local time as if it were UTC, shifting the displayed date.
+            return Carbon::parse($dateString)->utc();
         } catch (\Exception $e) {
             return null;
         }
@@ -975,7 +985,7 @@ class YouTubeController extends Controller
             'summary_status' => $video->summary_status,
             'channel_title' => $video->channel_title,
             'duration' => $this->formatDuration($video->duration ?? 0),
-            'published_at' => $video->published_at ? $video->published_at->format('M j, Y') : null,
+            'published_at' => $video->published_at ? $video->published_at->toIso8601String() : null,
             'transcript_read_time' => $transcriptReadTime,
             'summary_read_time' => $summaryReadTime,
             'duration_timestamp' => $this->formatDurationTimestamp($video->duration ?? 0),

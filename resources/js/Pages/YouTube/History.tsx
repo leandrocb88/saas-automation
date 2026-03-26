@@ -4,6 +4,7 @@ import Select from '@/Components/Select';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, useEffect, useCallback } from 'react';
 import ConfirmationModal from '@/Components/ConfirmationModal';
+import { formatLocalDate } from '@/utils/date';
 
 interface Video {
     id: number;
@@ -349,10 +350,18 @@ export default function History({ auth, videos, canViewHistory, retentionDays, q
                                             )}
                                         </div>
 
-                                        <div className="mt-auto pt-4 flex flex-col gap-4 border-t border-gray-100 dark:border-gray-700/50">
+                                        <div className="mt-auto pt-4 flex flex-col gap-2 border-t border-gray-100 dark:border-gray-700/50">
+                                            {video.published_at && (
+                                                <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    Published: {formatLocalDate(video.published_at)}
+                                                </div>
+                                            )}
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
-                                                    {video.date}
+                                                    Added: {formatLocalDate(video.date)}
                                                 </span>
                                             </div>
                                             <Link

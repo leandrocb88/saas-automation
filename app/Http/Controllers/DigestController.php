@@ -40,6 +40,8 @@ class DigestController extends Controller
             'custom_prompt' => 'nullable|string',
             'global_summary_prompt' => 'nullable|string',
             'timezone' => 'required|string|timezone',
+            'video_types' => 'nullable|array',
+            'video_types.*' => 'in:videos,shorts,streams',
         ]);
 
         $digest = Auth::user()->digests()->create([
@@ -52,6 +54,7 @@ class DigestController extends Controller
             'custom_prompt' => $validated['custom_prompt'],
             'global_summary_prompt' => $validated['global_summary_prompt'],
             'timezone' => $validated['timezone'] ?? 'UTC',
+            'video_types' => !empty($validated['video_types']) ? $validated['video_types'] : ['videos'],
             'is_active' => true,
         ]);
 
@@ -106,6 +109,8 @@ class DigestController extends Controller
             'global_summary_prompt' => 'nullable|string',
             'is_active' => 'boolean',
             'timezone' => 'required|string|timezone',
+            'video_types' => 'nullable|array',
+            'video_types.*' => 'in:videos,shorts,streams',
         ]);
 
         $digest->update([
@@ -119,6 +124,7 @@ class DigestController extends Controller
             'global_summary_prompt' => $validated['global_summary_prompt'],
             'is_active' => $validated['is_active'] ?? $digest->is_active,
             'timezone' => $validated['timezone'] ?? $digest->timezone,
+            'video_types' => !empty($validated['video_types']) ? $validated['video_types'] : ['videos'],
         ]);
 
         if (isset($validated['channel_ids'])) {

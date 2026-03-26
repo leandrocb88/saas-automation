@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import Dropdown from '@/Components/Dropdown';
+import { formatLocalDate } from '@/utils/date';
 
 interface TranscriptSegment {
     text: string;
@@ -742,7 +743,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                             </svg>
-                                                            {video.published_at}
+                                                            Published: {formatLocalDate(video.published_at)}
                                                         </div>
                                                     )}
                                                     {video.transcript_read_time && (

@@ -14,7 +14,9 @@ class ProcessDailyDigests extends Command
                             {--limit= : Total max videos to fetch across all channels}
                             {--sort= : Sort order (newest, oldest, relevance)}
                             {--days-back= : Number of days to look back}
-                            {--include-summary= : Whether to include AI Summaries}';
+                            {--include-summary= : Whether to include AI Summaries}
+                            {--sync : Run synchronously instead of queueing}
+                            {--bypass-quota : Bypass credit check for testing}';
     protected $description = 'Process and send daily email digests for all active custom Digests.';
 
     public function handle()
@@ -61,10 +63,24 @@ class ProcessDailyDigests extends Command
                 'include_summary' => $includeSummaryOverride !== null
                     ? filter_var($includeSummaryOverride, FILTER_VALIDATE_BOOLEAN)
                     : true,
+                'bypass_quota' => $this->option('bypass-quota'),
             ];
 
-            $this->info("Dispatching custom digest job for digest #{$digest->id} (User: {$digest->user->email})");
-            \App\Jobs\ProcessCustomDigestJob::dispatch($digest, $options);
+            $this->info("--------------------------------------------------");
+            $this->info("Processing Digest #{$digest->id}: {$digest->name}");
+            $this->info("User: {$digest->user->email}");
+            $this->info("Timezone: " . ($digest->timezone ?? 'UTC'));
+            $this->info("Options: " . json_encode($options));
+
+            if ($this->option('sync')) {
+                $this->info("Running synchronously...");
+                \App\Jobs\ProcessCustomDigestJob::dispatchSync($digest, $options);
+                $this->info("SUCCESS: Digest #{$digest->id} processed.");
+            } else {
+                \App\Jobs\ProcessCustomDigestJob::dispatch($digest, $options);
+                $this->info("QUEUED: Digest job dispatched to background.");
+            }
+
             $digest->update(['last_run_at' => now()]);
         }
 

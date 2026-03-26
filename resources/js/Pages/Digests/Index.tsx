@@ -1,6 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react'; // Use router from @inertiajs/react
 import { PageProps } from '@/types';
+import ConfirmationModal from '@/Components/ConfirmationModal';
+import { useState } from 'react';
 
 interface Digest {
     id: number;
@@ -23,9 +25,19 @@ interface Props extends PageProps {
 }
 
 export default function Index({ auth, digests, flash }: Props) {
+    const [confirmingDigestDeletion, setConfirmingDigestDeletion] = useState(false);
+    const [digestToDelete, setDigestToDelete] = useState<number | null>(null);
+
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this digest?')) {
-            router.delete(route('digests.destroy', id));
+        setDigestToDelete(id);
+        setConfirmingDigestDeletion(true);
+    };
+
+    const confirmDelete = () => {
+        if (digestToDelete) {
+            router.delete(route('digests.destroy', digestToDelete), {
+                onSuccess: () => setConfirmingDigestDeletion(false),
+            });
         }
     };
 
@@ -193,6 +205,15 @@ export default function Index({ auth, digests, flash }: Props) {
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal
+                show={confirmingDigestDeletion}
+                onClose={() => setConfirmingDigestDeletion(false)}
+                onConfirm={confirmDelete}
+                title="Delete Digest"
+                content="Are you sure you want to delete this digest? This action cannot be undone."
+                confirmText="Delete"
+            />
         </AuthenticatedLayout>
     );
 }

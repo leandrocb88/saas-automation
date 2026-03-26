@@ -27,6 +27,7 @@ interface Digest {
     global_summary_prompt: string | null;
     is_active: boolean;
     timezone: string;
+    video_types: string[] | null;
     channels: Channel[];
 }
 
@@ -48,6 +49,7 @@ export default function Edit({ auth, digest, availableChannels }: Props) {
         global_summary_prompt: digest.global_summary_prompt || '',
         is_active: digest.is_active,
         timezone: digest.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        video_types: digest.video_types ?? ['videos'],
     });
 
     const submit: FormEventHandler = (e) => {
@@ -213,6 +215,56 @@ export default function Edit({ auth, digest, availableChannels }: Props) {
                                     <InputError className="mt-2" message={errors.search_term} />
                                 </div>
                             )}
+
+                            {/* Video Content Types */}
+                            <div>
+                                <InputLabel value="Content Types" className="text-gray-700 dark:text-gray-300 font-medium ml-1" />
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 ml-1 mb-3">Choose which types of content to fetch from channels.</p>
+                                <div className="flex flex-wrap gap-3">
+                                    {([
+                                        { value: 'videos', label: 'Videos', icon: '🎬' },
+                                        { value: 'shorts', label: 'Shorts', icon: '⚡' },
+                                        { value: 'streams', label: 'Live Streams', icon: '🔴' },
+                                    ] as const).map(({ value, label, icon }) => {
+                                        const checked = (data.video_types ?? ['videos']).includes(value);
+                                        return (
+                                            <label
+                                                key={value}
+                                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all select-none ${
+                                                    checked
+                                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                                                    : 'border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/40 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only"
+                                                    checked={checked}
+                                                    onChange={() => {
+                                                        const current = new Set(data.video_types ?? ['videos']);
+                                                        if (current.has(value)) {
+                                                            current.delete(value);
+                                                        } else {
+                                                            current.add(value);
+                                                        }
+                                                        setData('video_types', Array.from(current));
+                                                    }}
+                                                />
+                                                <span className="text-base">{icon}</span>
+                                                <span className="text-sm font-semibold">{label}</span>
+                                                {checked && (
+                                                    <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                {(data.video_types ?? ['videos']).length === 0 && (
+                                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 ml-1">⚠️ Select at least one content type.</p>
+                                )}
+                            </div>
 
                             {data.mode !== 'search_term' && (
                                 <div className="animate-in fade-in slide-in-from-top-2 duration-300">
