@@ -72,6 +72,15 @@ export default function Index({ auth, digests, flash }: Props) {
                         </div>
                         <div className="flex items-stretch gap-3">
                             <Link
+                                href={route('digest_runs.index')}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/50 dark:bg-white/10 hover:bg-white/80 dark:hover:bg-white/20 backdrop-blur-sm border border-gray-200/50 dark:border-white/10 text-gray-900 dark:text-white px-6 py-3 text-sm font-semibold shadow-sm transition-all hover:shadow-md active:scale-95"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                All History
+                            </Link>
+                            <Link
                                 href={route('digests.create')}
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-500 dark:hover:bg-indigo-400 text-white px-6 py-3 text-sm font-semibold shadow-sm transition-all hover:shadow-md active:scale-95"
                             >
@@ -179,7 +188,7 @@ export default function Index({ auth, digests, flash }: Props) {
                                 </div>
                                 <div className="border-t border-gray-100 dark:border-gray-700/50 bg-gray-50/80 dark:bg-gray-800/80 px-4 py-4 flex gap-2">
                                     <Link
-                                        href={route('digests.show', digest.id)}
+                                        href={route('digest_runs.index', { digest_id: digest.id })}
                                         className="flex-1 text-center py-2.5 rounded-xl text-sm font-semibold text-indigo-600 dark:text-white bg-indigo-50 dark:bg-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-500 transition-colors shadow-sm"
                                     >
                                         History

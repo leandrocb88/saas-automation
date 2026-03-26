@@ -761,6 +761,31 @@ class YouTubeController extends Controller
         ]);
     }
 
+    public function digestShow(Request $request, string $token)
+    {
+        $videos = Video::with('user')->where('share_token', $token)
+            ->oldest('id')
+            ->get();
+
+        if ($videos->isEmpty()) {
+            // Check if it exists in runs
+            $runExists = \App\Models\DigestRun::where('batch_id', $token)->exists();
+            if ($runExists) {
+                return Inertia::render('YouTube/BatchSummary', [
+                    'results' => [],
+                    'isHistoryView' => false,
+                    'error' => 'Videos for this digest run are still being processed or were not found.'
+                ]);
+            }
+            abort(404, 'Digest results not found.');
+        }
+
+        return Inertia::render('YouTube/BatchSummary', [
+            'results' => $videos->map(fn($v) => $this->formatVideoForView($v)),
+            'isHistoryView' => false,
+        ]);
+    }
+
     public function generateSummary(Request $request, Video $video)
     {
         $user = $request->user();

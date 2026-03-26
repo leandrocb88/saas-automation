@@ -111,6 +111,12 @@ export default function Authenticated({
                                 >
                                     My Digests
                                 </NavLink>
+                                <NavLink
+                                    href={route('digest_runs.index')}
+                                    active={route().current('digest_runs.*')}
+                                >
+                                    Digest History
+                                </NavLink>
 
                                 <NavLink
                                     href={route('plans')}
@@ -305,6 +311,12 @@ export default function Authenticated({
                             active={route().current('digests.*')}
                         >
                             My Digests
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('digest_runs.index')}
+                            active={route().current('digest_runs.*')}
+                        >
+                            Digest History
                         </ResponsiveNavLink>
 
                         <ResponsiveNavLink

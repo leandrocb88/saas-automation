@@ -10,6 +10,22 @@ use Illuminate\Support\Facades\Storage;
 
 class DigestRunController extends Controller
 {
+    public function index(Request $request)
+    {
+        $query = Auth::user()->digestRuns()->with('digest')->latest();
+
+        if ($request->has('digest_id')) {
+            $query->where('digest_id', $request->digest_id);
+        }
+
+        $runs = $query->paginate(20);
+
+        return \Inertia\Inertia::render('DigestRuns/Index', [
+            'runs' => $runs,
+            'digestId' => $request->digest_id,
+        ]);
+    }
+
     public function downloadPdf(DigestRun $digestRun)
     {
         if ($digestRun->user_id !== Auth::id()) abort(403);

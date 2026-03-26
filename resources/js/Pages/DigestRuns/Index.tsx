@@ -10,11 +10,12 @@ interface DigestRun {
     created_at: string;
     summary_count: number;
     total_duration: number;
+    batch_id: string;
     pdf_path: string | null;
     audio_path: string | null;
     completed_at: string | null;
-    pdf_status: 'pending' | 'processing' | 'completed' | 'failed';
     audio_status: 'pending' | 'processing' | 'completed' | 'failed';
+    digest?: Digest;
 }
 
 interface Digest {
@@ -29,11 +30,15 @@ interface Digest {
 }
 
 interface Props extends PageProps {
-    digest: Digest;
-    runs: DigestRun[];
+    runs: {
+        data: DigestRun[];
+        links: { url: string | null; label: string; active: boolean }[];
+        total: number;
+    };
+    digestId?: string;
 }
 
-export default function Show({ auth, digest, runs }: Props) {
+export default function Index({ auth, runs, digestId }: Props) {
     const formatDuration = (seconds: number) => {
         if (seconds < 60) return `${seconds}s`;
         const hours = Math.floor(seconds / 3600);
@@ -113,7 +118,7 @@ export default function Show({ auth, digest, runs }: Props) {
 
     return (
         <AuthenticatedLayout>
-            <Head title={`Digest: ${digest.name}`} />
+            <Head title="Digest History" />
 
             {/* Hero Header */}
             <div className="relative bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-indigo-900 dark:via-purple-900 dark:to-indigo-900 overflow-hidden">
@@ -133,23 +138,11 @@ export default function Show({ auth, digest, runs }: Props) {
                             </Link>
 
                             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
-                                {digest.name}
+                                Digest History {digestId && '(Filtered)'}
                             </h1>
                             <p className="mt-2 text-indigo-900 dark:text-indigo-100 text-lg max-w-xl">
-                                Run history and generated summaries for this automatic digest.
+                                Detailed history of your automated digest runs and their generated content.
                             </p>
-                        </div>
-                        <div className="flex items-stretch gap-3">
-                            <Link
-                                href={route('digests.edit', digest.id)}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 text-gray-900 dark:text-white px-6 py-3 text-sm font-semibold shadow-sm transition-all hover:shadow-md active:scale-95"
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                Edit Settings
-                            </Link>
                         </div>
                     </div>
                 </div>
@@ -161,11 +154,11 @@ export default function Show({ auth, digest, runs }: Props) {
                         <div className="flex items-center justify-between mb-8">
                             <h3 className="text-xl font-bold text-gray-900 dark:text-white">Run History</h3>
                             <div className="text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-4 py-1.5 rounded-full border border-gray-100 dark:border-gray-700 shadow-sm">
-                                Total runs: {runs.length}
+                                Total runs: {runs.total}
                             </div>
                         </div>
 
-                        {runs.length === 0 ? (
+                        {runs.data.length === 0 ? (
                             <div className="rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-12 text-center bg-gray-50/50 dark:bg-gray-800/30">
                                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/20 shadow-inner">
                                     <svg className="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -174,12 +167,12 @@ export default function Show({ auth, digest, runs }: Props) {
                                 </div>
                                 <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">No runs recorded yet</h3>
                                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                                    Runs will appear here automatically based on your digest schedule.
+                                    Runs will appear here automatically based on your digest schedules.
                                 </p>
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {runs.map((run) => (
+                                {runs.data.map((run) => (
                                     <div key={run.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-all duration-300 gap-4 sm:gap-6">
                                         
                                         {/* Run Info */}
@@ -206,6 +199,9 @@ export default function Show({ auth, digest, runs }: Props) {
                                                     )}
                                                 </div>
                                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                                                    <div className="flex items-center text-indigo-600 dark:text-indigo-400 font-medium">
+                                                        {run.digest ? run.digest.name : 'Deleted Digest'}
+                                                    </div>
                                                     <div className="flex items-center">
                                                         <svg className="w-4 h-4 mr-1.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -224,10 +220,20 @@ export default function Show({ auth, digest, runs }: Props) {
                                         
                                         {/* Actions */}
                                         <div className="flex sm:flex-col lg:flex-row items-center justify-end gap-2 shrink-0 border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-700/50 pt-4 sm:pt-0 sm:pl-6 mt-2 sm:mt-0 w-full sm:w-auto">
+                                            <Link
+                                                href={route('youtube.digest.show', run.batch_id)}
+                                                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-sm font-semibold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all border border-indigo-100 dark:border-indigo-500/20 active:scale-95"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                                View Videos
+                                            </Link>
                                             <button
                                                 onClick={() => handleDownloadClick(run.id, 'pdf')}
                                                 disabled={downloading[`${run.id}-pdf`]}
-                                                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-sm font-semibold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all border border-indigo-100 dark:border-indigo-500/20 active:scale-95 ${downloading[`${run.id}-pdf`] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/80 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl transition-all border border-gray-200/50 dark:border-gray-700/50 active:scale-95 ${downloading[`${run.id}-pdf`] ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
                                                 {downloading[`${run.id}-pdf`] ? (
                                                     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -235,16 +241,16 @@ export default function Show({ auth, digest, runs }: Props) {
                                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                     </svg>
                                                 ) : (
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                     </svg>
                                                 )}
-                                                {downloading[`${run.id}-pdf`] ? 'Processing...' : 'Download PDF'}
+                                                {downloading[`${run.id}-pdf`] ? '...' : 'PDF'}
                                             </button>
                                             <button
                                                 onClick={() => handleDownloadClick(run.id, 'audio')}
                                                 disabled={downloading[`${run.id}-audio`]}
-                                                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 text-sm font-semibold rounded-xl hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-all border border-purple-100 dark:border-purple-500/20 active:scale-95 ${downloading[`${run.id}-audio`] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/80 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl transition-all border border-gray-200/50 dark:border-gray-700/50 active:scale-95 ${downloading[`${run.id}-audio`] ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
                                                 {downloading[`${run.id}-audio`] ? (
                                                     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -252,17 +258,44 @@ export default function Show({ auth, digest, runs }: Props) {
                                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                     </svg>
                                                 ) : (
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                                                     </svg>
                                                 )}
-                                                {downloading[`${run.id}-audio`] ? 'Processing...' : 'Download Audio'}
+                                                {downloading[`${run.id}-audio`] ? '...' : 'Audio'}
                                             </button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
+
+                        {runs.links && runs.links.length > 3 && (
+                            <div className="mt-8 flex justify-center pb-4">
+                                <div className="inline-flex items-center justify-center space-x-1 bg-white dark:bg-gray-800 rounded-xl p-1.5 border border-gray-200 dark:border-gray-700/50 shadow-sm">
+                                    {runs.links.map((link, idx) => (
+                                        link.url ? (
+                                            <Link
+                                                key={idx}
+                                                href={link.url}
+                                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${link.active 
+                                                    ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-500/20' 
+                                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                                                }`}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        ) : (
+                                            <span 
+                                                key={idx} 
+                                                className="px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-500" 
+                                                dangerouslySetInnerHTML={{ __html: link.label }} 
+                                            />
+                                        )
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                     </div>
                 </div>
             </div>

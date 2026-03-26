@@ -78,4 +78,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Digest::class);
     }
+
+    public function digestRuns()
+    {
+        return $this->hasMany(DigestRun::class);
+    }
 }
