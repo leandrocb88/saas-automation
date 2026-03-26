@@ -1158,6 +1158,9 @@ class YouTubeController extends Controller
             'audio_duration' => $video->audio_duration,
             'transcript_translate_status' => \Illuminate\Support\Facades\Cache::get("video_{$video->id}_translate_transcript_status", 'completed'),
             'summary_translate_status' => \Illuminate\Support\Facades\Cache::get("video_{$video->id}_translate_summary_status", 'completed'),
+            'summary' => $video->summary,
+            'summary_detailed' => $video->summary_detailed,
+            'translations' => $video->translations,
         ]);
     }
 

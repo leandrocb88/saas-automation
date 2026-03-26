@@ -318,44 +318,45 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                 }
                 // Reload data to get the new duration or summary without re-posting the form
                 if (type === 'summary' || type === 'summary_translate' || type === 'transcript_translate') {
-                    // Fetch just this video's latest data to update local UI text
-                    axios.get(route('youtube.show', videoId)).then(res => {
-                        if (res.data.results?.[0]) {
-                            const video = res.data.results[0];
-                            setLocalResults(prev => prev.map(v => {
-                                if (v.id !== videoId) return v;
+                    // Update local UI text with the newly fetched data from videoStatus
+                    setLocalResults(prev => prev.map(v => {
+                        if (v.id !== videoId) return v;
 
-                                // Determine which transcript and summary to show based on user's current selection
-                                let displayTranscript = video.transcript;
-                                let displaySummary = video.summary_detailed;
+                        const updatedVideo = {
+                            ...v,
+                            summary: response.data.summary ?? v.summary,
+                            summary_detailed: response.data.summary_detailed ?? v.summary_detailed,
+                            translations: response.data.translations ?? v.translations,
+                            summary_status: type === 'summary' ? 'completed' : v.summary_status,
+                            summary_translate_status: type === 'summary_translate' ? 'completed' : v.summary_translate_status,
+                            transcript_translate_status: type === 'transcript_translate' ? 'completed' : v.transcript_translate_status
+                        };
 
-                                const tLang = transcriptLanguages[videoId];
-                                if (tLang && video.translations?.[tLang]) {
-                                    const trans = video.translations[tLang];
-                                    if (Array.isArray(trans.transcript)) {
-                                        displayTranscript = trans.transcript;
-                                    } else if (trans.transcript && typeof trans.transcript === 'object') {
-                                        displayTranscript = trans.transcript.transcript || trans.transcript.translatedTranscript || trans.transcript;
-                                    }
-                                }
+                        // Determine which transcript and summary to show based on user's current selection
+                        let displayTranscript = updatedVideo.transcript;
+                        let displaySummary = updatedVideo.summary_detailed;
 
-                                const sLang = summaryLanguages[videoId];
-                                if (sLang && video.translations?.[sLang]?.summary_detailed) {
-                                    displaySummary = video.translations[sLang].summary_detailed;
-                                }
-
-                                return {
-                                    ...v,
-                                    ...video,
-                                    transcript: displayTranscript,
-                                    summary_detailed: displaySummary,
-                                    summary_status: type === 'summary' ? 'completed' : video.summary_status,
-                                    summary_translate_status: type === 'summary_translate' ? 'completed' : video.summary_translate_status,
-                                    transcript_translate_status: type === 'transcript_translate' ? 'completed' : video.transcript_translate_status
-                                };
-                            }));
+                        const tLang = transcriptLanguages[videoId];
+                        if (tLang && updatedVideo.translations?.[tLang]) {
+                            const trans = updatedVideo.translations[tLang];
+                            if (Array.isArray(trans.transcript)) {
+                                displayTranscript = trans.transcript;
+                            } else if (trans.transcript && typeof trans.transcript === 'object') {
+                                displayTranscript = trans.transcript.transcript || trans.transcript.translatedTranscript || trans.transcript;
+                            }
                         }
-                    });
+
+                        const sLang = summaryLanguages[videoId];
+                        if (sLang && updatedVideo.translations?.[sLang]?.summary_detailed) {
+                            displaySummary = updatedVideo.translations[sLang].summary_detailed;
+                        }
+
+                        return {
+                            ...updatedVideo,
+                            transcript: displayTranscript,
+                            summary_detailed: displaySummary
+                        };
+                    }));
                 } else {
                     setLocalResults(prev => prev.map(v =>
                         v.id === videoId ? { ...v, [`${type}_status`]: 'completed', [`${type}_url`]: url } : v
