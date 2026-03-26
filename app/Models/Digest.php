@@ -21,6 +21,7 @@ class Digest extends Model
         'search_term',
         'is_active',
         'last_run_at',
+        'timezone',
     ];
 
     protected $casts = [

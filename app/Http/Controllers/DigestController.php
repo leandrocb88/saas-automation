@@ -39,6 +39,7 @@ class DigestController extends Controller
             'channel_ids.*' => 'exists:channels,id',
             'custom_prompt' => 'nullable|string',
             'global_summary_prompt' => 'nullable|string',
+            'timezone' => 'required|string|timezone',
         ]);
 
         $digest = Auth::user()->digests()->create([
@@ -50,6 +51,7 @@ class DigestController extends Controller
             'search_term' => $validated['search_term'],
             'custom_prompt' => $validated['custom_prompt'],
             'global_summary_prompt' => $validated['global_summary_prompt'],
+            'timezone' => $validated['timezone'] ?? 'UTC',
             'is_active' => true,
         ]);
 
@@ -103,6 +105,7 @@ class DigestController extends Controller
             'custom_prompt' => 'nullable|string',
             'global_summary_prompt' => 'nullable|string',
             'is_active' => 'boolean',
+            'timezone' => 'required|string|timezone',
         ]);
 
         $digest->update([
@@ -115,6 +118,7 @@ class DigestController extends Controller
             'custom_prompt' => $validated['custom_prompt'],
             'global_summary_prompt' => $validated['global_summary_prompt'],
             'is_active' => $validated['is_active'] ?? $digest->is_active,
+            'timezone' => $validated['timezone'] ?? $digest->timezone,
         ]);
 
         if (isset($validated['channel_ids'])) {

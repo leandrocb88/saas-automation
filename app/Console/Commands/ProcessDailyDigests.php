@@ -29,26 +29,31 @@ class ProcessDailyDigests extends Command
 
         if ($userId) {
             $query->where('user_id', $userId);
-        } elseif (!$force) {
-            // Match digests scheduled for the current hour AND not run in the last 20 hours
-            $query->where('frequency', 'daily')
-                  ->where('scheduled_at', 'like', substr($currentHour, 0, 2) . ':%')
-                  ->where(function($q) {
-                      $q->whereNull('last_run_at')
-                        ->orWhere('last_run_at', '<', Carbon::now()->subHours(20));
-                  });
         }
 
         $digests = $query->get();
 
-        if ($digests->isEmpty()) {
-            $this->info($force ? 'No active digests found.' : 'No digests scheduled for this hour.');
+        $toProcess = $digests->filter(function ($digest) use ($force) {
+            if ($force) return true;
+            if ($digest->frequency !== 'daily') return false;
+
+            $localNow = Carbon::now($digest->timezone ?? 'UTC');
+            $localHour = $localNow->format('H');
+            $scheduledHour = substr($digest->scheduled_at, 0, 2);
+
+            // Match hour and ensure not run in last 20 hours
+            return $localHour === $scheduledHour && 
+                   (!$digest->last_run_at || $digest->last_run_at->lt(Carbon::now()->subHours(20)));
+        });
+
+        if ($toProcess->isEmpty()) {
+            $this->info($force ? 'No active digests found.' : 'No digests due for processing in their respective timezones.');
             return;
         }
 
         $includeSummaryOverride = $this->option('include-summary');
 
-        foreach ($digests as $digest) {
+        foreach ($toProcess as $digest) {
             $options = [
                 'limit'    => $this->option('limit'),
                 'sort'     => $this->option('sort'),

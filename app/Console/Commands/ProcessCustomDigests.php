@@ -37,31 +37,40 @@ class ProcessCustomDigests extends Command
 
         if ($digestId) {
             $query->where('id', $digestId);
-        } elseif (!$force) {
-            // Check for digests scheduled within the last 10 minutes
-            // AND not run in the last 20 hours (to prevent duplicate daily runs)
-            $query->whereBetween('scheduled_at', [$startTime, $endTime])
-                  ->where(function($q) {
-                      $q->whereNull('last_run_at')
-                        ->orWhere('last_run_at', '<', Carbon::now()->subHours(20));
-                  })
-                  ->where(function($q) use ($currentDay) {
-                      $q->where('frequency', 'daily')
-                        ->orWhere(function($sub) use ($currentDay) {
-                            $sub->where('frequency', 'weekly')
-                                ->where('day_of_week', $currentDay);
-                        });
-                  });
         }
 
         $digests = $query->get();
 
-        if ($digests->isEmpty()) {
+        $toProcess = $digests->filter(function ($digest) use ($force) {
+            if ($force) return true;
+
+            $localNow = Carbon::now($digest->timezone ?? 'UTC');
+            $localTime = $localNow->format('H:i');
+            $currentDay = strtolower($localNow->format('D'));
+
+            // Check if scheduled time is within the last 10 minutes locally
+            $scheduledTime = Carbon::createFromFormat('H:i', $digest->scheduled_at, $digest->timezone ?? 'UTC');
+            $diffInMinutes = $scheduledTime->diffInMinutes($localNow, false);
+
+            if ($diffInMinutes < 0 || $diffInMinutes > 10) {
+                return false;
+            }
+
+            // Frequency check
+            if ($digest->frequency === 'weekly' && $digest->day_of_week !== $currentDay) {
+                return false;
+            }
+
+            // Anti-duplicate check (run at most once every 20 hours)
+            return !$digest->last_run_at || $digest->last_run_at->lt(Carbon::now()->subHours(20));
+        });
+
+        if ($toProcess->isEmpty()) {
             $this->info('No digests due for processing.');
             return;
         }
 
-        foreach ($digests as $digest) {
+        foreach ($toProcess as $digest) {
             $this->info("Dispatching custom digest job: {$digest->name}");
             \App\Jobs\ProcessCustomDigestJob::dispatch($digest);
             $digest->update(['last_run_at' => now()]);

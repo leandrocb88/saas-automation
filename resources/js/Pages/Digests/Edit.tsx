@@ -26,6 +26,7 @@ interface Digest {
     custom_prompt: string | null;
     global_summary_prompt: string | null;
     is_active: boolean;
+    timezone: string;
     channels: Channel[];
 }
 
@@ -46,6 +47,7 @@ export default function Edit({ auth, digest, availableChannels }: Props) {
         custom_prompt: digest.custom_prompt || '',
         global_summary_prompt: digest.global_summary_prompt || '',
         is_active: digest.is_active,
+        timezone: digest.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -162,6 +164,25 @@ export default function Edit({ auth, digest, availableChannels }: Props) {
                                     <InputError className="mt-2" message={errors.day_of_week} />
                                 </div>
                             )}
+
+                            <div>
+                                <InputLabel htmlFor="timezone" value="Timezone" className="text-gray-700 dark:text-gray-300 font-medium ml-1" />
+                                <select
+                                    id="timezone"
+                                    className="mt-2 block w-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-gray-200/80 dark:border-gray-700/80 rounded-xl focus:ring-indigo-500/30 focus:border-indigo-500 text-gray-900 dark:text-gray-100 shadow-sm transition-all"
+                                    value={data.timezone}
+                                    onChange={(e) => setData('timezone', e.target.value)}
+                                >
+                                    {!Intl.supportedValuesOf('timeZone').includes(data.timezone) && (
+                                        <option value={data.timezone}>{data.timezone}</option>
+                                    )}
+                                    {Intl.supportedValuesOf('timeZone').map((tz) => (
+                                        <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+                                    ))}
+                                </select>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 ml-1">The digest will be delivered at {data.scheduled_at} in this timezone.</p>
+                                <InputError className="mt-2" message={errors.timezone} />
+                            </div>
 
                             <div>
                                 <InputLabel htmlFor="mode" value="Source Mode" className="text-gray-700 dark:text-gray-300 font-medium ml-1" />
