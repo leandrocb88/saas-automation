@@ -57,7 +57,9 @@ class ProcessCustomDigests extends Command
             $currentDay = strtolower($localNow->format('D'));
 
             // Check if scheduled time is within the last 10 minutes locally
-            $scheduledTime = Carbon::createFromFormat('H:i', $digest->scheduled_at, $digest->timezone ?? 'UTC');
+            // scheduled_at may be stored as 'H:i:s' or 'H:i' — normalize to 'H:i'
+            $scheduledHM = substr($digest->scheduled_at, 0, 5);
+            $scheduledTime = Carbon::createFromFormat('H:i', $scheduledHM, $digest->timezone ?? 'UTC');
             $diffInMinutes = $scheduledTime->diffInMinutes($localNow, false);
 
             if ($diffInMinutes < 0 || $diffInMinutes > 10) {

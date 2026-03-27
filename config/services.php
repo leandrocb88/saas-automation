@@ -58,6 +58,13 @@ return [
         'gemini_version' => env('GEMINI_VERSION', 'v1beta'),
     ],
 
+    // Separate Socialite entry for YouTube subscription import (needs youtube.readonly scope)
+    'youtube' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('YOUTUBE_REDIRECT_URI', 'http://localhost:8000/auth/youtube/callback'),
+    ],
+
     'audio' => [
         'driver' => env('AUDIO_DRIVER', 'openai'), // 'openai' or 'kokoro'
 

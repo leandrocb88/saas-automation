@@ -41,6 +41,7 @@ class ProcessDailyDigests extends Command
 
             $localNow = Carbon::now($digest->timezone ?? 'UTC');
             $localHour = $localNow->format('H');
+            // scheduled_at may be stored as 'H:i:s' — normalize to just 'HH'
             $scheduledHour = substr($digest->scheduled_at, 0, 2);
 
             // Match hour and ensure not run in last 20 hours

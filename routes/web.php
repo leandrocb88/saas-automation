@@ -50,6 +50,10 @@ Route::middleware('web')->group(function () {
             // Video Downloads & Status
             Route::get('/videos/{video}/pdf', [App\Http\Controllers\YouTubeController::class, 'downloadVideoPdf'])->name('video.pdf');
             Route::get('/videos/{video}/audio', [App\Http\Controllers\YouTubeController::class, 'downloadVideoAudio'])->name('video.audio');
+
+            // YouTube OAuth – Import Subscriptions
+            Route::get('/auth/youtube/redirect', [App\Http\Controllers\YouTubeController::class, 'youtubeAuthRedirect'])->name('youtube.auth.redirect');
+            Route::get('/auth/youtube/callback', [App\Http\Controllers\YouTubeController::class, 'youtubeAuthCallback'])->name('youtube.auth.callback');
         });
 
         // Redirect /welcome to /

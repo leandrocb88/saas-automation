@@ -66,6 +66,95 @@ class YouTubeController extends Controller
         ]);
     }
 
+    public function youtubeAuthRedirect()
+    {
+        $redirectUrl = config('services.youtube.redirect', url('/auth/youtube/callback'));
+
+        return \Laravel\Socialite\Facades\Socialite::driver('google')
+            ->redirectUrl($redirectUrl)
+            ->with(['access_type' => 'online', 'prompt' => 'consent select_account'])
+            ->scopes(['https://www.googleapis.com/auth/youtube.readonly'])
+            ->redirect();
+    }
+
+    public function youtubeAuthCallback(Request $request)
+    {
+        $redirectUrl = config('services.youtube.redirect', url('/auth/youtube/callback'));
+
+        try {
+            $socialUser = \Laravel\Socialite\Facades\Socialite::driver('google')
+                ->redirectUrl($redirectUrl)
+                ->user();
+        } catch (\Exception $e) {
+            Log::error('YouTube OAuth Callback Error: ' . $e->getMessage());
+            return redirect()->route('youtube.subscriptions')->withErrors(['url' => 'Failed to connect to YouTube. Please try again.']);
+        }
+
+        $user = $request->user();
+        $accessToken = $socialUser->token;
+
+        // Fetch all subscriptions via YouTube Data API
+        $channels = [];
+        $pageToken = null;
+
+        do {
+            $params = [
+                'part'         => 'snippet',
+                'mine'         => 'true',
+                'maxResults'   => 50,
+                'access_token' => $accessToken,
+            ];
+
+            if ($pageToken) {
+                $params['pageToken'] = $pageToken;
+            }
+
+            $response = Http::timeout(15)->get('https://www.googleapis.com/youtube/v3/subscriptions', $params);
+
+            if ($response->failed()) {
+                Log::error('YouTube Subscriptions API Error', ['body' => $response->body()]);
+                break;
+            }
+
+            $data = $response->json();
+
+            foreach ($data['items'] ?? [] as $item) {
+                $snippet = $item['snippet'] ?? [];
+                $resourceId = $snippet['resourceId'] ?? [];
+                $channelId = $resourceId['channelId'] ?? null;
+
+                if (!$channelId) continue;
+
+                $channels[] = [
+                    'youtube_channel_id' => $channelId,
+                    'url'                => 'https://www.youtube.com/channel/' . $channelId,
+                    'name'               => $snippet['title'] ?? 'Unknown',
+                    'thumbnail_url'      => $snippet['thumbnails']['high']['url']
+                                            ?? $snippet['thumbnails']['default']['url']
+                                            ?? null,
+                ];
+            }
+
+            $pageToken = $data['nextPageToken'] ?? null;
+
+        } while ($pageToken);
+
+        $imported = 0;
+
+        foreach ($channels as $ch) {
+            $exists = $user->channels()->where('youtube_channel_id', $ch['youtube_channel_id'])->exists();
+
+            if (!$exists) {
+                $user->channels()->create($ch);
+                $imported++;
+            }
+        }
+
+        return redirect()->route('youtube.subscriptions')
+            ->with('success', "Imported {$imported} new channel(s) from your YouTube subscriptions." . (count($channels) - $imported > 0 ? ' ' . (count($channels) - $imported) . ' already existed.' : ''));
+    }
+
+
     public function storeSubscription(Request $request)
     {
         $request->validate([

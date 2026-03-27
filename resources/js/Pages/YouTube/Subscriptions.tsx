@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, Link, router } from '@inertiajs/react';
+import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
 import InputError from '@/Components/InputError';
 import { FormEventHandler, useState } from 'react';
 import ConfirmationModal from '@/Components/ConfirmationModal';
@@ -16,9 +16,10 @@ interface Channel {
 interface Props {
     auth: any;
     channels: Channel[];
+    flash?: { success?: string };
 }
 
-export default function Subscriptions({ auth, channels }: Props) {
+export default function Subscriptions({ auth, channels, flash }: Props) {
     const [channelToUnsubscribe, setChannelToUnsubscribe] = useState<number | null>(null);
 
     const confirmUnsubscribe = (id: number) => {
@@ -60,6 +61,18 @@ export default function Subscriptions({ auth, channels }: Props) {
         <AuthenticatedLayout>
             <Head title="Subscriptions" />
 
+            {/* Flash Message */}
+            {flash?.success && (
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-200 dark:border-emerald-800">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
+                        <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">{flash.success}</p>
+                    </div>
+                </div>
+            )}
+
             {/* Hero Header */}
             <div className="relative bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-indigo-600 dark:via-purple-600 dark:to-indigo-800 overflow-hidden">
                 {/* Decorative blobs */}
@@ -81,6 +94,16 @@ export default function Subscriptions({ auth, channels }: Props) {
 
                         {/* Controls */}
                         <div className="flex items-stretch gap-3 mt-4 sm:mt-0">
+                            {/* Import from YouTube */}
+                            <a
+                                href={route('youtube.auth.redirect')}
+                                className="group flex items-center gap-2 rounded-2xl px-6 py-3 transition-all duration-300 shadow-sm hover:scale-[1.02] active:scale-95 bg-red-500 hover:bg-red-600 text-white hover:shadow-md border border-red-600"
+                            >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                </svg>
+                                <span className="text-sm font-semibold">Import from YouTube</span>
+                            </a>
                             <Link
                                 href={route('digests.index')}
                                 className="group flex items-center gap-2 rounded-2xl px-6 py-3 transition-all duration-300 shadow-sm hover:scale-[1.02] active:scale-95 bg-white/50 dark:bg-white/10 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-white/20 border border-indigo-200/50 dark:border-white/20 text-gray-900 dark:text-white hover:shadow-md hover:border-indigo-300/50 dark:hover:border-white/30"
