@@ -73,12 +73,31 @@ class ProcessDigests extends Command
             }
 
             // 3. Prevent double-dispatching within the same 10-minute window
-            // Since this runs every 5 mins, it will hit the window twice. 
-            // We check only against a 10-minute window, effectively removing the 20-hour restriction.
             $alreadyRun = $digest->last_run_at && $digest->last_run_at->gt(now()->subMinutes(10));
             if ($alreadyRun) {
                 Log::info(" - Skipped: Already dispatched in the last 10 minutes.");
                 return false;
+            }
+
+            // 4. Free user trickery prevention: max 1 digest run per day
+            // We use 'youtube' as primary service check, similar to HandleInertiaRequests
+            // Technically some users might be zillow, but this script is specific to youtube digests.
+            if (!$digest->user->subscribed('youtube')) {
+                // Check if ANY digest for this user has run today in local time
+                // To avoid multiple DB queries, we can query it or check relations if loaded, 
+                // but since it's a cron job, a subquery is safest.
+                $hasRunToday = Digest::where('user_id', $digest->user_id)
+                    ->whereNotNull('last_run_at')
+                    ->get()
+                    ->contains(function ($d) use ($localNow) {
+                        $dLocalRun = Carbon::parse($d->last_run_at)->timezone($d->timezone ?? 'UTC');
+                        return $dLocalRun->isSameDay($localNow);
+                    });
+
+                if ($hasRunToday) {
+                    Log::info(" - Skipped: Free user has already had a digest run today.");
+                    return false;
+                }
             }
 
             return true;

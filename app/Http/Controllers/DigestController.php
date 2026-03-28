@@ -44,6 +44,14 @@ class DigestController extends Controller
             'video_types.*' => 'in:videos,shorts,streams',
         ]);
 
+        $service = str_contains($request->getHost(), 'zillow') ? 'zillow' : 'youtube';
+        if (!Auth::user()->subscribed($service)) {
+            $activeCount = Auth::user()->digests()->where('is_active', true)->count();
+            if ($activeCount >= 1) {
+                return redirect()->back()->with('error', 'Free users can only have 1 active digest. Please upgrade or pause your existing digest first.');
+            }
+        }
+
         $digest = Auth::user()->digests()->create([
             'name' => $validated['name'],
             'frequency' => $validated['frequency'],
@@ -62,7 +70,19 @@ class DigestController extends Controller
             $digest->channels()->attach($validated['channel_ids']);
         }
 
-        return redirect()->route('digests.index')->with('success', 'Digest created successfully.');
+        $message = 'Digest created successfully.';
+        $service = str_contains($request->getHost(), 'zillow') ? 'zillow' : 'youtube';
+        if (!Auth::user()->subscribed($service)) {
+            $hasRunToday = Auth::user()->digests()->whereNotNull('last_run_at')->get()->contains(function($d) {
+                $dLocalRun = \Carbon\Carbon::parse($d->last_run_at)->timezone($d->timezone ?? 'UTC');
+                return $dLocalRun->isSameDay(\Carbon\Carbon::now($d->timezone ?? 'UTC'));
+            });
+            if ($hasRunToday) {
+                $message .= ' Changes will apply the next day, as you have already had a digest processed today.';
+            }
+        }
+
+        return redirect()->route('digests.index')->with('success', $message);
     }
 
     public function edit(Digest $digest)
@@ -99,6 +119,16 @@ class DigestController extends Controller
             'video_types.*' => 'in:videos,shorts,streams',
         ]);
 
+        $service = str_contains($request->getHost(), 'zillow') ? 'zillow' : 'youtube';
+        $settingActive = $validated['is_active'] ?? $digest->is_active;
+
+        if (!Auth::user()->subscribed($service) && $settingActive && !$digest->is_active) {
+            $activeCount = Auth::user()->digests()->where('is_active', true)->count();
+            if ($activeCount >= 1) {
+                return redirect()->back()->with('error', 'Free users can only have 1 active digest. Please upgrade to activate this digest.');
+            }
+        }
+
         $digest->update([
             'name' => $validated['name'],
             'frequency' => $validated['frequency'],
@@ -117,7 +147,28 @@ class DigestController extends Controller
             $digest->channels()->sync($validated['channel_ids']);
         }
 
-        return redirect()->route('digests.index')->with('success', 'Digest updated successfully.');
+        $message = 'Digest updated successfully.';
+        $service = str_contains($request->getHost(), 'zillow') ? 'zillow' : 'youtube';
+        $isPaid = Auth::user()->subscribed($service);
+        $settingActive = $validated['is_active'] ?? $digest->is_active;
+
+        if (!$isPaid && $settingActive) {
+            $hasRunToday = Auth::user()->digests()->whereNotNull('last_run_at')->get()->contains(function($d) {
+                $dLocalRun = \Carbon\Carbon::parse($d->last_run_at)->timezone($d->timezone ?? 'UTC');
+                return $dLocalRun->isSameDay(\Carbon\Carbon::now($d->timezone ?? 'UTC'));
+            });
+            if ($hasRunToday) {
+                $message .= ' Changes will apply the next day, as you have already reached your free digest run limit for today.';
+            }
+        } else if ($digest->last_run_at) {
+            $localLastRun = \Carbon\Carbon::parse($digest->last_run_at)->timezone($digest->timezone ?? 'UTC');
+            $localNow = \Carbon\Carbon::now($digest->timezone ?? 'UTC');
+            if ($localLastRun->isSameDay($localNow)) {
+                $message .= ' Changes will apply the next day, as this digest has already been processed today.';
+            }
+        }
+
+        return redirect()->route('digests.index')->with('success', $message);
     }
 
     public function destroy(Digest $digest)

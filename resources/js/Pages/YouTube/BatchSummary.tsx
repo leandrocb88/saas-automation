@@ -181,7 +181,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
             };
         });
     });
-    const [expandedIndex, setExpandedIndex] = useState<number | null>(isHistoryView ? 0 : null);
+    const [expandedIndices, setExpandedIndices] = useState<Record<number, boolean>>(isHistoryView ? { 0: true } : {});
     const [maximizedSections, setMaximizedSections] = useState<Record<number, 'transcript' | 'summary' | null>>({});
 
     const toggleMaximize = (index: number, section: 'transcript' | 'summary') => {
@@ -192,8 +192,21 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
     };
 
     const toggleExpand = (index: number) => {
-        setExpandedIndex(expandedIndex === index ? null : index);
+        setExpandedIndices(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }));
         setSearchTerm('');
+    };
+
+    const handleExpandAll = () => {
+        const all: Record<number, boolean> = {};
+        localResults.forEach((_, i) => { all[i] = true; });
+        setExpandedIndices(all);
+    };
+
+    const handleCollapseAll = () => {
+        setExpandedIndices({});
     };
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -650,6 +663,58 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
         return Object.values(groups).sort((a, b) => b.videos.length - a.videos.length);
     }, [localResults]);
 
+    const overviewStats = React.useMemo(() => {
+        let totalVideoSeconds = 0;
+        let totalTranscriptMinutes = 0;
+        let totalSummaryMinutes = 0;
+
+        localResults.forEach(video => {
+            if (video.duration_timestamp) {
+                const parts = video.duration_timestamp.split(':').map(Number);
+                if (parts.length === 3) {
+                    totalVideoSeconds += (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+                } else if (parts.length === 2) {
+                    totalVideoSeconds += (parts[0] * 60) + parts[1];
+                }
+            }
+
+            if (video.transcript_read_time) {
+                const match = video.transcript_read_time.match(/(\d+)/);
+                if (match) totalTranscriptMinutes += parseInt(match[1], 10);
+            }
+
+            if (video.summary_read_time) {
+                const match = video.summary_read_time.match(/(\d+)/);
+                if (match) totalSummaryMinutes += parseInt(match[1], 10);
+            }
+        });
+
+        const totalVideoMinutes = Math.ceil(totalVideoSeconds / 60);
+
+        const formatVideoTime = () => {
+             const h = Math.floor(totalVideoSeconds / 3600);
+             const m = Math.floor((totalVideoSeconds % 3600) / 60);
+             if (h > 0) return `${h}h ${m}m`;
+             return `${m}m`;
+        };
+
+        const formatMinutesToHours = (totalMins: number) => {
+             const h = Math.floor(totalMins / 60);
+             const m = Math.floor(totalMins % 60);
+             if (h > 0) return `${h}h ${m}m`;
+             return `${m}m`;
+        };
+
+        const timeSavedMinutes = totalVideoMinutes - totalSummaryMinutes;
+
+        return {
+            videoTimeStr: formatVideoTime(),
+            transcriptTimeStr: formatMinutesToHours(totalTranscriptMinutes),
+            summaryTimeStr: formatMinutesToHours(totalSummaryMinutes),
+            timeSavedStr: formatMinutesToHours(timeSavedMinutes > 0 ? timeSavedMinutes : 0)
+        };
+    }, [localResults]);
+
     return (
         <AuthenticatedLayout>
             <Head title={isHistoryView ? "Video Detail" : "Batch Results"} />
@@ -674,25 +739,110 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                     {isHistoryView ? localResults[0]?.title : `Processed ${localResults.length} Videos`}
                                 </h1>
                             </div>
-                            {isHistoryView ? (
-                                <Link
-                                    href={route('youtube.history')}
-                                    className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white bg-white/50 dark:bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 ring-1 ring-gray-200 dark:ring-white/10 hover:ring-gray-300 dark:hover:ring-white/20 transition-all"
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                    </svg>
-                                    Back to History
-                                </Link>
-                            ) : (
-                                <Link
-                                    href={route('youtube.home')}
-                                    className="flex items-center gap-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg px-5 py-2.5 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-indigo-600 hover:to-purple-600 transition-all"
-                                >
-                                    Analyze More
-                                </Link>
-                            )}
+                            <div className="flex items-center gap-2">
+                                {!isHistoryView && localResults.length > 1 && (
+                                    <>
+                                        <button 
+                                            onClick={handleExpandAll}
+                                            className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white bg-white/50 dark:bg-white/10 backdrop-blur-sm rounded-lg px-5 py-2.5 ring-1 ring-gray-200 dark:ring-white/10 hover:ring-gray-300 dark:hover:ring-white/20 transition-all shadow-sm"
+                                            title="Expand All"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                            </svg>
+                                            <span className="hidden sm:inline">Expand All</span>
+                                        </button>
+                                        <button 
+                                            onClick={handleCollapseAll}
+                                            className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white bg-white/50 dark:bg-white/10 backdrop-blur-sm rounded-lg px-5 py-2.5 ring-1 ring-gray-200 dark:ring-white/10 hover:ring-gray-300 dark:hover:ring-white/20 transition-all shadow-sm"
+                                            title="Collapse All"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 14h6m0 0v6m0-6l-7 7m17-11h-6m0 0V4m0 6l7-7M4 10h6m0 0V4m0 6l-7-7m17 11h-6m0 0v6m0-6l7 7" />
+                                            </svg>
+                                            <span className="hidden sm:inline">Collapse All</span>
+                                        </button>
+                                    </>
+                                )}
+                                {isHistoryView ? (
+                                    <Link
+                                        href={route('youtube.history')}
+                                        className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white bg-white/50 dark:bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 ring-1 ring-gray-200 dark:ring-white/10 hover:ring-gray-300 dark:hover:ring-white/20 transition-all"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                        </svg>
+                                        Back to History
+                                    </Link>
+                                ) : (
+                                    <Link
+                                        href={route('youtube.home')}
+                                        className="flex items-center gap-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg px-5 py-2.5 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-indigo-600 hover:to-purple-600 transition-all"
+                                    >
+                                        Analyze More
+                                    </Link>
+                                )}
+                            </div>
                         </div>
+
+                        {/* Summary Stats Grid */}
+                        {!isHistoryView && localResults.length > 0 && (
+                            <div className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md rounded-2xl p-5 shadow-sm ring-1 ring-gray-200/50 dark:ring-gray-700/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400">
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Video Time</p>
+                                    </div>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {overviewStats.videoTimeStr}
+                                    </p>
+                                </div>
+                                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md rounded-2xl p-5 shadow-sm ring-1 ring-gray-200/50 dark:ring-gray-700/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400">
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Transcript Reading</p>
+                                    </div>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {overviewStats.transcriptTimeStr}
+                                    </p>
+                                </div>
+                                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md rounded-2xl p-5 shadow-sm ring-1 ring-gray-200/50 dark:ring-gray-700/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-500 dark:text-indigo-400">
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Summary Reading</p>
+                                    </div>
+                                    <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                                        {overviewStats.summaryTimeStr}
+                                    </p>
+                                </div>
+                                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-5 shadow-md shadow-indigo-500/20 ring-1 ring-white/20">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="p-1.5 bg-white/20 rounded-lg text-white">
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-sm font-medium text-white/90">Time Saved</p>
+                                    </div>
+                                    <p className="text-2xl font-bold text-white">
+                                        {overviewStats.timeSavedStr}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -723,7 +873,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                         const detectedTranscriptLang = originalLanguages[video.id!]?.transcript;
                                         const detectedSummaryLang = video.summary_detailed ? originalLanguages[video.id!]?.summary : detectedTranscriptLang;
                                         const displaySegments = groupTranscriptSegments(transcriptArray);
-                                        const isExpanded = expandedIndex === index;
+                                        const isExpanded = !!expandedIndices[index];
 
                                         // Statuses for this video
                                         const pdfStatus = video.pdf_status || 'pending';
@@ -826,23 +976,23 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                     <div className="border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 p-6">
 
                                                         {/* Controls Bar */}
-                                                        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                                                            <div className="relative flex-1 w-full md:max-w-md">
-                                                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                                                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                                    </svg>
+                                                        <div className={`grid grid-cols-1 ${maximizedSections[index] ? '' : 'lg:grid-cols-2'} gap-6 mb-4`}>
+                                                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                                                <div className="relative flex-1 w-full">
+                                                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                                        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                                        </svg>
+                                                                    </div>
+                                                                    <input
+                                                                        type="text"
+                                                                        className="block w-full rounded-xl border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm dark:bg-gray-800 dark:ring-gray-600 dark:text-white"
+                                                                        placeholder="Search transcript..."
+                                                                        value={searchTerm}
+                                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                                    />
                                                                 </div>
-                                                                <input
-                                                                    type="text"
-                                                                    className="block w-full rounded-xl border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm dark:bg-gray-800 dark:ring-gray-600 dark:text-white"
-                                                                    placeholder="Search transcript..."
-                                                                    value={searchTerm}
-                                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                                />
-                                                            </div>
-                                                            <div className="flex flex-wrap gap-3 w-full md:w-auto justify-end">
-                                                                <label className="inline-flex items-center cursor-pointer">
+                                                                <label className="inline-flex items-center cursor-pointer flex-shrink-0">
                                                                     <input
                                                                         type="checkbox"
                                                                         className="sr-only peer"
@@ -853,6 +1003,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                     <span className="ms-2 text-sm font-medium text-gray-700 dark:text-gray-300">Timestamps</span>
                                                                 </label>
                                                             </div>
+                                                            {!maximizedSections[index] && <div className="hidden lg:block"></div>}
                                                         </div>
 
 
