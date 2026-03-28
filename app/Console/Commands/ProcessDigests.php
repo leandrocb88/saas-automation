@@ -59,7 +59,8 @@ class ProcessDigests extends Command
             // diffInMinutes(..., false) is (localNow - scheduledTime)
             $diffInMinutes = $scheduledTime->diffInMinutes($localNow, false);
 
-            Log::info("Checking Digest #{$digest->id} ({$digest->name}): LocalNow: {$localTime}, Sched: {$scheduledHM}, Diff: {$diffInMinutes}m, Freq: {$digest->frequency}");
+            $isPaid = $digest->user->subscribed('youtube');
+            Log::info("Checking Digest #{$digest->id} ({$digest->name}) [User: {$digest->user->email}, Paid: " . ($isPaid ? 'Yes' : 'No') . "]: LocalNow: {$localTime}, Sched: {$scheduledHM}, Diff: {$diffInMinutes}m, Freq: {$digest->frequency}");
 
             // 1. Time window check (0 to 10 minutes past scheduled time)
             if ($diffInMinutes < 0 || $diffInMinutes > 10) {
@@ -68,24 +69,19 @@ class ProcessDigests extends Command
 
             // 2. Frequency / Day check
             if ($digest->frequency === 'weekly' && $digest->day_of_week !== $currentDay) {
-                Log::info(" - Skipped: Weekly day mismatch (Local: {$currentDay}, Sched: {$digest->day_of_week})");
+                Log::info(" - Skipped: Weekly day mismatch (Local: {$currentDay}, Sched: {$digest->day_of_week}) for {$digest->user->email}");
                 return false;
             }
 
-            // 3. Prevent double-dispatching within the same 10-minute window
-            $alreadyRun = $digest->last_run_at && $digest->last_run_at->gt(now()->subMinutes(10));
+            // 3. Prevent double-dispatching within the same 1-minute window
+            $alreadyRun = $digest->last_run_at && $digest->last_run_at->gt(now()->subMinute());
             if ($alreadyRun) {
-                Log::info(" - Skipped: Already dispatched in the last 10 minutes.");
+                Log::info(" - Skipped: Already dispatched in the last minute for {$digest->user->email}");
                 return false;
             }
 
             // 4. Free user trickery prevention: max 1 digest run per day
-            // We use 'youtube' as primary service check, similar to HandleInertiaRequests
-            // Technically some users might be zillow, but this script is specific to youtube digests.
-            if (!$digest->user->subscribed('youtube')) {
-                // Check if ANY digest for this user has run today in local time
-                // To avoid multiple DB queries, we can query it or check relations if loaded, 
-                // but since it's a cron job, a subquery is safest.
+            if (!$isPaid) {
                 $hasRunToday = Digest::where('user_id', $digest->user_id)
                     ->whereNotNull('last_run_at')
                     ->get()
@@ -95,7 +91,7 @@ class ProcessDigests extends Command
                     });
 
                 if ($hasRunToday) {
-                    Log::info(" - Skipped: Free user has already had a digest run today.");
+                    Log::info(" - Skipped: Free user has already had a digest run today ({$digest->user->email})");
                     return false;
                 }
             }
