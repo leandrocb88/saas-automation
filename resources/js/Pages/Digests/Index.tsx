@@ -44,7 +44,10 @@ export default function Index({ auth, digests, flash }: Props) {
     const toggleActive = (digest: Digest) => {
         router.put(route('digests.update', digest.id), {
             ...digest,
+            scheduled_at: digest.scheduled_at.substring(0, 5),
             is_active: !digest.is_active,
+        }, {
+            preserveScroll: true
         });
     };
 
