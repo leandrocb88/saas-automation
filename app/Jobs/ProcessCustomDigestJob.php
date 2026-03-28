@@ -99,17 +99,29 @@ class ProcessCustomDigestJob implements ShouldQueue
             $videoTypes = $digest->video_types ?? ['videos'];
             $perChannelLimit = (int)($options['limit'] ?? $maxVideosPerSource);
 
-            $items = $railway->analyzeChannels($sourceUrls, [
+            $payloadOptions = [
                 'maxVideosPerChannel' => in_array('videos', $videoTypes) ? $perChannelLimit : 0,
                 'maxShortsPerChannel' => in_array('shorts', $videoTypes) ? $perChannelLimit : 0,
                 'maxStreamsPerChannel' => in_array('streams', $videoTypes) ? $perChannelLimit : 0,
+                'maxVideosPerSearch' => in_array('videos', $videoTypes) ? $perChannelLimit : 0,
+                'maxShortsPerSearch' => in_array('shorts', $videoTypes) ? $perChannelLimit : 0,
+                'maxStreamsPerSearch' => in_array('streams', $videoTypes) ? $perChannelLimit : 0,
                 'channelDateFilterMode' => 'relative',
                 'channelDaysBack' => (int)$daysBack,
                 'channelSortBy' => $options['sort'] ?? 'latest',
+                'searchDateFilter' => (int)$daysBack === 1 ? 'today' : ((int)$daysBack === 7 ? 'week' : 'month'),
+                'searchSortBy' => 'relevance',
                 'downloadSubtitles' => true,
                 'includeTimestamps' => true,
                 'preferAutoSubtitles' => false,
+            ];
+
+            Log::info("Railway Analysis Payload for Custom Digest ID {$digest->id}:", [
+                'urls' => $sourceUrls,
+                'options' => $payloadOptions
             ]);
+
+            $items = $railway->analyzeChannels($sourceUrls, $payloadOptions);
 
             if ($items === null) {
                 throw new \Exception("Railway API failed or unreachable.");

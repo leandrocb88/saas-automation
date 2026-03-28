@@ -20,7 +20,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (env('APP_ENV') !== 'local') {
+        if (config('app.url')) {
+            \Illuminate\Support\Facades\URL::forceRootUrl(config('app.url'));
+        }
+
+        if (config('app.env') !== 'local') {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
