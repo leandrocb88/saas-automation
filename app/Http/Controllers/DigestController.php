@@ -78,7 +78,7 @@ class DigestController extends Controller
                 return $dLocalRun->isSameDay(\Carbon\Carbon::now($d->timezone ?? 'UTC'));
             });
             if ($hasRunToday) {
-                $message .= ' Changes will apply the next day, as you have already had a digest processed today.';
+                $message .= ' Changes will apply the next day, as this digest has already been processed today.';
             }
         }
 
@@ -152,18 +152,12 @@ class DigestController extends Controller
         $isPaid = Auth::user()->subscribed($service);
         $settingActive = $validated['is_active'] ?? $digest->is_active;
 
-        if (!$isPaid && $settingActive) {
+        if (!$isPaid) {
             $hasRunToday = Auth::user()->digests()->whereNotNull('last_run_at')->get()->contains(function($d) {
                 $dLocalRun = \Carbon\Carbon::parse($d->last_run_at)->timezone($d->timezone ?? 'UTC');
                 return $dLocalRun->isSameDay(\Carbon\Carbon::now($d->timezone ?? 'UTC'));
             });
             if ($hasRunToday) {
-                $message .= ' Changes will apply the next day, as you have already reached your free digest run limit for today.';
-            }
-        } else if ($digest->last_run_at) {
-            $localLastRun = \Carbon\Carbon::parse($digest->last_run_at)->timezone($digest->timezone ?? 'UTC');
-            $localNow = \Carbon\Carbon::now($digest->timezone ?? 'UTC');
-            if ($localLastRun->isSameDay($localNow)) {
                 $message .= ' Changes will apply the next day, as this digest has already been processed today.';
             }
         }
