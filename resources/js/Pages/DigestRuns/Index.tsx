@@ -193,10 +193,14 @@ export default function Index({ auth, runs, digestId }: Props) {
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
                                                             Completed
                                                         </span>
+                                                    ) : run.status === 'failed' ? (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20">
+                                                            Failed
+                                                        </span>
                                                     ) : (
                                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                                            {run.status === 'failed' ? 'Failed' : 'Processing'}
+                                                            Processing
                                                         </span>
                                                     )}
                                                 </div>
@@ -233,6 +237,13 @@ export default function Index({ auth, runs, digestId }: Props) {
                                                     </svg>
                                                     View Videos
                                                 </Link>
+                                            ) : run.status === 'failed' ? (
+                                                <div className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 text-sm font-semibold rounded-xl border border-rose-100 dark:border-rose-500/20 opacity-60">
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    Failed
+                                                </div>
                                             ) : (
                                                 <div className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 text-sm font-semibold rounded-xl border border-gray-100 dark:border-gray-700 cursor-not-allowed">
                                                     <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">

@@ -99,24 +99,28 @@ export default function Authenticated({
                                 >
                                     Channels
                                 </NavLink>
-                                <NavLink
-                                    href={route('youtube.subscriptions')}
-                                    active={route().current('youtube.subscriptions')}
-                                >
-                                    Subscriptions
-                                </NavLink>
-                                <NavLink
-                                    href={route('digests.index')}
-                                    active={route().current('digests.*')}
-                                >
-                                    My Digests
-                                </NavLink>
-                                <NavLink
-                                    href={route('digest_runs.index')}
-                                    active={route().current('digest_runs.*')}
-                                >
-                                    Digest History
-                                </NavLink>
+                                {user && (
+                                    <>
+                                        <NavLink
+                                            href={route('youtube.subscriptions')}
+                                            active={route().current('youtube.subscriptions')}
+                                        >
+                                            Subscriptions
+                                        </NavLink>
+                                        <NavLink
+                                            href={route('digests.index')}
+                                            active={route().current('digests.*')}
+                                        >
+                                            My Digests
+                                        </NavLink>
+                                        <NavLink
+                                            href={route('digest_runs.index')}
+                                            active={route().current('digest_runs.*')}
+                                        >
+                                            Digest History
+                                        </NavLink>
+                                    </>
+                                )}
 
                                 <NavLink
                                     href={route('plans')}
@@ -300,24 +304,28 @@ export default function Authenticated({
                         >
                             Channels
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            href={route('youtube.subscriptions')}
-                            active={route().current('youtube.subscriptions')}
-                        >
-                            Subscriptions
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            href={route('digests.index')}
-                            active={route().current('digests.*')}
-                        >
-                            My Digests
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            href={route('digest_runs.index')}
-                            active={route().current('digest_runs.*')}
-                        >
-                            Digest History
-                        </ResponsiveNavLink>
+                        {user && (
+                            <>
+                                <ResponsiveNavLink
+                                    href={route('youtube.subscriptions')}
+                                    active={route().current('youtube.subscriptions')}
+                                >
+                                    Subscriptions
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route('digests.index')}
+                                    active={route().current('digests.*')}
+                                >
+                                    My Digests
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route('digest_runs.index')}
+                                    active={route().current('digest_runs.*')}
+                                >
+                                    Digest History
+                                </ResponsiveNavLink>
+                            </>
+                        )}
 
                         <ResponsiveNavLink
                             href={route('plans')}

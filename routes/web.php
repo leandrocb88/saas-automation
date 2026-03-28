@@ -29,7 +29,6 @@ Route::middleware('web')->group(function () {
             Route::get('/channels', [App\Http\Controllers\YouTubeController::class, 'channel'])->name('youtube.channel');
             Route::post('/channels/process', [App\Http\Controllers\YouTubeController::class, 'processChannel'])->name('youtube.channel.process');
             Route::get('/history', [App\Http\Controllers\YouTubeController::class, 'history'])->name('youtube.history');
-            Route::get('/history/digests', [App\Http\Controllers\DigestRunController::class, 'index'])->name('digest_runs.index');
             Route::delete('/history/clear', [App\Http\Controllers\YouTubeController::class, 'clearHistory'])->name('youtube.clear');
             Route::get('/video/{video}', [App\Http\Controllers\YouTubeController::class, 'show'])->name('youtube.show');
             Route::delete('/video/{video}', [App\Http\Controllers\YouTubeController::class, 'destroy'])->name('youtube.destroy');
@@ -43,6 +42,7 @@ Route::middleware('web')->group(function () {
             Route::delete('/subscriptions/{channel}', [App\Http\Controllers\YouTubeController::class, 'destroySubscription'])->name('youtube.subscriptions.destroy');
             Route::post('/subscriptions/{channel}/toggle', [App\Http\Controllers\YouTubeController::class, 'toggleSubscriptionStatus'])->name('youtube.subscriptions.toggle');
             Route::resource('digests', \App\Http\Controllers\DigestController::class)->except(['show']);
+            Route::get('/history/digests', [App\Http\Controllers\DigestRunController::class, 'index'])->name('digest_runs.index');
             Route::get('/digest-runs/{digestRun}/pdf', [App\Http\Controllers\DigestRunController::class, 'downloadPdf'])->name('digest_runs.pdf');
             Route::get('/digest-runs/{digestRun}/audio', [App\Http\Controllers\DigestRunController::class, 'downloadAudio'])->name('digest_runs.audio');
             Route::get('/digest-runs/{digestRun}/status', [App\Http\Controllers\DigestRunController::class, 'status'])->name('digest_runs.status');

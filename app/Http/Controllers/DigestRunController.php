@@ -12,7 +12,20 @@ class DigestRunController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Auth::user()->digestRuns()->with('digest')->latest();
+        $user = Auth::user();
+        
+        if (!$user) {
+            return \Inertia\Inertia::render('DigestRuns/Index', [
+                'runs' => [
+                    'data' => [],
+                    'links' => [],
+                    'total' => 0,
+                ],
+                'digestId' => $request->digest_id,
+            ]);
+        }
+
+        $query = $user->digestRuns()->with('digest')->latest();
 
         if ($request->has('digest_id')) {
             $query->where('digest_id', $request->digest_id);
