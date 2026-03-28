@@ -9,11 +9,13 @@ class RailwayService
 {
     protected string $baseUrl;
     protected ?string $apiKey;
+    protected YouTubeService $youtube;
 
-    public function __construct()
+    public function __construct(YouTubeService $youtube)
     {
         $this->baseUrl = config('services.railway.base_url');
         $this->apiKey = config('services.railway.api_key');
+        $this->youtube = $youtube;
     }
 
     protected function getClient(int $timeout = 60)
@@ -35,9 +37,8 @@ class RailwayService
      */
     public function fetchTranscripts(array $urls, array $options = []): ?array
     {
-        $payload = array_merge([
-            'startUrls' => $urls,
-        ], $options);
+        $categorized = $this->youtube->categorizeUrls($urls);
+        $payload = array_merge($categorized, $options);
 
         try {
             $response = $this->getClient(60)->post($this->baseUrl, $payload);
@@ -72,9 +73,8 @@ class RailwayService
      */
     public function analyzeChannels(array $channelUrls, array $options = []): ?array
     {
-        $payload = array_merge([
-            'channelUrls' => $channelUrls,
-        ], $options);
+        $categorized = $this->youtube->categorizeUrls($channelUrls);
+        $payload = array_merge($categorized, $options);
 
         try {
             $response = $this->getClient(120)->post($this->baseUrl, $payload);

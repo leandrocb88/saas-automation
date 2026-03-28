@@ -103,4 +103,40 @@ class YouTubeService
         }
         return $count;
     }
+
+    /**
+     * Determine if a URL is a YouTube channel URL.
+     */
+    public function isChannelUrl(string $url): bool
+    {
+        return (bool)preg_match('/^https?:\/\/(www\.)?youtube\.com\/(channel\/|c\/|user\/|@)[\w\-\.]+/', $url);
+    }
+
+    /**
+     * Categorize a list of items into startUrls (videos), channelUrls, and searchKeywords.
+     */
+    public function categorizeUrls(array $items): array
+    {
+        $startUrls = [];
+        $channelUrls = [];
+        $searchKeywords = [];
+
+        foreach ($items as $item) {
+            if (filter_var($item, FILTER_VALIDATE_URL)) {
+                if ($this->isChannelUrl($item)) {
+                    $channelUrls[] = $item;
+                } else {
+                    $startUrls[] = $item;
+                }
+            } else {
+                $searchKeywords[] = $item;
+            }
+        }
+
+        return [
+            'startUrls' => $startUrls,
+            'channelUrls' => $channelUrls,
+            'searchKeywords' => $searchKeywords,
+        ];
+    }
 }

@@ -24,6 +24,7 @@ return [
 
     'apify' => [
         'token' => env('APIFY_API_TOKEN'),
+        'fallback_enabled' => env('APIFY_YOUTUBE_FALLBACK', false),
     ],
 
     'ses' => [

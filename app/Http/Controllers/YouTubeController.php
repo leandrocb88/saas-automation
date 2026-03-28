@@ -340,19 +340,24 @@ class YouTubeController extends Controller
 
         // Fallback to Apify ONLY if Railway API failed (returns null)
         if ($items === null) {
-            Log::warning("Railway Channel Analysis failed, falling back to Apify.");
+            if (config('services.apify.fallback_enabled')) {
+                Log::warning("Railway Channel Analysis failed, falling back to Apify.");
 
-            $actorId = 'leandrocb88~youtube-video-transcript-actor';
-            $input = array_merge([
-                'channelUrls' => array_values($channelUrls),
-            ], $options);
+                $actorId = 'leandrocb88~youtube-video-transcript-actor';
+                $categorized = $this->youtube->categorizeUrls(array_values($channelUrls));
+                $input = array_merge($categorized, $options);
 
-            try {
-                $items = $this->apify->runActorSyncGetDatasetItems($actorId, $input);
-            } catch (\Exception $e) {
+                try {
+                    $items = $this->apify->runActorSyncGetDatasetItems($actorId, $input);
+                } catch (\Exception $e) {
+                    // Refund on Failure
+                    $quotaManager->decrementUsage($user, 'youtube', $estimatedCost);
+                    return back()->withErrors(['error' => 'Analysis failed: ' . $e->getMessage()]);
+                }
+            } else {
                 // Refund on Failure
                 $quotaManager->decrementUsage($user, 'youtube', $estimatedCost);
-                return back()->withErrors(['error' => 'Analysis failed: ' . $e->getMessage()]);
+                return back()->withErrors(['error' => 'Channel analysis failed. Please try again later.']);
             }
         }
 
@@ -584,27 +589,37 @@ class YouTubeController extends Controller
 
         // Fallback to Apify ONLY if Railway API failed (returns null)
         if ($items === null) {
-            Log::warning("Railway API failed, falling back to Apify.");
-            
-            $actorId = 'leandrocb88~youtube-video-transcript-actor';
-            $input = [
-                'downloadSubtitles' => true,
-                'includeTimestamps' => $request->boolean('include_timestamps'),
-                'preferAutoSubtitles' => false,
-                'subtitleLanguage' => $request->input('subtitle_language', 'en'),
-                'startUrls' => array_values($urlsToFetch),
-            ];
+            if (config('services.apify.fallback_enabled')) {
+                Log::warning("Railway API failed, falling back to Apify.");
+                
+                $actorId = 'leandrocb88~youtube-video-transcript-actor';
+                $categorized = $this->youtube->categorizeUrls(array_values($urlsToFetch));
+                $input = array_merge([
+                    'downloadSubtitles' => true,
+                    'includeTimestamps' => $request->boolean('include_timestamps'),
+                    'preferAutoSubtitles' => false,
+                    'subtitleLanguage' => $request->input('subtitle_language', 'en'),
+                ], $categorized);
 
-            try {
-                $items = $apify->runActorSyncGetDatasetItems($actorId, $input);
-            } catch (\Exception $e) {
+                try {
+                    $items = $this->apify->runActorSyncGetDatasetItems($actorId, $input);
+                } catch (\Exception $e) {
+                    // Refund on Failure
+                    if ($user) {
+                        $quotaManager->decrementUsage($user, 'youtube', $cost);
+                    } else {
+                        $quotaManager->decrementGuestUsage($ip, $userAgent, 'youtube', $cost);
+                    }
+                    return back()->withErrors(['error' => 'Analysis failed: ' . $e->getMessage()]);
+                }
+            } else {
                 // Refund on Failure
                 if ($user) {
                     $quotaManager->decrementUsage($user, 'youtube', $cost);
                 } else {
                     $quotaManager->decrementGuestUsage($ip, $userAgent, 'youtube', $cost);
                 }
-                return back()->withErrors(['error' => 'Analysis failed: ' . $e->getMessage()]);
+                return back()->withErrors(['error' => 'Analysis failed. Please try again later.']);
             }
         }
 

@@ -63,6 +63,13 @@ class ProcessCustomDigestJob implements ShouldQueue
                 $sourceUrls[] = $channel->url;
             }
         }
+
+        if ($digest->mode === 'search' || $digest->mode === 'mixed') {
+            if (!empty($digest->search_term)) {
+                $terms = array_filter(array_map('trim', explode(',', $digest->search_term)));
+                $sourceUrls = array_merge($sourceUrls, $terms);
+            }
+        }
         
         if (empty($sourceUrls)) {
             Log::warning("Digest '{$digest->name}' has no active sources. Skipping.");
