@@ -50,8 +50,14 @@ class OpenAIService
             ]);
 
             if ($response->failed()) {
-                Log::error('OpenAI API Error', ['status' => $response->status(), 'body' => $response->body()]);
-                throw new \Exception('Failed to communicate with OpenAI API.');
+                Log::error('OpenAI API Error', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'model' => $model,
+                    'key_length' => strlen(config('services.openai.api_key')),
+                    'key_prefix' => substr(config('services.openai.api_key'), 0, 7)
+                ]);
+                throw new \Exception('Failed to communicate with OpenAI API: ' . $response->body());
             }
 
             $content = $response->json('choices.0.message.content');

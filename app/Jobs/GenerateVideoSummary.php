@@ -64,9 +64,12 @@ class GenerateVideoSummary implements ShouldQueue
             ]);
 
         } catch (\Exception $e) {
-            Log::error("Video Summary Generation Failed: " . $e->getMessage(), [
+            Log::error("Video Summary Generation Failed", [
                 'video_id' => $this->video->id,
-                'error' => $e->getMessage()
+                'provider' => config('services.ai.provider', 'gemini'),
+                'model' => $provider === 'gemini' ? config('services.google.gemini_summary_model') : config('services.openai.summary_model'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             $this->video->update(['summary_status' => 'failed']);
             $this->refundCredit($quotaManager);
