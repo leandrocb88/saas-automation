@@ -42,11 +42,8 @@ class ProcessCustomDigestJob implements ShouldQueue
      */
     public function handle(\App\Services\RailwayService $railway, OpenAIService $openAI, GeminiService $gemini, QuotaManager $quotaManager): void
     {
-        $digest = $this->digest;
-        $user = $digest->user;
-        $options = $this->options;
-        
-        Log::info(">>> Starting Digest Process: '{$digest->name}' (ID: {$digest->id}) for {$user->email}");
+        try {
+            Log::info(">>> Starting Digest Process: '{$digest->name}' (ID: {$digest->id}) for {$user->email}");
 
         $sourceUrls = [];
         if ($digest->mode === 'channels' || $digest->mode === 'mixed') {
@@ -94,8 +91,7 @@ class ProcessCustomDigestJob implements ShouldQueue
 
         $processedCount = 0;
 
-        try {
-            $daysBack = $options['days_back'] ?? ($digest->frequency === 'weekly' ? 7 : 1);
+        $daysBack = $options['days_back'] ?? ($digest->frequency === 'weekly' ? 7 : 1);
 
             // Determine which video types to include based on digest settings
             $videoTypes = $digest->video_types ?? ['videos'];
@@ -312,6 +308,10 @@ class ProcessCustomDigestJob implements ShouldQueue
             Log::error("Digest Processing Failed for ID {$digest->id}: " . $e->getMessage());
             Log::error($e->getTraceAsString());
         } finally {
+            // Unlock the digest
+            $digest->update(['status' => 'ready']);
+            Log::info("Unlocked Digest #{$digest->id} (Status: ready).");
+
             // Refund unused credits
             if ($estimatedCost > 0) {
                 $actualUsed = $processedCount * $costPerVideo;

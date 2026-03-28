@@ -23,6 +23,7 @@ class Digest extends Model
         'last_run_at',
         'timezone',
         'video_types',
+        'status',
     ];
 
     protected $casts = [

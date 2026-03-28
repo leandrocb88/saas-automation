@@ -36,7 +36,9 @@ class ProcessDigests extends Command
         $force = $this->option('force');
         $digestId = $this->option('digest');
 
-        $query = Digest::query()->where('is_active', true);
+        $query = Digest::query()
+            ->where('is_active', true)
+            ->where('status', 'ready');
 
         if ($digestId) {
             $query->where('id', $digestId);
@@ -126,7 +128,10 @@ class ProcessDigests extends Command
                 \App\Jobs\ProcessCustomDigestJob::dispatch($digest, $options);
             }
 
-            $digest->update(['last_run_at' => now()]);
+            $digest->update([
+                'last_run_at' => now(),
+                'status'      => 'processing'
+            ]);
         }
 
         $this->info('Digest processing complete.');
