@@ -23,6 +23,8 @@ class ProcessCustomDigestJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $timeout = 600;
+
     protected $digest;
     protected $options;
 

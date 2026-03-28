@@ -13,6 +13,8 @@ class GenerateVideoSummary implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 300;
+
     /**
      * Create a new job instance.
      */
