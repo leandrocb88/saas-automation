@@ -20,7 +20,7 @@ class DigestController extends Controller
 
     public function create()
     {
-        $channels = Auth::user()->channels()->select('id', 'name', 'thumbnail_url', 'is_paused')->get();
+        $channels = Auth::user()->channels()->select('id', 'name', 'thumbnail_url', 'is_paused')->orderBy('name')->get();
         return Inertia::render('Digests/Create', [
             'availableChannels' => $channels,
         ]);
@@ -69,7 +69,7 @@ class DigestController extends Controller
     {
         if ($digest->user_id !== Auth::id()) abort(403);
 
-        $channels = Auth::user()->channels()->select('id', 'name', 'thumbnail_url', 'is_paused')->get();
+        $channels = Auth::user()->channels()->select('id', 'name', 'thumbnail_url', 'is_paused')->orderBy('name')->get();
         $digest->load('channels');
 
         return Inertia::render('Digests/Edit', [

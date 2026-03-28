@@ -276,7 +276,7 @@ export default function Edit({ auth, digest, availableChannels }: Props) {
                                             </div>
                                         ) : (
                                             <div className="space-y-1">
-                                                {availableChannels.map((channel) => (
+                                                {[...availableChannels].sort((a, b) => a.name.localeCompare(b.name)).map((channel) => (
                                                     <label key={channel.id} className="flex items-center space-x-3 p-2.5 hover:bg-gray-100/50 dark:hover:bg-gray-800/60 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50">
                                                         <Checkbox
                                                             checked={data.channel_ids.includes(channel.id)}
