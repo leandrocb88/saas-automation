@@ -18,6 +18,9 @@ interface User {
     is_blocked: boolean;
     is_admin: boolean;
     channels_count: number;
+    daily_usage: number;
+    purchased_credits: number;
+    total_credits: number;
     created_at: string;
 }
 
@@ -50,6 +53,7 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
         email: '',
         password: '',
         is_admin: false,
+        purchased_credits: 0,
     });
 
     const handleEditUser = (user: User) => {
@@ -58,7 +62,8 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
             name: user.name,
             email: user.email,
             password: '',
-            is_admin: (user as any).is_admin || false, // Assuming is_admin comes from backend, though type def above didn't have it. It should.
+            is_admin: user.is_admin || false,
+            purchased_credits: user.purchased_credits || 0,
         });
         setIsAddingUser(true); // Reusing the modal for simplicity, or we can make a separate one. Let's make separate to be clean or just adapt the title.
         // Actually adhering to the plan: "Add Edit User modal" implies a separate one or adapted one.
@@ -236,7 +241,7 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
                                     <tr>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Channels</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Remaining</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usage</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Joined</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
@@ -263,11 +268,16 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 font-medium">
-                                                {user.channels_count}
+                                                <div className="flex flex-col">
+                                                    <span>{user.total_credits}</span>
+                                                    {user.purchased_credits > 0 && (
+                                                        <span className="text-[10px] text-indigo-500 font-normal">+{user.purchased_credits} top-up</span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                                                    {(user as any).daily_usage || 0} credits
+                                                    {user.daily_usage || 0}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -297,7 +307,8 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
                                                                 name: user.name,
                                                                 email: user.email,
                                                                 password: '',
-                                                                is_admin: (user as any).is_admin || false,
+                                                                is_admin: user.is_admin || false,
+                                                                purchased_credits: user.purchased_credits || 0,
                                                             });
                                                             setIsAddingUser(true);
                                                         }}
@@ -401,6 +412,21 @@ export default function AdminDashboard({ auth, users, stats }: { auth: any, user
                             required={!editingUser}
                         />
                         <InputError message={errors.password} className="mt-2" />
+                    </div>
+
+                    <div className="mt-4">
+                        <InputLabel htmlFor="purchased_credits" value="Purchased Credits" />
+                        <TextInput
+                            id="purchased_credits"
+                            type="number"
+                            name="purchased_credits"
+                            value={data.purchased_credits}
+                            className="mt-1 block w-full"
+                            onChange={(e) => setData('purchased_credits', parseInt(e.target.value) || 0)}
+                            min="0"
+                            required
+                        />
+                        <InputError message={errors.purchased_credits} className="mt-2" />
                     </div>
 
                     <div className="mt-4 flex items-center">

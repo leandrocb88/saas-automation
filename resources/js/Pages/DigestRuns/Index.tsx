@@ -14,6 +14,8 @@ interface DigestRun {
     pdf_path: string | null;
     audio_path: string | null;
     completed_at: string | null;
+    status: 'processing' | 'completed' | 'failed';
+    pdf_status: 'pending' | 'processing' | 'completed' | 'failed';
     audio_status: 'pending' | 'processing' | 'completed' | 'failed';
     digest?: Digest;
 }
@@ -187,14 +189,14 @@ export default function Index({ auth, runs, digestId }: Props) {
                                                     <h4 className="text-base font-bold text-gray-900 dark:text-white truncate">
                                                         {formatLocalDateTime(run.created_at)}
                                                     </h4>
-                                                    {run.completed_at ? (
+                                                    {run.status === 'completed' ? (
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
                                                             Completed
                                                         </span>
                                                     ) : (
                                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                                            Processing
+                                                            {run.status === 'failed' ? 'Failed' : 'Processing'}
                                                         </span>
                                                     )}
                                                 </div>
@@ -220,20 +222,30 @@ export default function Index({ auth, runs, digestId }: Props) {
                                         
                                         {/* Actions */}
                                         <div className="flex sm:flex-col lg:flex-row items-center justify-end gap-2 shrink-0 border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-700/50 pt-4 sm:pt-0 sm:pl-6 mt-2 sm:mt-0 w-full sm:w-auto">
-                                            <Link
-                                                href={route('youtube.digest.show', run.batch_id)}
-                                                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-sm font-semibold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all border border-indigo-100 dark:border-indigo-500/20 active:scale-95"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                                View Videos
-                                            </Link>
+                                            {run.status === 'completed' ? (
+                                                <Link
+                                                    href={route('youtube.digest.show', run.batch_id)}
+                                                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-sm font-semibold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all border border-indigo-100 dark:border-indigo-500/20 active:scale-95"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    View Videos
+                                                </Link>
+                                            ) : (
+                                                <div className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 text-sm font-semibold rounded-xl border border-gray-100 dark:border-gray-700 cursor-not-allowed">
+                                                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    Processing...
+                                                </div>
+                                            )}
                                             <button
                                                 onClick={() => handleDownloadClick(run.id, 'pdf')}
-                                                disabled={downloading[`${run.id}-pdf`]}
-                                                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/80 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl transition-all border border-gray-200/50 dark:border-gray-700/50 active:scale-95 ${downloading[`${run.id}-pdf`] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                disabled={downloading[`${run.id}-pdf`] || run.status !== 'completed'}
+                                                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/80 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl transition-all border border-gray-200/50 dark:border-gray-700/50 active:scale-95 ${(downloading[`${run.id}-pdf`] || run.status !== 'completed') ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
                                                 {downloading[`${run.id}-pdf`] ? (
                                                     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -249,8 +261,8 @@ export default function Index({ auth, runs, digestId }: Props) {
                                             </button>
                                             <button
                                                 onClick={() => handleDownloadClick(run.id, 'audio')}
-                                                disabled={downloading[`${run.id}-audio`]}
-                                                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/80 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl transition-all border border-gray-200/50 dark:border-gray-700/50 active:scale-95 ${downloading[`${run.id}-audio`] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                disabled={downloading[`${run.id}-audio`] || run.status !== 'completed'}
+                                                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 hover:bg-white/80 dark:hover:bg-gray-700/80 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-xl transition-all border border-gray-200/50 dark:border-gray-700/50 active:scale-95 ${(downloading[`${run.id}-audio`] || run.status !== 'completed') ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
                                                 {downloading[`${run.id}-audio`] ? (
                                                     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">

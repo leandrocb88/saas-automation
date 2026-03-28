@@ -26,10 +26,20 @@ class AdminController extends Controller
         $adminOnly = \App\Models\Setting::where('key', 'admin_only_access')->value('value');
 
         // 2. Users Pagination filtered by service
-        $users = User::where('service_type', $service)
+        $usersPagination = User::where('service_type', $service)
             ->withCount('channels')
             ->latest()
             ->paginate(20);
+
+        /** @var \App\Services\QuotaManager $quotaManager */
+        $quotaManager = app(\App\Services\QuotaManager::class);
+
+        $usersPagination->getCollection()->transform(function ($user) use ($quotaManager, $service) {
+            $user->total_credits = $quotaManager->getRemainingQuota($user, $service);
+            return $user;
+        });
+
+        $users = $usersPagination;
 
         return Inertia::render('Admin/Dashboard', [
             'stats' => [
@@ -54,6 +64,7 @@ class AdminController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,NULL,id,service_type,' . $service,
             'password' => 'required|string|min:8',
             'is_admin' => 'boolean',
+            'purchased_credits' => 'nullable|integer|min:0',
         ]);
 
         User::create([
@@ -62,6 +73,7 @@ class AdminController extends Controller
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
             'service_type' => $service,
             'is_admin' => $validated['is_admin'] ?? false,
+            'purchased_credits' => $validated['purchased_credits'] ?? 0,
         ]);
 
         return back()->with('success', 'User created successfully.');
@@ -109,12 +121,14 @@ class AdminController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id . ',id,service_type,' . $service,
             'password' => 'nullable|string|min:8',
             'is_admin' => 'boolean',
+            'purchased_credits' => 'nullable|integer|min:0',
         ]);
 
         $data = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'is_admin' => $validated['is_admin'] ?? false,
+            'purchased_credits' => $validated['purchased_credits'] ?? 0,
         ];
 
         if (!empty($validated['password'])) {

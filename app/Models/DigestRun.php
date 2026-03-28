@@ -17,6 +17,7 @@ class DigestRun extends Model
         'pdf_status',
         'audio_status',
         'audio_duration',
+        'status',
         'completed_at',
     ];
 

@@ -46,6 +46,10 @@ class ProcessCustomDigestJob implements ShouldQueue
         $user = $digest->user;
         $options = $this->options;
 
+        $estimatedCost = 0;
+        $processedCount = 0;
+        $costPerVideo = 0;
+
         try {
             Log::info(">>> Starting Digest Process: '{$digest->name}' (ID: {$digest->id}) for {$user->email}");
 
@@ -94,6 +98,13 @@ class ProcessCustomDigestJob implements ShouldQueue
         }
 
         $processedCount = 0;
+        $shareToken = \Illuminate\Support\Str::uuid()->toString();
+        $run = \App\Models\DigestRun::create([
+            'digest_id' => $digest->id,
+            'user_id' => $user->id,
+            'batch_id' => $shareToken,
+            'status' => 'processing',
+        ]);
 
         $daysBack = $options['days_back'] ?? ($digest->frequency === 'weekly' ? 7 : 1);
 
@@ -133,11 +144,11 @@ class ProcessCustomDigestJob implements ShouldQueue
 
             if (empty($items)) {
                 Log::info("No new videos found for custom digest {$digest->id}.");
+                $run->delete();
                 return;
             }
 
             $batchTimestamp = now();
-            $shareToken = \Illuminate\Support\Str::uuid()->toString();
             
             $videosToSend = [];
             $videosToSummarize = [];
@@ -275,13 +286,11 @@ class ProcessCustomDigestJob implements ShouldQueue
             $processedCount = count($processedVideos);
 
             if (!empty($processedVideos)) {
-                $run = \App\Models\DigestRun::create([
-                    'digest_id' => $digest->id,
-                    'user_id' => $user->id,
-                    'batch_id' => $shareToken,
+                $run->update([
                     'summary_count' => count($processedVideos),
                     'total_duration' => collect($videosToSend)->sum('duration'),
                     'completed_at' => now(),
+                    'status' => 'completed',
                 ]);
 
                 $totalDuration = collect($videosToSend)->sum('duration');
@@ -307,10 +316,14 @@ class ProcessCustomDigestJob implements ShouldQueue
             } else {
                 Log::info("Step 3/4: Skipping Email (No new content discovered).");
                 Log::info(">>> FINISHED: No content to send for '{$digest->name}'");
+                $run->delete();
             }
         } catch (\Exception $e) {
             Log::error("Digest Processing Failed for ID {$digest->id}: " . $e->getMessage());
             Log::error($e->getTraceAsString());
+            if (isset($run)) {
+                $run->update(['status' => 'failed']);
+            }
         } finally {
             // Unlock the digest
             $digest->update(['status' => 'ready']);

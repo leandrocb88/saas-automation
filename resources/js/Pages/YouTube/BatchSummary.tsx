@@ -467,7 +467,9 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                 if (response.data.status === 'processing') {
                     const key = `${videoId}-transcript_translate`;
                     startPolling(videoId, 'transcript_translate', key);
+                    router.reload({ only: ['auth'] });
                 } else if (response.data.status === 'completed') {
+                    router.reload({ only: ['auth'] });
                     setLocalResults(prev => prev.map(v =>
                         v.id === videoId ? {
                             ...v,
@@ -527,7 +529,9 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                 if (response.data.status === 'processing') {
                     const key = `${videoId}-summary_translate`;
                     startPolling(videoId, 'summary_translate', key);
+                    router.reload({ only: ['auth'] });
                 } else if (response.data.status === 'completed') {
+                    router.reload({ only: ['auth'] });
                     setLocalResults(prev => prev.map(v =>
                         v.id === videoId ? {
                             ...v,
@@ -1385,6 +1389,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                                                 setProcessingId(video.id!);
                                                                                                 setGenerationError(null);
                                                                                                 startPolling(video.id!, 'summary', `${video.id}-summary`);
+                                                                                                router.reload({ only: ['auth'] });
                                                                                             }
                                                                                         }).catch(err => {
                                                                                             console.error("Generate Summary Failed", err);
@@ -1436,6 +1441,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                                                 .then(res => {
                                                                                                     if (res.data.status === 'processing') {
                                                                                                         startPolling(video.id!, 'summary', `${video.id}-summary`);
+                                                                                                        router.reload({ only: ['auth'] });
                                                                                                     } else {
                                                                                                         setProcessingId(null);
                                                                                                     }

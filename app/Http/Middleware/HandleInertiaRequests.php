@@ -76,10 +76,14 @@ class HandleInertiaRequests extends Middleware
                 return $next->format('F j, Y');
             })();
 
+            /** @var \App\Services\QuotaManager $quotaManager */
+            $quotaManager = app(\App\Services\QuotaManager::class);
+            $remaining = $quotaManager->getRemainingQuota($user, $service);
+
             $userData['quota'] = [
                 'used' => $user->daily_usage,
-                'limit' => $limit,
-                'remaining' => max(0, $limit - $user->daily_usage),
+                'limit' => $limit + $user->purchased_credits,
+                'remaining' => $remaining,
                 'plan' => $plan,
                 'plan_name' => ucfirst($plan),
                 'period' => $period,

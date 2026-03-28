@@ -12,6 +12,20 @@ class QuotaManager
         // Service argument might be redundant if User implies service, but keeping for config lookup
         $this->refreshQuotaIfNeeded($user, $service);
 
+        $limit = $this->getLimit($user, $service);
+        $totalAvailable = $limit + $user->purchased_credits;
+
+        return ($user->daily_usage + $amount) <= $totalAvailable;
+    }
+
+    public function getTotalQuota(User $user, string $service): int
+    {
+        $this->refreshQuotaIfNeeded($user, $service);
+        return $this->getLimit($user, $service) + $user->purchased_credits;
+    }
+
+    protected function getLimit(User $user, string $service): int
+    {
         $plan = 'free';
         if ($user->subscribed($service)) {
             $subscription = $user->subscription($service);
@@ -22,14 +36,11 @@ class QuotaManager
             if (in_array($priceId, $plusPrices)) {
                 $plan = 'plus';
             } else {
-                 $plan = 'plus';
+                 $plan = 'pro'; // Default to pro if not plus for now, or just consistent fallback
             }
         }
         
-        $limit = config("plans.{$service}.{$plan}.limit", 0);
-        $totalAvailable = $limit + $user->purchased_credits;
-
-        return ($user->daily_usage + $amount) <= $totalAvailable;
+        return config("plans.{$service}.{$plan}.limit", 0);
     }
 
     public function getCost(?User $user, string $service, string $action): int
