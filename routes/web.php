@@ -205,4 +205,54 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/admin/settings/guest-access', [AdminController::class, 'toggleGuestAccess'])->name('admin.settings.guest_access');
     Route::post('/admin/settings/sign-up', [AdminController::class, 'toggleRegistration'])->name('admin.settings.sign_up');
     Route::post('/admin/settings/admin-only', [AdminController::class, 'toggleAdminOnly'])->name('admin.settings.admin_only');
+
+    // Digest Recovery & Debug Route
+    Route::get('/admin/digests/debug', function() {
+        // 1. Reset any digests that have been in "processing" for more than 10 minutes (likely crashed)
+        $recovered = \App\Models\Digest::where('status', 'processing')
+            ->where('updated_at', '<', now()->subMinutes(10))
+            ->update(['status' => 'ready']);
+
+        // 2. Clear SPECIFIC status for testing if requested
+        if (request()->has('reset_all')) {
+            \App\Models\Digest::query()->update(['status' => 'ready']);
+        }
+
+        // 3. Generate a detailed report
+        $digests = \App\Models\Digest::with('user')->where('is_active', true)->get();
+        
+        $data = $digests->map(function($d) {
+            $localNow = \Carbon\Carbon::now($d->timezone ?? 'UTC');
+            $scheduledHM = substr($d->scheduled_at, 0, 5);
+            
+            // Handle different formats H:i:s or H:i
+            try {
+                $scheduledTime = \Carbon\Carbon::createFromFormat('H:i', $scheduledHM, $d->timezone ?? 'UTC');
+                $diff = $scheduledTime->diffInMinutes($localNow, false);
+            } catch (\Exception $e) {
+                $diff = 'Error parsing schedule';
+            }
+            
+            return [
+                'id' => $d->id,
+                'name' => $d->name,
+                'user' => $d->user->email,
+                'status' => $d->status,
+                'is_paid' => $d->user->subscribed('youtube'),
+                'timezone' => $d->timezone ?? 'UTC',
+                'local_now_time' => $localNow->toDateTimeString(),
+                'scheduled_at' => $scheduledHM,
+                'diff_to_schedule_mins' => $diff,
+                'in_run_window' => (is_numeric($diff) && $diff >= 0 && $diff <= 10),
+                'last_run' => $d->last_run_at ? $d->last_run_at->toDateTimeString() : 'Never',
+            ];
+        });
+
+        return response()->json([
+            'message' => 'Digest Recovery Report',
+            'recovered_stuck_count' => $recovered,
+            'server_utc_now' => now()->toDateTimeString(),
+            'active_digests' => $data
+        ]);
+    })->name('admin.digests.debug');
 });
