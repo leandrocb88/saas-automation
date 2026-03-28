@@ -42,6 +42,10 @@ class ProcessCustomDigestJob implements ShouldQueue
      */
     public function handle(\App\Services\RailwayService $railway, OpenAIService $openAI, GeminiService $gemini, QuotaManager $quotaManager): void
     {
+        $digest = $this->digest;
+        $user = $digest->user;
+        $options = $this->options;
+
         try {
             Log::info(">>> Starting Digest Process: '{$digest->name}' (ID: {$digest->id}) for {$user->email}");
 
