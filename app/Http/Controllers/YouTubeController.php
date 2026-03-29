@@ -345,6 +345,10 @@ class YouTubeController extends Controller
 
                 $actorId = 'leandrocb88~youtube-video-transcript-actor';
                 $categorized = $this->youtube->categorizeUrls(array_values($channelUrls));
+                
+                // Ensure no stray 'urls' key if it exists in options
+                unset($options['urls']); 
+                
                 $input = array_merge($categorized, $options);
 
                 try {
@@ -594,12 +598,16 @@ class YouTubeController extends Controller
                 
                 $actorId = 'leandrocb88~youtube-video-transcript-actor';
                 $categorized = $this->youtube->categorizeUrls(array_values($urlsToFetch));
+                
                 $input = array_merge([
                     'downloadSubtitles' => true,
                     'includeTimestamps' => $request->boolean('include_timestamps'),
                     'preferAutoSubtitles' => false,
                     'subtitleLanguage' => $request->input('subtitle_language', 'en'),
                 ], $categorized);
+                
+                // Explicitly remove any legacy 'urls' key if it crept in
+                unset($input['urls']);
 
                 try {
                     $items = $this->apify->runActorSyncGetDatasetItems($actorId, $input);

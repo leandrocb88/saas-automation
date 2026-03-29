@@ -40,6 +40,14 @@ class RailwayService
         $categorized = $this->youtube->categorizeUrls($urls);
         $payload = array_merge($categorized, $options);
 
+        // Debug Log: Ensure the payload keys are exactly what we expect
+        Log::info("Railway Transaction Payload:", [
+            'keys' => array_keys($payload),
+            'startUrls_count' => count($payload['startUrls'] ?? []),
+            'channelUrls_count' => count($payload['channelUrls'] ?? []),
+            'searchKeywords_count' => count($payload['searchKeywords'] ?? []),
+        ]);
+
         try {
             $response = $this->getClient(60)->post($this->baseUrl, $payload);
 
@@ -51,14 +59,14 @@ class RailwayService
             Log::error("Railway API Error", [
                 'status' => $response->status(),
                 'body' => $response->body(),
-                'urls' => $urls
+                'payload_keys' => array_keys($payload)
             ]);
 
             return null; // Return null to indicate API failure (not just empty results)
         } catch (\Exception $e) {
             Log::error("Railway API Exception", [
                 'message' => $e->getMessage(),
-                'urls' => $urls
+                'payload_keys' => array_keys($payload)
             ]);
             return null;
         }
@@ -76,6 +84,11 @@ class RailwayService
         $categorized = $this->youtube->categorizeUrls($channelUrls);
         $payload = array_merge($categorized, $options);
 
+        Log::info("Railway Channel Analysis Payload:", [
+            'keys' => array_keys($payload),
+            'channelUrls_count' => count($payload['channelUrls'] ?? []),
+        ]);
+
         try {
             $response = $this->getClient(120)->post($this->baseUrl, $payload);
 
@@ -87,14 +100,14 @@ class RailwayService
             Log::error("Railway Channel Analysis Error", [
                 'status' => $response->status(),
                 'body' => $response->body(),
-                'channels' => $channelUrls
+                'payload_keys' => array_keys($payload)
             ]);
 
             return null;
         } catch (\Exception $e) {
             Log::error("Railway Channel Analysis Exception", [
                 'message' => $e->getMessage(),
-                'channels' => $channelUrls
+                'payload_keys' => array_keys($payload)
             ]);
             return null;
         }

@@ -136,9 +136,10 @@ class ProcessCustomDigestJob implements ShouldQueue
                 'preferAutoSubtitles' => false,
             ];
 
-            Log::info("Railway Analysis Payload for Custom Digest ID {$digest->id}:", [
-                'urls' => $sourceUrls,
-                'options' => $payloadOptions
+            Log::info("Railway Analysis Process Initiated for Digest ID {$digest->id}:", [
+                'total_sources' => count($sourceUrls),
+                'days_back' => $daysBack,
+                'per_source_limit' => $perChannelLimit
             ]);
 
             $items = $railway->analyzeChannels($sourceUrls, $payloadOptions);
