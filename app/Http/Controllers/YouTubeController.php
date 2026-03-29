@@ -62,7 +62,7 @@ class YouTubeController extends Controller
         $user = $request->user();
         
         return Inertia::render('YouTube/Subscriptions', [
-            'channels' => $user->channels()->get(),
+            'channels' => $user->channels()->latest()->paginate(12),
         ]);
     }
 

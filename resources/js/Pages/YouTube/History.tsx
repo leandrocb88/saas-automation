@@ -4,6 +4,7 @@ import Select from '@/Components/Select';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, useEffect, useCallback } from 'react';
 import ConfirmationModal from '@/Components/ConfirmationModal';
+import Pagination from '@/Components/Pagination';
 import { formatLocalDate } from '@/utils/date';
 
 interface Video {
@@ -379,27 +380,15 @@ export default function History({ auth, videos, canViewHistory, retentionDays, q
                             ))}
                         </div>
 
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="mt-10 flex flex-col sm:flex-row justify-between items-center gap-4">
-                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                    Page <span className="font-semibold text-gray-700 dark:text-gray-200">{videos.current_page}</span> of <span className="font-semibold text-gray-700 dark:text-gray-200">{totalPages}</span>
-                                </div>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {videos.links.map((link, key) => (
-                                        <Link
-                                            key={key}
-                                            href={link.url || '#'}
-                                            className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${link.active
-                                                ? 'bg-indigo-600 text-white shadow-sm'
-                                                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300'
-                                                } ${!link.url && 'opacity-40 cursor-not-allowed pointer-events-none'}`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        <Pagination 
+                            links={videos.links} 
+                            meta={{
+                                current_page: videos.current_page,
+                                from: videos.from,
+                                to: videos.to,
+                                total: videos.total
+                            }} 
+                        />
                     </>
                 )}
             </div>

@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react'; // Use router from @inertiajs/react
 import { PageProps } from '@/types';
 import ConfirmationModal from '@/Components/ConfirmationModal';
+import Pagination from '@/Components/Pagination';
 import { useState } from 'react';
 
 interface Digest {
@@ -17,7 +18,14 @@ interface Digest {
 }
 
 interface Props extends PageProps {
-    digests: Digest[];
+    digests: {
+        data: Digest[];
+        links: { url: string | null; label: string; active: boolean }[];
+        total: number;
+        current_page: number;
+        from: number;
+        to: number;
+    };
     flash: {
         success?: string;
         error?: string;
@@ -109,7 +117,7 @@ export default function Index({ auth, digests, flash }: Props) {
                     </div>
                 )}
 
-                {digests.length === 0 ? (
+                {digests.data.length === 0 ? (
                     <div className="rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-700 p-12 text-center bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-sm">
                         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/20 shadow-inner">
                             <svg className="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -129,7 +137,7 @@ export default function Index({ auth, digests, flash }: Props) {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {digests.map((digest) => (
+                        {digests.data.map((digest) => (
                             <div key={digest.id} className="group relative bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-3xl border border-gray-200/50 dark:border-gray-700/50 shadow-sm hover:shadow-xl dark:shadow-none hover:border-indigo-300/50 dark:hover:border-indigo-500/50 transition-all duration-300 overflow-hidden flex flex-col">
                                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 
@@ -216,6 +224,16 @@ export default function Index({ auth, digests, flash }: Props) {
                         ))}
                     </div>
                 )}
+
+                <Pagination 
+                    links={digests.links} 
+                    meta={{
+                        current_page: digests.current_page,
+                        from: digests.from,
+                        to: digests.to,
+                        total: digests.total
+                    }} 
+                />
             </div>
 
             <ConfirmationModal

@@ -12,7 +12,7 @@ class DigestController extends Controller
 {
     public function index()
     {
-        $digests = Auth::user()->digests()->withCount('channels')->get();
+        $digests = Auth::user()->digests()->withCount('channels')->latest()->paginate(12);
         return Inertia::render('Digests/Index', [
             'digests' => $digests,
         ]);

@@ -4,6 +4,7 @@ import { PageProps } from '@/types';
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { formatLocalDateTime } from '@/utils/date';
+import Pagination from '@/Components/Pagination';
 
 interface DigestRun {
     id: number;
@@ -36,6 +37,9 @@ interface Props extends PageProps {
         data: DigestRun[];
         links: { url: string | null; label: string; active: boolean }[];
         total: number;
+        current_page: number;
+        from: number;
+        to: number;
     };
     digestId?: string;
 }
@@ -293,31 +297,15 @@ export default function Index({ auth, runs, digestId }: Props) {
                             </div>
                         )}
 
-                        {runs.links && runs.links.length > 3 && (
-                            <div className="mt-8 flex justify-center pb-4">
-                                <div className="inline-flex items-center justify-center space-x-1 bg-white dark:bg-gray-800 rounded-xl p-1.5 border border-gray-200 dark:border-gray-700/50 shadow-sm">
-                                    {runs.links.map((link, idx) => (
-                                        link.url ? (
-                                            <Link
-                                                key={idx}
-                                                href={link.url}
-                                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${link.active 
-                                                    ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-500/20' 
-                                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                                                }`}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                            />
-                                        ) : (
-                                            <span 
-                                                key={idx} 
-                                                className="px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-500" 
-                                                dangerouslySetInnerHTML={{ __html: link.label }} 
-                                            />
-                                        )
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        <Pagination 
+                            links={runs.links} 
+                            meta={{
+                                current_page: runs.current_page,
+                                from: runs.from,
+                                to: runs.to,
+                                total: runs.total
+                            }} 
+                        />
 
                     </div>
                 </div>

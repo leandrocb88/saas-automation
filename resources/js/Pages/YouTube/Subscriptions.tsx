@@ -3,6 +3,7 @@ import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
 import InputError from '@/Components/InputError';
 import { FormEventHandler, useState } from 'react';
 import ConfirmationModal from '@/Components/ConfirmationModal';
+import Pagination from '@/Components/Pagination';
 
 interface Channel {
     id: number;
@@ -15,7 +16,14 @@ interface Channel {
 
 interface Props {
     auth: any;
-    channels: Channel[];
+    channels: {
+        data: Channel[];
+        links: { url: string | null; label: string; active: boolean }[];
+        total: number;
+        current_page: number;
+        from: number;
+        to: number;
+    };
     flash?: { success?: string };
 }
 
@@ -156,15 +164,15 @@ export default function Subscriptions({ auth, channels, flash }: Props) {
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                             Your Channels
-                            {channels.length > 0 && (
+                            {channels.data.length > 0 && (
                                 <span className="ml-2 inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
-                                    {channels.length}
+                                    {channels.total}
                                 </span>
                             )}
                         </h2>
                     </div>
 
-                    {channels.length === 0 ? (
+                    {channels.data.length === 0 ? (
                         <div className="rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-12 text-center">
                             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/20">
                                 <svg className="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -178,7 +186,7 @@ export default function Subscriptions({ auth, channels, flash }: Props) {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                            {channels.map((channel) => (
+                            {channels.data.map((channel) => (
                                 <div
                                     key={channel.id}
                                     className="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-800 transition-all duration-300 overflow-hidden"
@@ -261,6 +269,16 @@ export default function Subscriptions({ auth, channels, flash }: Props) {
                         </div>
                     )}
                 </div>
+
+                <Pagination 
+                    links={channels.links} 
+                    meta={{
+                        current_page: channels.current_page,
+                        from: channels.from,
+                        to: channels.to,
+                        total: channels.total
+                    }} 
+                />
             </div>
 
             <ConfirmationModal
