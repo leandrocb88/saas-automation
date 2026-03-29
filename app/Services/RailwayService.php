@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Log;
 
 class RailwayService
 {
+    public const CHUNK_SIZE = 25;
+
     protected string $baseUrl;
     protected ?string $apiKey;
     protected YouTubeService $youtube;
@@ -37,39 +39,48 @@ class RailwayService
      */
     public function fetchTranscripts(array $urls, array $options = []): ?array
     {
-        $categorized = $this->youtube->categorizeUrls($urls);
-        $payload = array_merge($categorized, $options);
+        $allResults = [];
+        $chunks = array_chunk($urls, self::CHUNK_SIZE);
+        $totalChunks = count($chunks);
 
-        // Debug Log: Ensure the payload keys are exactly what we expect
-        Log::info("Railway Transaction Payload:", [
-            'keys' => array_keys($payload),
-            'startUrls_count' => count($payload['startUrls'] ?? []),
-            'channelUrls_count' => count($payload['channelUrls'] ?? []),
-            'searchKeywords_count' => count($payload['searchKeywords'] ?? []),
-        ]);
+        foreach ($chunks as $idx => $chunk) {
+            $currentChunkNum = $idx + 1;
+            $categorized = $this->youtube->categorizeUrls($chunk);
+            $payload = array_merge($categorized, $options);
 
-        try {
-            $response = $this->getClient(300)->post($this->baseUrl, $payload);
+            Log::info("Railway Batch ({$currentChunkNum}/{$totalChunks}) Payload:", [
+                'keys' => array_keys($payload),
+                'startUrls_count' => count($payload['startUrls'] ?? []),
+                'channelUrls_count' => count($payload['channelUrls'] ?? []),
+                'searchKeywords_count' => count($payload['searchKeywords'] ?? []),
+            ]);
 
-            if ($response->successful()) {
-                $data = $response->json();
-                return $data['items'] ?? [];
+            try {
+                $response = $this->getClient(300)->post($this->baseUrl, $payload);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $items = $data['items'] ?? [];
+                    $allResults = array_merge($allResults, $items);
+                    Log::info("Railway Batch ({$currentChunkNum}/{$totalChunks}) Success: Found " . count($items) . " items.");
+                } else {
+                    Log::error("Railway Batch ({$currentChunkNum}/{$totalChunks}) Error", [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                        'chunk' => $chunk
+                    ]);
+                    return null; // Fail fast so fallback can take over
+                }
+            } catch (\Exception $e) {
+                Log::error("Railway Batch ({$currentChunkNum}/{$totalChunks}) Exception", [
+                    'message' => $e->getMessage(),
+                    'chunk' => $chunk
+                ]);
+                return null;
             }
-
-            Log::error("Railway API Error", [
-                'status' => $response->status(),
-                'body' => $response->body(),
-                'payload_keys' => array_keys($payload)
-            ]);
-
-            return null; // Return null to indicate API failure (not just empty results)
-        } catch (\Exception $e) {
-            Log::error("Railway API Exception", [
-                'message' => $e->getMessage(),
-                'payload_keys' => array_keys($payload)
-            ]);
-            return null;
         }
+
+        return $allResults;
     }
 
     /**
@@ -81,35 +92,45 @@ class RailwayService
      */
     public function analyzeChannels(array $channelUrls, array $options = []): ?array
     {
-        $categorized = $this->youtube->categorizeUrls($channelUrls);
-        $payload = array_merge($categorized, $options);
+        $allResults = [];
+        $chunks = array_chunk($channelUrls, self::CHUNK_SIZE);
+        $totalChunks = count($chunks);
 
-        Log::info("Railway Channel Analysis Payload:", [
-            'keys' => array_keys($payload),
-            'channelUrls_count' => count($payload['channelUrls'] ?? []),
-        ]);
+        foreach ($chunks as $idx => $chunk) {
+            $currentChunkNum = $idx + 1;
+            $categorized = $this->youtube->categorizeUrls($chunk);
+            $payload = array_merge($categorized, $options);
 
-        try {
-            $response = $this->getClient(300)->post($this->baseUrl, $payload);
+            Log::info("Railway Channel Batch ({$currentChunkNum}/{$totalChunks}) Payload:", [
+                'keys' => array_keys($payload),
+                'channelUrls_count' => count($payload['channelUrls'] ?? []),
+            ]);
 
-            if ($response->successful()) {
-                $data = $response->json();
-                return $data['items'] ?? [];
+            try {
+                $response = $this->getClient(300)->post($this->baseUrl, $payload);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $items = $data['items'] ?? [];
+                    $allResults = array_merge($allResults, $items);
+                    Log::info("Railway Channel Batch ({$currentChunkNum}/{$totalChunks}) Success: Found " . count($items) . " items.");
+                } else {
+                    Log::error("Railway Channel Batch ({$currentChunkNum}/{$totalChunks}) Error", [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                        'chunk' => $chunk
+                    ]);
+                    return null;
+                }
+            } catch (\Exception $e) {
+                Log::error("Railway Channel Batch ({$currentChunkNum}/{$totalChunks}) Exception", [
+                    'message' => $e->getMessage(),
+                    'chunk' => $chunk
+                ]);
+                return null;
             }
-
-            Log::error("Railway Channel Analysis Error", [
-                'status' => $response->status(),
-                'body' => $response->body(),
-                'payload_keys' => array_keys($payload)
-            ]);
-
-            return null;
-        } catch (\Exception $e) {
-            Log::error("Railway Channel Analysis Exception", [
-                'message' => $e->getMessage(),
-                'payload_keys' => array_keys($payload)
-            ]);
-            return null;
         }
+
+        return $allResults;
     }
 }
