@@ -15,6 +15,8 @@ interface Digest {
     search_term?: string; // Add optional search_term
     is_active: boolean;
     channels_count: number;
+    last_run_at?: string;
+    last_time_change_at?: string;
 }
 
 interface Props extends PageProps {
@@ -30,9 +32,10 @@ interface Props extends PageProps {
         success?: string;
         error?: string;
     };
+    isPaid: boolean;
 }
 
-export default function Index({ auth, digests, flash }: Props) {
+export default function Index({ auth, digests, flash, isPaid }: Props) {
     const [confirmingDigestDeletion, setConfirmingDigestDeletion] = useState(false);
     const [digestToDelete, setDigestToDelete] = useState<number | null>(null);
 
@@ -58,6 +61,13 @@ export default function Index({ auth, digests, flash }: Props) {
             preserveScroll: true
         });
     };
+
+    const hasAnyRunToday = digests.data.some(digest => {
+        if (!digest.last_run_at) return false;
+        const lastRun = new Date(digest.last_run_at);
+        const today = new Date();
+        return lastRun.toDateString() === today.toDateString();
+    });
 
     return (
         <AuthenticatedLayout>
@@ -147,6 +157,23 @@ export default function Index({ auth, digests, flash }: Props) {
                                             <h3 className="text-lg font-bold text-gray-900 dark:text-white line-clamp-2 leading-tight" title={digest.name}>
                                                 {digest.name}
                                             </h3>
+                                            
+                                            {!isPaid && hasAnyRunToday && digest.last_time_change_at && (
+                                                (() => {
+                                                    const changeDate = new Date(digest.last_time_change_at);
+                                                    const isToday = changeDate.toDateString() === new Date().toDateString();
+                                                    return isToday ? (
+                                                        <div className="mt-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
+                                                            <svg className="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                            </svg>
+                                                            <span className="text-[10px] font-medium text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                                                                Changes apply tomorrow
+                                                            </span>
+                                                        </div>
+                                                    ) : null;
+                                                })()
+                                            )}
                                         </div>
                                         <button
                                             onClick={() => toggleActive(digest)}

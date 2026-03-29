@@ -75,15 +75,17 @@ class ProcessDigests extends Command
                 return false;
             }
 
-            // 3. Prevent double-dispatching within the same 1-minute window
-            $alreadyRun = $digest->last_run_at && $digest->last_run_at->gt(now()->subMinute());
-            if ($alreadyRun) {
-                Log::info(" - Skipped: Already dispatched in the last minute for {$digest->user->email}");
-                return false;
-            }
-
-            // 4. Free user trickery prevention: max 1 digest run per day
-            if (!$isPaid) {
+            // 3. Paid vs Free Eligibility Logic
+            if ($isPaid) {
+                // Paid Users: A digest can run again if processed BEFORE the current scheduled window started.
+                // This allows them to "reset" the digest by moving the time forward.
+                $alreadyRun = $digest->last_run_at && Carbon::parse($digest->last_run_at)->greaterThanOrEqualTo($scheduledTime);
+                if ($alreadyRun) {
+                    Log::info(" - Skipped: Already dispatched for this scheduled instance ({$digest->last_run_at})");
+                    return false;
+                }
+            } else {
+                // Free Users: Strictly max 1 digest run per day across ALL their digests.
                 $hasRunToday = Digest::where('user_id', $digest->user_id)
                     ->whereNotNull('last_run_at')
                     ->get()

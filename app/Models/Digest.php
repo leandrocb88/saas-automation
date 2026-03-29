@@ -21,6 +21,7 @@ class Digest extends Model
         'search_term',
         'is_active',
         'last_run_at',
+        'last_time_change_at',
         'timezone',
         'video_types',
         'status',
@@ -29,6 +30,7 @@ class Digest extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'last_run_at' => 'datetime',
+        'last_time_change_at' => 'datetime',
         'video_types' => 'array',
     ];
 

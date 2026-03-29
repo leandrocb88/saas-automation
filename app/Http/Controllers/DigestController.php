@@ -10,11 +10,13 @@ use Illuminate\Support\Facades\Auth;
 
 class DigestController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $digests = Auth::user()->digests()->withCount('channels')->latest()->paginate(12);
+        $service = str_contains($request->getHost(), 'zillow') ? 'zillow' : 'youtube';
         return Inertia::render('Digests/Index', [
             'digests' => $digests,
+            'isPaid' => Auth::user()->subscribed($service),
         ]);
     }
 
@@ -64,6 +66,7 @@ class DigestController extends Controller
             'timezone' => $validated['timezone'] ?? 'UTC',
             'video_types' => !empty($validated['video_types']) ? $validated['video_types'] : ['videos'],
             'is_active' => true,
+            'last_time_change_at' => now(), // Initial setup counts as a change
         ]);
 
         if (!empty($validated['channel_ids'])) {
@@ -119,15 +122,7 @@ class DigestController extends Controller
             'video_types.*' => 'in:videos,shorts,streams',
         ]);
 
-        $service = str_contains($request->getHost(), 'zillow') ? 'zillow' : 'youtube';
-        $settingActive = $validated['is_active'] ?? $digest->is_active;
-
-        if (!Auth::user()->subscribed($service) && $settingActive && !$digest->is_active) {
-            $activeCount = Auth::user()->digests()->where('is_active', true)->count();
-            if ($activeCount >= 1) {
-                return redirect()->back()->with('error', 'Free users can only have 1 active digest. Please upgrade to activate this digest.');
-            }
-        }
+        $timeChanged = $validated['scheduled_at'] !== $digest->scheduled_at;
 
         $digest->update([
             'name' => $validated['name'],
@@ -141,6 +136,7 @@ class DigestController extends Controller
             'is_active' => $validated['is_active'] ?? $digest->is_active,
             'timezone' => $validated['timezone'] ?? $digest->timezone,
             'video_types' => !empty($validated['video_types']) ? $validated['video_types'] : ['videos'],
+            'last_time_change_at' => $timeChanged ? now() : $digest->last_time_change_at,
         ]);
 
         if (isset($validated['channel_ids'])) {
