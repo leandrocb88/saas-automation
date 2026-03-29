@@ -48,12 +48,7 @@ class RailwayService
             $categorized = $this->youtube->categorizeUrls($chunk);
             $payload = array_merge($categorized, $options);
 
-            Log::info("Railway Batch ({$currentChunkNum}/{$totalChunks}) Payload:", [
-                'keys' => array_keys($payload),
-                'startUrls_count' => count($payload['startUrls'] ?? []),
-                'channelUrls_count' => count($payload['channelUrls'] ?? []),
-                'searchKeywords_count' => count($payload['searchKeywords'] ?? []),
-            ]);
+            Log::info("Railway Batch ({$currentChunkNum}/{$totalChunks}) Payload:", $payload);
 
             try {
                 $response = $this->getClient(300)->post($this->baseUrl, $payload);
@@ -101,10 +96,7 @@ class RailwayService
             $categorized = $this->youtube->categorizeUrls($chunk);
             $payload = array_merge($categorized, $options);
 
-            Log::info("Railway Channel Batch ({$currentChunkNum}/{$totalChunks}) Payload:", [
-                'keys' => array_keys($payload),
-                'channelUrls_count' => count($payload['channelUrls'] ?? []),
-            ]);
+            Log::info("Railway Channel Batch ({$currentChunkNum}/{$totalChunks}) Payload:", $payload);
 
             try {
                 $response = $this->getClient(300)->post($this->baseUrl, $payload);

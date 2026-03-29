@@ -315,7 +315,8 @@ class YouTubeController extends Controller
 
         // Allow script to continue running even if user disconnects
         ignore_user_abort(true);
-        set_time_limit(600);
+        ini_set('memory_limit', '768M');
+        set_time_limit(1800);
 
         // 2. Trigger Railway API (with Apify fallback)
         $options = [
@@ -581,7 +582,8 @@ class YouTubeController extends Controller
             // Note: remaining is already reduced because freeze happened. No additional deduction needed here.
         }
 
-        set_time_limit(600); 
+        ini_set('memory_limit', '768M');
+        set_time_limit(1800); 
 
         // 2. Trigger Fetching
         $items = $this->railway->fetchTranscripts(array_values($urlsToFetch), [

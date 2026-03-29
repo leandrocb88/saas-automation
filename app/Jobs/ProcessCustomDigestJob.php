@@ -23,7 +23,7 @@ class ProcessCustomDigestJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 600;
+    public $timeout = 1800;
 
     protected $digest;
     protected $options;
@@ -51,6 +51,9 @@ class ProcessCustomDigestJob implements ShouldQueue
         $costPerVideo = 0;
 
         try {
+            ini_set('memory_limit', '768M'); // Leave some room for the OS and other container processes since the instance only has 1GB
+            set_time_limit(1800); // 30 minutes execution time
+
             Log::info(">>> Starting Digest Process: '{$digest->name}' (ID: {$digest->id}) for {$user->email}");
 
         $sourceUrls = [];
