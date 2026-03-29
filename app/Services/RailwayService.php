@@ -49,7 +49,7 @@ class RailwayService
         ]);
 
         try {
-            $response = $this->getClient(60)->post($this->baseUrl, $payload);
+            $response = $this->getClient(300)->post($this->baseUrl, $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -90,7 +90,7 @@ class RailwayService
         ]);
 
         try {
-            $response = $this->getClient(120)->post($this->baseUrl, $payload);
+            $response = $this->getClient(300)->post($this->baseUrl, $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
