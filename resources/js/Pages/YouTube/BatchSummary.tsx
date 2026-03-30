@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import Dropdown from '@/Components/Dropdown';
 import { formatLocalDate } from '@/utils/date';
+import YouTubePlayer, { YouTubePlayerRef } from '@/Components/YouTubePlayer';
 
 interface TranscriptSegment {
     text: string;
@@ -144,6 +145,8 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
         return langs;
     }, [results]);
 
+    const playerRefs = useRef<Record<string, YouTubePlayerRef>>({});
+
     const [localResults, setLocalResults] = useState<VideoResult[]>(() => {
         return results.map(video => {
             let initialTranscript = video.transcript;
@@ -181,7 +184,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
             };
         });
     });
-    const [expandedIndices, setExpandedIndices] = useState<Record<number, boolean>>(isHistoryView ? { 0: true } : {});
+    const [expandedIndices, setExpandedIndices] = useState<Record<number, boolean>>((isHistoryView || results.length === 1) ? { 0: true } : {});
     const [maximizedSections, setMaximizedSections] = useState<Record<number, 'transcript' | 'summary' | null>>({});
 
     const toggleMaximize = (index: number, section: 'transcript' | 'summary') => {
@@ -733,14 +736,14 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
-                                <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-sm px-3 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300 mb-3">
+                                <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-sm px-3 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300 mb-3 shadow-sm">
                                     <svg className="w-3 h-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    {isHistoryView ? 'Video Detail' : 'Batch Complete'}
+                                    {isHistoryView ? 'Analysis Archive' : 'Analysis Complete'}
                                 </div>
-                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                                    {isHistoryView ? localResults[0]?.title : `Processed ${localResults.length} Videos`}
+                                <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                                    {isHistoryView ? 'Detailed Report' : `Processed ${localResults.length} Videos`}
                                 </h1>
                             </div>
                             <div className="flex items-center gap-2">
@@ -866,7 +869,9 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                     </div>
                                     <div>
                                         <h2 className="text-xl font-bold text-gray-900 dark:text-white">{group.channel}</h2>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">{group.videos.length} {group.videos.length === 1 ? 'video' : 'videos'} analyzed</p>
+                                        {group.videos.length > 1 && (
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">{group.videos.length} videos analyzed</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -888,33 +893,30 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                         return (
                                             <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl ring-1 ring-gray-200/50 dark:ring-gray-700/50 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
                                                 {/* Collapsed Header */}
-                                                <div className="p-6">
-                                                    <div className="flex gap-5">
+                                                <div className={`p-5 transition-colors ${localResults.length > 1 ? 'hover:bg-gray-50/50 dark:hover:bg-gray-700/20 cursor-pointer' : ''}`} onClick={(e) => {
+                                                    // Only toggle if there are multiple videos
+                                                    if (localResults.length <= 1) return;
+                                                    // Prevent expanding if they click a link
+                                                    if ((e.target as HTMLElement).closest('a') || (e.target as HTMLElement).closest('button.no-expand')) return;
+                                                    toggleExpand(index);
+                                                }}>
+                                                    <div className="flex justify-between items-center gap-4">
                                                         {video.thumbnail && (
-                                                            <div className="relative w-48 rounded-xl overflow-hidden flex-shrink-0 group">
+                                                            <div className="w-20 sm:w-24 flex-shrink-0 aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-200/50 dark:ring-gray-700/50 shadow-sm">
                                                                 <img
                                                                     src={video.thumbnail}
                                                                     alt={video.title}
-                                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                                    className="w-full h-full object-cover"
+                                                                    loading="lazy"
                                                                 />
-                                                                <a href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]" onClick={(e) => e.stopPropagation()}>
-                                                                    <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/30">
-                                                                        <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                                                                            <path d="M8 5v14l11-7z" />
-                                                                        </svg>
-                                                                    </div>
-                                                                </a>
-                                                                {video.duration_timestamp && (
-                                                                    <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] pointer-events-none">
-                                                                        {video.duration_timestamp}
-                                                                    </div>
-                                                                )}
                                                             </div>
                                                         )}
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="text-lg font-bold text-gray-900 dark:text-white truncate">
-                                                                {video.title || 'Unknown Title'}
-                                                            </h4>
+                                                            <div className="flex items-center gap-3">
+                                                                <h4 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                                                                    {video.title || 'Unknown Title'}
+                                                                </h4>
+                                                            </div>
 
                                                             {/* Metadata Row */}
                                                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
@@ -962,16 +964,21 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <div className="flex-shrink-0 self-center">
-                                                            <button
-                                                                onClick={() => toggleExpand(index)}
-                                                                className="rounded-xl p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                                            >
-                                                                <svg className={`w-5 h-5 text-gray-400 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                                </svg>
-                                                            </button>
-                                                        </div>
+                                                        {localResults.length > 1 && (
+                                                            <div className="flex-shrink-0 self-center">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        toggleExpand(index);
+                                                                    }}
+                                                                    className="rounded-xl p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 transition-colors"
+                                                                >
+                                                                    <svg className={`w-5 h-5 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                    </svg>
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -979,36 +986,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                 {isExpanded && (
                                                     <div className="border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 p-6">
 
-                                                        {/* Controls Bar */}
-                                                        <div className={`grid grid-cols-1 ${maximizedSections[index] ? '' : 'lg:grid-cols-2'} gap-6 mb-4`}>
-                                                            <div className="flex flex-col sm:flex-row items-center gap-4">
-                                                                <div className="relative flex-1 w-full">
-                                                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                                                        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                                        </svg>
-                                                                    </div>
-                                                                    <input
-                                                                        type="text"
-                                                                        className="block w-full rounded-xl border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm dark:bg-gray-800 dark:ring-gray-600 dark:text-white"
-                                                                        placeholder="Search transcript..."
-                                                                        value={searchTerm}
-                                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                                    />
-                                                                </div>
-                                                                <label className="inline-flex items-center cursor-pointer flex-shrink-0">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        className="sr-only peer"
-                                                                        checked={showTimestamps}
-                                                                        onChange={(e) => setShowTimestamps(e.target.checked)}
-                                                                    />
-                                                                    <div className="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-                                                                    <span className="ms-2 text-sm font-medium text-gray-700 dark:text-gray-300">Timestamps</span>
-                                                                </label>
-                                                            </div>
-                                                            {!maximizedSections[index] && <div className="hidden lg:block"></div>}
-                                                        </div>
+
 
 
                                                         {/* Content Grid */}
@@ -1016,7 +994,43 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
 
                                                             {/* Transcript Column */}
                                                             <div className={`${maximizedSections[index] === 'summary' ? 'hidden' : ''} ${maximizedSections[index] === 'transcript' ? 'w-full' : ''} `}>
-                                                                <div className="rounded-2xl bg-white dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-700/50 shadow-sm overflow-hidden flex flex-col max-h-[600px]">
+                                                                <div className="rounded-2xl bg-white dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-700/50 shadow-sm overflow-hidden flex flex-col max-h-[1000px] h-full">
+                                                                    {/* Video Player Box inside Transcript container */}
+                                                                    <div className="bg-black flex-shrink-0 w-full">
+                                                                        <YouTubePlayer 
+                                                                            ref={(el) => { if (el) playerRefs.current[`${video.id || index}`] = el; }} 
+                                                                            videoUrl={video.videoUrl} 
+                                                                        />
+                                                                    </div>
+
+                                                                    {/* Controls Bar inside Transcript */}
+                                                                    <div className="flex flex-col sm:flex-row items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700 shadow-sm bg-gray-50 dark:bg-gray-800/50">
+                                                                        <div className="relative flex-1 w-full">
+                                                                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                                                <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                                                </svg>
+                                                                            </div>
+                                                                            <input
+                                                                                type="text"
+                                                                                className="block w-full rounded-xl border-0 py-2.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm dark:bg-gray-900 dark:ring-gray-600 dark:text-white"
+                                                                                placeholder="Search transcript..."
+                                                                                value={searchTerm}
+                                                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                                            />
+                                                                        </div>
+                                                                        <label className="inline-flex items-center cursor-pointer flex-shrink-0">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                className="sr-only peer"
+                                                                                checked={showTimestamps}
+                                                                                onChange={(e) => setShowTimestamps(e.target.checked)}
+                                                                            />
+                                                                            <div className="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                                                                            <span className="ms-2 text-sm font-medium text-gray-700 dark:text-gray-300">Timestamps</span>
+                                                                        </label>
+                                                                    </div>
+
                                                                     <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center shrink-0">
                                                                         <div className="flex items-center gap-2">
                                                                             <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1136,9 +1150,12 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                                 if (!searchTerm) {
                                                                                     return (
                                                                                         <div key={i} className="group relative mb-3 text-gray-900 dark:text-gray-100 text-sm leading-relaxed hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-2 px-3 py-1 rounded-lg transition-colors pr-8">
-                                                                                            <span className="font-mono text-xs text-indigo-700 dark:text-indigo-400 select-none mr-3 font-semibold">
+                                                                                            <button 
+                                                                                                onClick={() => playerRefs.current[`${video.id || index}`]?.seekTo(segment.start)}
+                                                                                                className="font-mono text-xs text-indigo-700 dark:text-indigo-400 select-none mr-3 font-semibold hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors inline-block"
+                                                                                            >
                                                                                                 {new Date(segment.start * 1000).toISOString().substr(11, 8)}
-                                                                                            </span>
+                                                                                            </button>
                                                                                             {text}
                                                                                             <button
                                                                                                 onClick={() => copySegment(text, `${video.id || index}-${i}`)}
@@ -1161,9 +1178,12 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                                                 const parts = text.split(new RegExp(`(${searchTerm})`, 'gi'));
                                                                                 return (
                                                                                     <div key={i} className="group relative mb-3 text-gray-900 dark:text-gray-100 text-sm leading-relaxed pr-8">
-                                                                                        <span className="font-mono text-xs text-indigo-700 dark:text-indigo-400 select-none mr-3 font-semibold">
+                                                                                        <button 
+                                                                                            onClick={() => playerRefs.current[`${video.id || index}`]?.seekTo(segment.start)}
+                                                                                            className="font-mono text-xs text-indigo-700 dark:text-indigo-400 select-none mr-3 font-semibold hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors inline-block"
+                                                                                        >
                                                                                             {new Date(segment.start * 1000).toISOString().substr(11, 8)}
-                                                                                        </span>
+                                                                                        </button>
                                                                                         {parts.map((part, pIdx) =>
                                                                                             part.toLowerCase() === searchTerm.toLowerCase() ? (
                                                                                                 <span key={pIdx} className="bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-100 rounded px-0.5 font-medium border-b-2 border-yellow-400">
@@ -1208,8 +1228,8 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                                                             </div>
 
                                                             {/* Summary Column */}
-                                                            <div className={`${maximizedSections[index] === 'transcript' ? 'hidden' : ''} ${maximizedSections[index] === 'summary' ? 'w-full' : ''} `}>
-                                                                <div className="h-full rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 ring-1 ring-indigo-200/50 dark:ring-indigo-800/50 overflow-hidden flex flex-col max-h-[600px]">
+                                                            <div className={`${maximizedSections[index] === 'transcript' ? 'hidden' : ''} ${maximizedSections[index] === 'summary' ? 'w-full' : ''} h-full`}>
+                                                                <div className="h-full rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 ring-1 ring-indigo-200/50 dark:ring-indigo-800/50 overflow-hidden flex flex-col max-h-[1000px]">
                                                                     {video.summary_detailed ? (
                                                                         <>
                                                                             <div className="px-4 py-3 bg-indigo-100/50 dark:bg-indigo-900/40 border-b border-indigo-200 dark:border-indigo-800 shrink-0 flex justify-between items-center">
