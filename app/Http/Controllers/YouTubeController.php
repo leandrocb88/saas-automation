@@ -60,9 +60,24 @@ class YouTubeController extends Controller
     public function subscriptions(Request $request)
     {
         $user = $request->user();
+        $query = $user->channels();
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        $sort = $request->input('sort', 'latest');
+        if ($sort === 'name_asc') {
+            $query->orderBy('name', 'asc');
+        } elseif ($sort === 'name_desc') {
+            $query->orderBy('name', 'desc');
+        } else {
+            $query->latest();
+        }
         
         return Inertia::render('YouTube/Subscriptions', [
-            'channels' => $user->channels()->latest()->paginate(12),
+            'channels' => $query->paginate(12)->withQueryString(),
+            'filters' => (object) $request->only(['search', 'sort']),
         ]);
     }
 
@@ -139,12 +154,20 @@ class YouTubeController extends Controller
 
         } while ($pageToken);
 
+        $allStats = [];
+        if (!empty($channels)) {
+            $allIds = array_column($channels, 'youtube_channel_id');
+            $youtubeService = app(\App\Services\YouTubeService::class);
+            $allStats = $youtubeService->getChannelsStatistics($allIds);
+        }
+
         $imported = 0;
 
         foreach ($channels as $ch) {
             $exists = $user->channels()->where('youtube_channel_id', $ch['youtube_channel_id'])->exists();
 
             if (!$exists) {
+                $ch['subscriber_count'] = $allStats[$ch['youtube_channel_id']] ?? null;
                 $user->channels()->create($ch);
                 $imported++;
             }

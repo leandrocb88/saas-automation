@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
 import InputError from '@/Components/InputError';
-import { FormEventHandler, useState } from 'react';
+import { FormEventHandler, useState, useEffect, useRef } from 'react';
 import ConfirmationModal from '@/Components/ConfirmationModal';
 import Pagination from '@/Components/Pagination';
 
@@ -25,10 +25,62 @@ interface Props {
         to: number;
     };
     flash?: { success?: string };
+    filters: { search?: string; sort?: string };
 }
 
-export default function Subscriptions({ auth, channels, flash }: Props) {
+export default function Subscriptions({ auth, channels, flash, filters }: Props) {
+    const [search, setSearch] = useState(filters?.search || '');
+    const [sort, setSort] = useState(filters?.sort || 'latest');
     const [channelToUnsubscribe, setChannelToUnsubscribe] = useState<number | null>(null);
+
+    // Initial check for crash prevention
+    if (!channels || !channels.data) {
+        console.error('Subscriptions: channels prop is missing or invalid', channels);
+        return (
+            <AuthenticatedLayout>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+                    <div className="inline-flex items-center justify-center p-4 rounded-full bg-red-50 dark:bg-red-900/20 mb-6">
+                        <svg className="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Something went wrong</h2>
+                    <p className="text-gray-600 dark:text-gray-400 max-w-sm mx-auto mb-8">
+                        The subscription data couldn't be loaded properly. Please try again or contact support if the issue persists.
+                    </p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-all"
+                    >
+                        Refresh Page
+                    </button>
+                </div>
+            </AuthenticatedLayout>
+        );
+    }
+
+    const isFirstMount = useRef(true);
+
+    useEffect(() => {
+        if (isFirstMount.current) {
+            isFirstMount.current = false;
+            return;
+        }
+
+        const query: any = {};
+        if (search) query.search = search;
+        if (sort !== 'latest') query.sort = sort;
+
+        const timer = setTimeout(() => {
+            router.get(route('youtube.subscriptions'), query, {
+                preserveState: true,
+                replace: true,
+                preserveScroll: true,
+            });
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [search, sort]);
 
     const confirmUnsubscribe = (id: number) => {
         setChannelToUnsubscribe(id);
@@ -161,15 +213,51 @@ export default function Subscriptions({ auth, channels, flash }: Props) {
 
                 {/* Channel Grid */}
                 <div>
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                             Your Channels
-                            {channels.data.length > 0 && (
+                            {channels.total > 0 && (
                                 <span className="ml-2 inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
                                     {channels.total}
                                 </span>
                             )}
                         </h2>
+
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            {/* Sort Dropdown */}
+                            <div className="relative w-full md:w-40">
+                                <select
+                                    className="block w-full rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-3 pr-10 py-2 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500/20 transition-all shadow-sm appearance-none cursor-pointer"
+                                    value={sort}
+                                    onChange={(e) => setSort(e.target.value)}
+                                >
+                                    <option value="latest">Latest</option>
+                                    <option value="name_asc">A-Z (Name)</option>
+                                    <option value="name_desc">Z-A (Name)</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            {/* Search Input */}
+                            <div className="relative w-full md:w-72">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <input
+                                    type="text"
+                                    className="block w-full rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-10 pr-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500/20 transition-all shadow-sm"
+                                    placeholder="Search channels..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {channels.data.length === 0 ? (

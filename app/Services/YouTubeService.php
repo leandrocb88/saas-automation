@@ -39,6 +39,37 @@ class YouTubeService
         ];
     }
 
+    /**
+     * Fetch statistics (like subscriber count) for multiple channel IDs.
+     * Max 50 IDs per request.
+     */
+    public function getChannelsStatistics(array $channelIds): array
+    {
+        if (empty($channelIds)) {
+            return [];
+        }
+
+        $allStats = [];
+        $chunks = array_chunk($channelIds, 50);
+
+        foreach ($chunks as $chunk) {
+            $response = Http::timeout(15)->get("{$this->baseUrl}/channels", [
+                'part' => 'statistics',
+                'id' => implode(',', $chunk),
+                'key' => $this->apiKey,
+            ]);
+
+            if ($response->successful()) {
+                $items = $response->json()['items'] ?? [];
+                foreach ($items as $item) {
+                    $allStats[$item['id']] = $this->formatSubscriberCount($item['statistics']['subscriberCount'] ?? 0);
+                }
+            }
+        }
+
+        return $allStats;
+    }
+
     protected function extractIdentifier($url)
     {
         // Handle: https://www.youtube.com/@Handle
