@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 class RailwayService
 {
-    public const CHUNK_SIZE = 25;
+    public const CHUNK_SIZE = 50;
 
     protected string $baseUrl;
     protected ?string $apiKey;
