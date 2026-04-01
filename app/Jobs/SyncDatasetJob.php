@@ -66,6 +66,13 @@ class SyncDatasetJob implements ShouldQueue
             $input['channelDaysBack'] = $daysBack;
             $input['maxVideosPerChannel'] = 1000;
             
+            if (config('app.debug')) {
+                Log::info("Smart Catch-up Payload Fragment:", [
+                    'daysBack' => $daysBack,
+                    'last_synced_at' => $this->dataset->last_synced_at,
+                ]);
+            }
+            
             Log::info("Smart Catch-up Background Job for Dataset {$this->dataset->id}: looking back {$daysBack} days.");
         }
 

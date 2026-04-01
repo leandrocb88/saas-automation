@@ -85,6 +85,12 @@ export default function Authenticated({
                             </div>
 
                             <div className="hidden space-x-1 sm:-my-px sm:ms-8 sm:flex">
+                                <NavLink
+                                    href={route('youtube.channel')}
+                                    active={route().current('youtube.channel')}
+                                >
+                                    Channels
+                                </NavLink>
                                 {route().has('youtube.history') && (
                                     <NavLink
                                         href={route('youtube.history')}
@@ -93,12 +99,6 @@ export default function Authenticated({
                                         History
                                     </NavLink>
                                 )}
-                                <NavLink
-                                    href={route('youtube.channel')}
-                                    active={route().current('youtube.channel')}
-                                >
-                                    Channels
-                                </NavLink>
                                 {user && (
                                     <>
                                         <NavLink

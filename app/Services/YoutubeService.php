@@ -29,7 +29,11 @@ class YoutubeService
     {
         $this->injectDebugFlag($payload);
 
-        Log::info("Triggering Youtube Actor ({$this->driver}) Sync:", $payload);
+        if (config('app.debug') || config('services.youtube_actor.debug')) {
+            Log::info("DEBUG: Knowledge Base Actor Payload ({$this->driver}):", $payload);
+        } else {
+            Log::info("Triggering Youtube Actor ({$this->driver}) Sync for Dataset.");
+        }
 
         if ($this->driver === 'apify') {
             return $this->triggerApifyActor($payload);
@@ -393,7 +397,7 @@ class YoutubeService
      */
     protected function injectDebugFlag(array &$payload): void
     {
-        if (config('services.youtube_actor.debug')) {
+        if (config('app.debug') || config('services.youtube_actor.debug')) {
             $payload['debug'] = true;
         }
     }
