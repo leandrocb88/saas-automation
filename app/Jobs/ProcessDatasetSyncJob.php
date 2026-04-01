@@ -27,8 +27,8 @@ class ProcessDatasetSyncJob implements ShouldQueue
     public function handle(\App\Services\YoutubeService $youtube, \App\Services\DatasetService $datasetService): void
     {
         // Increase memory and time limits for large dataset processing
-        ini_set('memory_limit', '512M');
-        set_time_limit(300); // 5 minutes
+        ini_set('memory_limit', '1024M');
+        set_time_limit(600); // 10 minutes
 
         \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob STARTED: Looking for Dataset ID #{$this->localDatasetId}");
         $dataset = \App\Models\Dataset::find($this->localDatasetId);
@@ -51,6 +51,7 @@ class ProcessDatasetSyncJob implements ShouldQueue
                     $fileContent = \Illuminate\Support\Facades\Storage::disk('s3')->get($this->s3FileIdOrActorId);
                     if ($fileContent) {
                         $items = json_decode($fileContent, true) ?? [];
+                        unset($fileContent); // Free large string memory
                         \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob: Successfully retrieved S3 content. Count: " . count($items));
                     } else {
                         \Illuminate\Support\Facades\Log::warning("ProcessDatasetSyncJob: S3 file is empty: {$this->s3FileIdOrActorId}");

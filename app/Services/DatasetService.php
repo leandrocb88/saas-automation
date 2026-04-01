@@ -22,11 +22,13 @@ class DatasetService
         
         $content = "";
         
+        // 1. Batch fetch already attached IDs to prevent N+1 queries in the loop
+        $existingVideoIds = $dataset->videos()->pluck('videos.id')->toArray();
+        $existingIdMap = array_flip($existingVideoIds);
+        
         foreach ($videos as $video) {
             // Check if already in dataset_videos to prevent duplicates
-            // This is the core requirement for preventing re-indexing of the same video
-            if ($dataset->videos()->where('video_id', $video->id)->exists()) {
-                Log::info("Skipping duplicate video #{$video->id} for dataset #{$dataset->id}");
+            if (isset($existingIdMap[$video->id])) {
                 continue;
             }
 
@@ -34,7 +36,6 @@ class DatasetService
             
             // Attach to dataset (this updates the pivot table)
             $dataset->videos()->attach($video->id);
-            Log::info("Attached video #{$video->id} to dataset #{$dataset->id}");
         }
 
         if (!empty($content)) {
