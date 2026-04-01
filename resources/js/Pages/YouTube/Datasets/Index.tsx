@@ -251,13 +251,18 @@ export default function Index({ auth, datasets, flash }: Props) {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/60 p-3 rounded-xl border border-gray-100 dark:border-gray-700/50">
+                                        <Link 
+                                            href={route('datasets.videos', dataset.id)}
+                                            className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-300 bg-white/40 dark:bg-gray-800/60 p-3 rounded-xl border border-gray-100 dark:border-gray-700/50 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-sm transition-all group/stat"
+                                            title="View processed videos"
+                                        >
                                             <div className="flex items-center">
-                                                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center mr-3">
+                                                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center mr-3 group-hover/stat:rotate-12 transition-transform">
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                                                 </div>
-                                                <div>
-                                                    <span className="font-bold text-gray-900 dark:text-white">{dataset.videos_count}</span> Videos
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-900 dark:text-white leading-none mb-0.5">{dataset.videos_count} Videos</span>
+                                                    <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest opacity-0 group-hover/stat:opacity-100 transition-opacity">View List</span>
                                                 </div>
                                             </div>
 
@@ -274,15 +279,15 @@ export default function Index({ auth, datasets, flash }: Props) {
                                                     {dataset.last_synced_at ? 'Synced' : 'Ready'}
                                                 </span>
                                             )}
-                                        </div>
+                                        </Link>
                                     </div>
                                 </div>
 
-                                <div className="border-t border-gray-100 dark:border-gray-700/50 bg-gray-50/80 dark:bg-gray-800/80 px-4 py-4 flex flex-wrap gap-2">
+                                <div className="border-t border-gray-100 dark:border-gray-700/50 bg-gray-50/80 dark:bg-gray-800/80 px-4 py-4 grid grid-cols-5 gap-2">
                                     <button
                                         onClick={() => triggerSync(dataset)}
                                         disabled={dataset.status === 'syncing'}
-                                        className="flex-1 text-center py-2 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                        className="col-span-2 text-center py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                         title="Catch up videos since last run"
                                     >
                                         Sync Now
@@ -290,24 +295,33 @@ export default function Index({ auth, datasets, flash }: Props) {
                                     <button
                                         onClick={() => triggerSync(dataset, true)}
                                         disabled={dataset.status === 'syncing'}
-                                        className="flex-1 text-center py-2 rounded-xl text-sm font-semibold text-purple-700 dark:text-purple-300 bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-900/50 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                        className="col-span-2 text-center py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-900/50 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                         title="Sync entire channel history"
                                     >
                                         Full Sync
                                     </button>
-                                    <a
-                                        href={route('datasets.download', dataset.id)}
-                                        className="flex-1 text-center py-2 rounded-xl text-sm font-semibold text-indigo-600 dark:text-white bg-indigo-50 dark:bg-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-500 transition-colors shadow-sm whitespace-nowrap"
-                                        target="_blank" rel="noreferrer"
-                                    >
-                                        Download
-                                    </a>
                                     <button
                                         onClick={() => handleDelete(dataset.id)}
-                                        className="py-2.5 px-3 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 border focus:outline-none border-gray-200 dark:border-gray-600 hover:border-red-200 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all shadow-sm group/del"
+                                        className="col-span-1 flex items-center justify-center py-2 rounded-xl text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 border focus:outline-none border-gray-200 dark:border-gray-600 hover:border-red-200 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all shadow-sm group/del"
                                     >
-                                        <svg className="w-5 h-5 group-hover/del:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        <svg className="w-4 h-4 group-hover/del:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
+
+                                    <Link
+                                        href={route('datasets.videos', dataset.id)}
+                                        className="col-span-3 text-center py-3 rounded-xl text-[11px] font-black uppercase tracking-widest text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-400 transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644C3.67 8.5 7.652 6 12 6c4.348 0 8.33 2.5 9.964 5.678a1.012 1.012 0 010 .644C20.33 15.5 16.348 18 12 18c-4.348 0-8.33-2.5-9.964-5.678z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                        Browse Videos
+                                    </Link>
+                                    <a
+                                        href={route('datasets.download', dataset.id)}
+                                        className="col-span-2 text-center py-3 rounded-xl text-[11px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-white/5 hover:bg-indigo-100 dark:hover:bg-white/10 transition-all shadow-sm flex items-center justify-center gap-2 border border-indigo-200 dark:border-indigo-500/20"
+                                        target="_blank" rel="noreferrer"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12L12 16.5m0 0l4.5-4.5M12 16.5V3" /></svg>
+                                        Download
+                                    </a>
                                 </div>
                             </div>
                         ))}

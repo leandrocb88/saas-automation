@@ -131,6 +131,33 @@ class DatasetController extends Controller
         return Storage::download($dataset->file_path, "{$dataset->name}-knowledge.md");
     }
 
+    public function videos(Dataset $dataset, Request $request)
+    {
+        $this->authorizeOwner($dataset);
+
+        $query = $dataset->videos();
+
+        // Search logic
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('channel_title', 'like', "%{$search}%");
+            });
+        }
+
+        $videos = $query->latest()
+            ->select('videos.id', 'video_id', 'title', 'channel_title', 'thumbnail_url', 'videos.created_at', 'duration', 'published_at')
+            ->paginate(24)
+            ->withQueryString();
+
+        return Inertia::render('YouTube/Datasets/Videos', [
+            'dataset' => $dataset,
+            'videos' => $videos,
+            'filters' => (object) $request->only(['search']),
+        ]);
+    }
+
 
     protected function authorizeOwner(Dataset $dataset)
     {

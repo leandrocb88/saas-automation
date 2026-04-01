@@ -67,6 +67,7 @@ Route::middleware('web')->group(function () {
             Route::put('/datasets/{dataset}', [\App\Http\Controllers\DatasetController::class, 'update'])->name('datasets.update');
             Route::patch('/datasets/{dataset}/toggle', [\App\Http\Controllers\DatasetController::class, 'toggle'])->name('datasets.toggle');
             Route::get('/datasets/{dataset}/download', [\App\Http\Controllers\DatasetController::class, 'download'])->name('datasets.download');
+            Route::get('/datasets/{dataset}/videos', [\App\Http\Controllers\DatasetController::class, 'videos'])->name('datasets.videos');
         });
 
         // Redirect /welcome to /

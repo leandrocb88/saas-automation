@@ -35,7 +35,16 @@ class YoutubeWebhookController extends Controller
             // Railway/Custom Format
             $status = $request->input('status');
             $runId = $request->input('runId');
-            $localDatasetId = $request->input('dataset_id') ?? $request->input('user_data.dataset_id') ?? $request->input('userData.dataset_id') ?? $request->input('dataset_id_internal');
+            
+            // Prioritize query string to avoid shadowing (user pointed out dataset_id/runId confusion)
+            $localDatasetId = $request->query('dataset_id') ?? $request->input('dataset_id') ?? $request->input('user_data.dataset_id') ?? $request->input('userData.dataset_id');
+
+            Log::info("Railway Webhook ID extraction:", [
+                'query_dataset_id' => $request->query('dataset_id'),
+                'input_dataset_id' => $request->input('dataset_id'),
+                'final_local_id' => $localDatasetId,
+                'run_id' => $runId
+            ]);
 
             if ($status === 'error') {
                 $errorMsg = $request->input('error', 'Unknown error from actor.');
@@ -60,7 +69,8 @@ class YoutubeWebhookController extends Controller
         if (!$actorDatasetId || !$localDatasetId) {
             Log::error('YouTube Webhook: Missing required IDs', [
                 'actor_dataset_id_or_s3' => $actorDatasetId,
-                'local_dataset_id' => $localDatasetId
+                'local_dataset_id' => $localDatasetId,
+                'payload' => $request->all()
             ]);
             return response()->json(['message' => 'Missing data'], 422);
         }
