@@ -71,39 +71,50 @@ class ProcessDatasetSyncJob implements ShouldQueue
                 return;
             }
 
-            \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob: Found " . count($items) . " items. Processing videos...");
+            \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob: Found " . count($items) . " items. Processing in chunks... ");
 
-            // 2. Process videos
-            $processedVideos = [];
-            foreach ($items as $item) {
-                $videoId = $youtube->extractVideoId($item['url'] ?? $item['videoUrl'] ?? '');
-                if (!$videoId) continue;
+            // 2. Process videos in chunks of 50 to keep memory stable for massive datasets
+            $chunks = array_chunk($items, 50);
+            unset($items); // Free raw items array memory after chunking
 
-                $video = \App\Models\Video::firstOrNew([
-                    'user_id' => $dataset->user_id,
-                    'video_id' => $videoId,
-                ]);
-
-                $video->title = $item['title'] ?? 'Unknown';
-                $video->channel_title = $item['channelName'] ?? $item['channel'] ?? 'Unknown';
-                $video->thumbnail_url = $item['thumbnailUrl'] ?? "https://img.youtube.com/vi/{$videoId}/mqdefault.jpg";
-                $video->transcript = $youtube->parseTranscript($item);
+            foreach ($chunks as $index => $chunk) {
+                \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob: Processing chunk " . ($index + 1) . "/" . count($chunks));
+                $processedVideos = [];
                 
-                $publishedDate = $item['publishedTimeText'] ?? $item['publishedAt'] ?? $item['date'] ?? null;
-                if ($publishedDate) {
-                    try {
-                        $video->published_at = \Carbon\Carbon::parse($publishedDate);
-                    } catch (\Exception $e) {}
+                foreach ($chunk as $item) {
+                    $videoId = $youtube->extractVideoId($item['url'] ?? $item['videoUrl'] ?? '');
+                    if (!$videoId) continue;
+
+                    $video = \App\Models\Video::firstOrNew([
+                        'user_id' => $dataset->user_id,
+                        'video_id' => $videoId,
+                    ]);
+
+                    $video->title = $item['title'] ?? 'Unknown';
+                    $video->channel_title = $item['channelName'] ?? $item['channel'] ?? 'Unknown';
+                    $video->thumbnail_url = $item['thumbnailUrl'] ?? "https://img.youtube.com/vi/{$videoId}/mqdefault.jpg";
+                    $video->transcript = $youtube->parseTranscript($item);
+                    
+                    $publishedDate = $item['publishedTimeText'] ?? $item['publishedAt'] ?? $item['date'] ?? null;
+                    if ($publishedDate) {
+                        try {
+                            $video->published_at = \Carbon\Carbon::parse($publishedDate);
+                        } catch (\Exception $e) {}
+                    }
+
+                    $video->save();
+                    $processedVideos[] = $video;
                 }
 
-                $video->save();
-                $processedVideos[] = $video;
+                // 3. Append this chunk to knowledge base immediately
+                if (!empty($processedVideos)) {
+                    $datasetService->appendVideosToKnowledge($dataset, $processedVideos);
+                }
+                
+                // Clear memory for the next chunk
+                unset($processedVideos);
+                if (function_exists('gc_collect_cycles')) gc_collect_cycles();
             }
-
-            \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob: Processed " . count($processedVideos) . " videos. Appending to knowledge base...");
-
-            // 3. Aggregate to Markdown Knowledge File
-            $datasetService->appendVideosToKnowledge($dataset, $processedVideos);
 
             // 4. Finalize Dataset State
             $dataset->update([
@@ -111,7 +122,7 @@ class ProcessDatasetSyncJob implements ShouldQueue
                 'last_synced_at' => now(),
             ]);
 
-            \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob: Sync complete for Dataset #{$dataset->id}. Results finalized.");
+            \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob: Mass-sync complete for Dataset #{$dataset->id}. Results finalized.");
 
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("ProcessDatasetSyncJob: CRITICAL FAILURE for Dataset #{$dataset->id}: " . $e->getMessage(), [

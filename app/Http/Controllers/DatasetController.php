@@ -147,7 +147,7 @@ class DatasetController extends Controller
         }
 
         $videos = $query->latest()
-            ->select('videos.id', 'video_id', 'title', 'channel_title', 'thumbnail_url', 'videos.created_at', 'duration', 'published_at')
+            ->select('videos.id', 'videos.video_id', 'title', 'channel_title', 'thumbnail_url', 'videos.created_at', 'duration', 'published_at')
             ->paginate(24)
             ->withQueryString();
 
