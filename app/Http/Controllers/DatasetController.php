@@ -135,19 +135,30 @@ class DatasetController extends Controller
     {
         $this->authorizeOwner($dataset);
 
-        $query = $dataset->videos();
+        // We must select columns explicitly to avoid pulling the huge "transcript" blob into the sort buffer,
+        // which causes MySQL to crash with "Out of sort memory" for large datasets.
+        $videos = $dataset->videos()
+            ->select([
+                'videos.id', 
+                'videos.video_id', 
+                'videos.title', 
+                'videos.channel_title', 
+                'videos.thumbnail_url', 
+                'videos.created_at', 
+                'videos.duration', 
+                'videos.published_at'
+            ]);
 
         // Search logic
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('channel_title', 'like', "%{$search}%");
+            $videos->where(function($q) use ($search) {
+                $q->where('videos.title', 'like', "%{$search}%")
+                  ->orWhere('videos.channel_title', 'like', "%{$search}%");
             });
         }
 
-        $videos = $query->latest()
-            ->select('videos.id', 'videos.video_id', 'title', 'channel_title', 'thumbnail_url', 'videos.created_at', 'duration', 'published_at')
+        $videos = $videos->orderBy('videos.created_at', 'desc')
             ->paginate(24)
             ->withQueryString();
 
