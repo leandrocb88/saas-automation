@@ -22,11 +22,6 @@ return [
         'key' => env('RESEND_API_KEY'),
     ],
 
-    'apify' => [
-        'token' => env('APIFY_API_TOKEN'),
-        'fallback_enabled' => env('APIFY_YOUTUBE_FALLBACK', false),
-    ],
-
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
@@ -110,9 +105,18 @@ return [
         'translate_driver' => env('TRANSLATE_DRIVER', 'gemini'),
     ],
 
-    'railway' => [
-        'base_url' => env('RAILWAY_API_URL', 'https://youtube-video-transcript-scraper-production.up.railway.app/'),
-        'api_key' => env('RAILWAY_API_KEY'),
+    'youtube_actor' => [
+        'driver' => env('YOUTUBE_ACTOR_DRIVER', 'railway'),
+        'debug' => env('YOUTUBE_ACTOR_DEBUG', false), // New debug flag
+        'apify' => [
+            'token' => env('APIFY_API_TOKEN'),
+            'actor_id' => env('APIFY_YOUTUBE_ACTOR_ID', 'leandrocb88~youtube-video-transcript-actor'),
+            'fallback_enabled' => env('APIFY_YOUTUBE_FALLBACK', false),
+        ],
+        'railway' => [
+            'base_url' => env('RAILWAY_API_URL', 'https://youtube-video-transcript-scraper-production.up.railway.app/'),
+            'api_key' => env('RAILWAY_API_KEY'),
+        ],
     ],
 
 ];

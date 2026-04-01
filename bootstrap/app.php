@@ -18,6 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'stripe/*',
+            'webhooks/apify/*',
+            'webhooks/youtube/*',
         ]);
 
         $middleware->alias([

@@ -11,3 +11,4 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('videos:prune')->daily();
 Schedule::command('app:process-digests')->everyMinute();
 Schedule::command('youtube:update-stats')->daily();
+Schedule::command('app:sync-datasets')->everyFiveMinutes();

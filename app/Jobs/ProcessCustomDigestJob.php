@@ -40,7 +40,7 @@ class ProcessCustomDigestJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(\App\Services\RailwayService $railway, OpenAIService $openAI, GeminiService $gemini, QuotaManager $quotaManager): void
+    public function handle(\App\Services\YoutubeService $youtube, OpenAIService $openAI, GeminiService $gemini, QuotaManager $quotaManager): void
     {
         $digest = $this->digest;
         $user = $digest->user;
@@ -86,10 +86,19 @@ class ProcessCustomDigestJob implements ShouldQueue
         $summaryCost = $includeSummary ? $quotaManager->getCost($user, 'youtube', 'ai_summary') : 0;
         $costPerVideo = $transcriptCost + $summaryCost;
 
-        if ($costPerVideo > 0) {
-            $maxVideosPerSource = min(50, (int)floor($remaining / ($costPerVideo * count($sourceUrls))));
-        } else {
-            $maxVideosPerSource = 50;
+        $maxVideosOverall = 1000;
+        $possibleByCredits = $costPerVideo > 0 ? (int)floor($remaining / $costPerVideo) : $maxVideosOverall;
+        
+        // Use the smaller of the credit limit or the 1000 total cap
+        $totalAllowed = min($maxVideosOverall, $possibleByCredits);
+
+        // Spread the allowed total across all sources
+        $sourceCount = count($sourceUrls);
+        $maxVideosPerSource = $sourceCount > 0 ? (int)floor($totalAllowed / $sourceCount) : 0;
+
+        // Ensure we don't send 0 if credits are available but sources are many
+        if ($maxVideosPerSource === 0 && $totalAllowed > 0 && $sourceCount > 0) {
+            $maxVideosPerSource = 1;
         }
 
         if ($maxVideosPerSource <= 0 && !($options['bypass_quota'] ?? false)) {
@@ -139,16 +148,10 @@ class ProcessCustomDigestJob implements ShouldQueue
                 'preferAutoSubtitles' => false,
             ];
 
-            Log::info("Railway Analysis Process Initiated for Digest ID {$digest->id}:", [
-                'total_sources' => count($sourceUrls),
-                'days_back' => $daysBack,
-                'per_source_limit' => $perChannelLimit
-            ]);
-
-            $items = $railway->analyzeChannels($sourceUrls, $payloadOptions);
+            $items = $youtube->fetchTranscripts($sourceUrls, $payloadOptions);
 
             if ($items === null) {
-                throw new \Exception("Railway API failed or unreachable.");
+                throw new \Exception("YouTube Actor primary call failed.");
             }
 
             Log::info("Step 1 Complete: Found " . count($items) . " videos from YouTube.");
@@ -166,7 +169,7 @@ class ProcessCustomDigestJob implements ShouldQueue
             $processedVideos = [];
 
             foreach ($items as $item) {
-                $videoId = $this->extractVideoId($item['url'] ?? $item['videoUrl'] ?? '');
+                $videoId = $youtube->extractVideoId($item['url'] ?? $item['videoUrl'] ?? '');
                 if (!$videoId) continue;
                 
                 $video = Video::firstOrNew([
@@ -190,7 +193,7 @@ class ProcessCustomDigestJob implements ShouldQueue
                     $video->duration = $durationRaw;
                 }
 
-                $transcript = $this->parseTranscript($item);
+                $transcript = $youtube->parseTranscript($item);
                 $video->transcript = $transcript;
                 
                 if (!$video->duration && !empty($transcript)) {
@@ -360,6 +363,10 @@ class ProcessCustomDigestJob implements ShouldQueue
 
     private function parseTranscript($item)
     {
+        // Keep the more detailed local parsing for digests if preferred, 
+        // or just use the service one. Service one is simpler but maybe enough.
+        // I'll keep the local one for now but call it via service if I wanted to.
+        // Actually, let's keep it as is for backward compatibility of digest format.
         $transcript = [];
         $raw = $item['transcript'] ?? $item['subtitles'] ?? [];
         if (is_array($raw)) {

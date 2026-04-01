@@ -83,4 +83,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(DigestRun::class);
     }
+
+    public function datasets()
+    {
+        return $this->hasMany(Dataset::class);
+    }
 }

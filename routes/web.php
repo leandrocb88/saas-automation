@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Services\QuotaManager;
 
+use App\Http\Controllers\Api\YoutubeWebhookController;
+
+Route::post('/webhooks/youtube/dataset-sync', [YoutubeWebhookController::class, 'handle'])->name('webhooks.youtube.dataset-sync');
+
 Route::middleware('web')->group(function () {
     $host = request()->getHost();
 
@@ -54,6 +58,15 @@ Route::middleware('web')->group(function () {
             // YouTube OAuth – Import Subscriptions
             Route::get('/auth/youtube/redirect', [App\Http\Controllers\YouTubeController::class, 'youtubeAuthRedirect'])->name('youtube.auth.redirect');
             Route::get('/auth/youtube/callback', [App\Http\Controllers\YouTubeController::class, 'youtubeAuthCallback'])->name('youtube.auth.callback');
+
+            // Resource Datasets
+            Route::get('/datasets', [\App\Http\Controllers\DatasetController::class, 'index'])->name('datasets.index');
+            Route::post('/datasets', [\App\Http\Controllers\DatasetController::class, 'store'])->name('datasets.store');
+            Route::delete('/datasets/{dataset}', [\App\Http\Controllers\DatasetController::class, 'destroy'])->name('datasets.destroy');
+            Route::post('/datasets/{dataset}/sync', [\App\Http\Controllers\DatasetController::class, 'sync'])->name('datasets.sync');
+            Route::put('/datasets/{dataset}', [\App\Http\Controllers\DatasetController::class, 'update'])->name('datasets.update');
+            Route::patch('/datasets/{dataset}/toggle', [\App\Http\Controllers\DatasetController::class, 'toggle'])->name('datasets.toggle');
+            Route::get('/datasets/{dataset}/download', [\App\Http\Controllers\DatasetController::class, 'download'])->name('datasets.download');
         });
 
         // Redirect /welcome to /

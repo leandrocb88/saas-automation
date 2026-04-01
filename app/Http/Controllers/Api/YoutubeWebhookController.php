@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App\Jobs\ProcessDatasetSyncJob;
+
+class YoutubeWebhookController extends Controller
+{
+    /**
+     * Handle YouTube Actor completion webhook (Apify or Railway).
+     */
+    public function handle(Request $request)
+    {
+        Log::info('YouTube Webhook Received:', $request->all());
+
+        $actorDatasetId = null;
+        $localDatasetId = null;
+
+        // 1. Detect Payload Format (Apify vs Railway)
+        $resource = $request->input('resource');
+        if ($resource && isset($resource['defaultDatasetId'])) {
+            // Apify Format
+            $actorDatasetId = $resource['defaultDatasetId'];
+            $localDatasetId = $resource['meta']['userData']['dataset_id'] ?? null;
+            $status = $resource['status'] ?? 'UNKNOWN';
+
+            if ($status !== 'SUCCEEDED') {
+                Log::warning("Apify Webhook: Run status is {$status}. Ignoring.");
+                return response()->json(['message' => 'Ignored'], 400);
+            }
+        } else {
+            // Railway/Custom Format
+            $status = $request->input('status');
+            $runId = $request->input('runId');
+            $localDatasetId = $request->input('dataset_id') ?? $request->input('user_data.dataset_id') ?? $request->input('userData.dataset_id') ?? $request->input('dataset_id_internal');
+
+            if ($status === 'error') {
+                $errorMsg = $request->input('error', 'Unknown error from actor.');
+                Log::error("Railway Webhook Error for Dataset #{$localDatasetId}: {$errorMsg}", ['runId' => $runId]);
+                
+                if ($localDatasetId) {
+                    \App\Models\Dataset::where('id', $localDatasetId)->update(['status' => 'error']);
+                }
+                
+                return response()->json(['message' => 'Error logged'], 200);
+            }
+
+            if ($status !== 'success') {
+                Log::warning("Railway Webhook: Unexpected status '{$status}'.");
+                return response()->json(['message' => 'Ignored'], 400);
+            }
+
+            // In Railway format, the "actorDatasetId" is actually the S3 File ID now
+            $actorDatasetId = $request->input('s3FileId');
+        }
+
+        if (!$actorDatasetId || !$localDatasetId) {
+            Log::error('YouTube Webhook: Missing required IDs', [
+                'actor_dataset_id_or_s3' => $actorDatasetId,
+                'local_dataset_id' => $localDatasetId
+            ]);
+            return response()->json(['message' => 'Missing data'], 422);
+        }
+
+        // 2. Dispatch the background job
+        ProcessDatasetSyncJob::dispatch($actorDatasetId, (int)$localDatasetId);
+
+        Log::info("YouTube Webhook: Dispatched ProcessDatasetSyncJob for local dataset #{$localDatasetId} with S3 source {$actorDatasetId}");
+
+        return response()->json(['message' => 'Webhook received and job dispatched'], 200);
+    }
+}

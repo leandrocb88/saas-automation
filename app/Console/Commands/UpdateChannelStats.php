@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Channel;
-use App\Services\YouTubeService;
+use App\Services\YoutubeService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -26,7 +26,7 @@ class UpdateChannelStats extends Command
     /**
      * Execute the console command.
      */
-    public function handle(YouTubeService $youtubeService)
+    public function handle(YoutubeService $youtubeService)
     {
         $this->info('Starting YouTube channel stats update...');
 

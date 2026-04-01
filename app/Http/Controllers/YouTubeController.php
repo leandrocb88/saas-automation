@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ApifyService;
+use App\Services\YoutubeService;
 use App\Services\OpenAIService;
 use App\Services\GeminiService;
 use App\Services\QuotaManager;
@@ -18,27 +18,21 @@ use Illuminate\Support\Facades\Storage;
 
 class YouTubeController extends Controller
 {
-    protected $apify;
-    protected $railway;
     protected $openai;
     protected $gemini;
     protected $quotaManager;
     protected $youtube;
 
     public function __construct(
-        ApifyService $apify, 
-        \App\Services\RailwayService $railway,
+        YoutubeService $youtube,
         OpenAIService $openai, 
         GeminiService $gemini,
-        QuotaManager $quotaManager,
-        \App\Services\YouTubeService $youtube
+        QuotaManager $quotaManager
     ) {
-        $this->apify = $apify;
-        $this->railway = $railway;
+        $this->youtube = $youtube;
         $this->openai = $openai;
         $this->gemini = $gemini;
         $this->quotaManager = $quotaManager;
-        $this->youtube = $youtube;
     }
 
     public function index()
@@ -157,8 +151,7 @@ class YouTubeController extends Controller
         $allStats = [];
         if (!empty($channels)) {
             $allIds = array_column($channels, 'youtube_channel_id');
-            $youtubeService = app(\App\Services\YouTubeService::class);
-            $allStats = $youtubeService->getChannelsStatistics($allIds);
+            $allStats = $this->youtube->getChannelsStatistics($allIds);
         }
 
         $imported = 0;
@@ -236,7 +229,7 @@ class YouTubeController extends Controller
     public function processChannel(Request $request)
     {
         $user = $request->user();
-        $apify = $this->apify;
+        $youtube = $this->youtube;
         $quotaManager = $this->quotaManager;
         $openAI = $this->openai;
         $gemini = $this->gemini;
@@ -323,8 +316,13 @@ class YouTubeController extends Controller
         $remaining = $quotaManager->getRemainingQuota($user, 'youtube');
         if($remaining < $estimatedCost) {
             // How many videos can we afford if each costs $costPerVideo?
-            $maxVideosTotal = (int)floor($remaining / $costPerVideo);
-            $maxVideosPerChannel = (int)floor($maxVideosTotal / count($channelUrls));
+            if ($costPerVideo > 0) {
+                $maxVideosTotal = (int)floor($remaining / $costPerVideo);
+                $maxVideosPerChannel = (int)floor($maxVideosTotal / count($channelUrls));
+            } else {
+                $maxVideosTotal = 1000; // Cap total batch at 1000 if free
+                $maxVideosPerChannel = (int)floor($maxVideosTotal / count($channelUrls));
+            }
             
             if ($maxVideosPerChannel < 1) {
                 return back()->withErrors(['limit' => "Not enough credits. Each video + summary requires {$costPerVideo} credits."]);
@@ -360,38 +358,18 @@ class YouTubeController extends Controller
             $options['channelDaysBack'] = $daysBack;
         }
 
-        $items = $this->railway->analyzeChannels(array_values($channelUrls), $options);
+        // 2. Trigger Fetching (Consolidated service handles driver/fallback)
+        $items = $this->youtube->fetchTranscripts(array_values($channelUrls), $options);
 
-        // Fallback to Apify ONLY if Railway API failed (returns null)
-        if ($items === null) {
-            if (config('services.apify.fallback_enabled')) {
-                Log::warning("Railway Channel Analysis failed, falling back to Apify.");
-
-                $actorId = 'leandrocb88~youtube-video-transcript-actor';
-                $categorized = $this->youtube->categorizeUrls(array_values($channelUrls));
-                
-                // Ensure no stray 'urls' key if it exists in options
-                unset($options['urls']); 
-                
-                $input = array_merge($categorized, $options);
-
-                try {
-                    $items = $this->apify->runActorSyncGetDatasetItems($actorId, $input);
-                } catch (\Exception $e) {
-                    // Refund on Failure
-                    $quotaManager->decrementUsage($user, 'youtube', $estimatedCost);
-                    return back()->withErrors(['error' => 'Analysis failed: ' . $e->getMessage()]);
-                }
-            } else {
-                // Refund on Failure
-                $quotaManager->decrementUsage($user, 'youtube', $estimatedCost);
-                return back()->withErrors(['error' => 'Channel analysis failed. Please try again later.']);
-            }
+        if (empty($items)) {
+            // Refund on failure
+            $this->quotaManager->incrementUsage($user, 'youtube', -$estimatedCost, 'channel_analysis_refund');
+            return back()->withErrors(['error' => 'Channel analysis failed or no videos found. Please try again later.']);
         }
 
         if (empty($items)) {
             // Refund if no items returned
-            $quotaManager->decrementUsage($user, 'youtube', $estimatedCost);
+            $quotaManager->incrementUsage($user, 'youtube', -$estimatedCost, 'channel_analysis_refund');
             return back()->withErrors(['urls' => 'No videos found matching your criteria.']);
         }
 
@@ -472,7 +450,7 @@ class YouTubeController extends Controller
         $diff = max(0, $estimatedCost - $actualCount);
         
         if ($diff > 0) {
-            $quotaManager->decrementUsage($user, 'youtube', $diff);
+            $quotaManager->incrementUsage($user, 'youtube', -$diff, 'channel_analysis_refund');
         }
 
         return to_route('youtube.history')->with('success', "{$actualCount} " . \Illuminate\Support\Str::plural('video', $actualCount) . " analyzed successfully!");
@@ -480,7 +458,7 @@ class YouTubeController extends Controller
 
     public function process(Request $request)
     {
-        $apify = $this->apify;
+        $youtube = $this->youtube;
         $openAI = $this->openai;
         $gemini = $this->gemini;
         $quotaManager = $this->quotaManager;
@@ -609,59 +587,28 @@ class YouTubeController extends Controller
         set_time_limit(1800); 
 
         // 2. Trigger Fetching
-        $items = $this->railway->fetchTranscripts(array_values($urlsToFetch), [
+        $items = $this->youtube->fetchTranscripts(array_values($urlsToFetch), [
             'downloadSubtitles' => true,
             'includeTimestamps' => $request->boolean('include_timestamps'),
             'preferAutoSubtitles' => false,
             'subtitleLanguage' => $request->input('subtitle_language', 'en'),
         ]);
 
-        // Fallback to Apify ONLY if Railway API failed (returns null)
-        if ($items === null) {
-            if (config('services.apify.fallback_enabled')) {
-                Log::warning("Railway API failed, falling back to Apify.");
-                
-                $actorId = 'leandrocb88~youtube-video-transcript-actor';
-                $categorized = $this->youtube->categorizeUrls(array_values($urlsToFetch));
-                
-                $input = array_merge([
-                    'downloadSubtitles' => true,
-                    'includeTimestamps' => $request->boolean('include_timestamps'),
-                    'preferAutoSubtitles' => false,
-                    'subtitleLanguage' => $request->input('subtitle_language', 'en'),
-                ], $categorized);
-                
-                // Explicitly remove any legacy 'urls' key if it crept in
-                unset($input['urls']);
-
-                try {
-                    $items = $this->apify->runActorSyncGetDatasetItems($actorId, $input);
-                } catch (\Exception $e) {
-                    // Refund on Failure
-                    if ($user) {
-                        $quotaManager->decrementUsage($user, 'youtube', $cost);
-                    } else {
-                        $quotaManager->decrementGuestUsage($ip, $userAgent, 'youtube', $cost);
-                    }
-                    return back()->withErrors(['error' => 'Analysis failed: ' . $e->getMessage()]);
-                }
-            } else {
-                // Refund on Failure
-                if ($user) {
-                    $quotaManager->decrementUsage($user, 'youtube', $cost);
-                } else {
-                    $quotaManager->decrementGuestUsage($ip, $userAgent, 'youtube', $cost);
-                }
-                return back()->withErrors(['error' => 'Analysis failed. Please try again later.']);
-            }
-        }
+        // 2. Trigger Fetching (Consolidated service handles driver and any necessary fallback internally)
+        $items = $this->youtube->fetchTranscripts(array_values($urlsToFetch), [
+            'downloadSubtitles' => true,
+            'includeTimestamps' => $request->boolean('include_timestamps'),
+            'preferAutoSubtitles' => false,
+            'subtitleLanguage' => $request->input('subtitle_language', 'en'),
+        ]);
 
         if (empty($items) && $existingVideos->isEmpty()) {
-            // Refund if no items returned (and we expected some)
+            Log::error("YouTube Process failed or no items returned.");
+            // Refund
             if ($user) {
-                $quotaManager->decrementUsage($user, 'youtube', $cost);
+                $this->quotaManager->incrementUsage($user, 'youtube', -$cost, 'refund');
             } else {
-                $quotaManager->decrementGuestUsage($ip, $userAgent, 'youtube', $cost);
+                $this->quotaManager->incrementGuestUsage($ip, $userAgent, 'youtube', -$cost);
             }
             return back()->withErrors(['urls' => 'Analysis failed. No videos found.']);
         }
@@ -683,9 +630,9 @@ class YouTubeController extends Controller
         if ($actualCount === 0 && $existingVideos->isEmpty()) {
              // Refund
              if ($user) {
-                 $quotaManager->decrementUsage($user, 'youtube', $cost);
+                 $quotaManager->incrementUsage($user, 'youtube', -$cost, 'refund');
              } else {
-                 $quotaManager->decrementGuestUsage($ip, $userAgent, 'youtube', $cost);
+                 $quotaManager->incrementGuestUsage($ip, $userAgent, 'youtube', -$cost);
              }
              return back()->withErrors(['urls' => 'Analysis failed. No videos found mapping your request.']);
         }
@@ -696,9 +643,9 @@ class YouTubeController extends Controller
         
         if ($diff > 0) {
             if ($user) {
-                $quotaManager->decrementUsage($user, 'youtube', $diff);
+                $quotaManager->incrementUsage($user, 'youtube', -$diff, 'refund');
             } else {
-                $quotaManager->decrementGuestUsage($ip, $userAgent, 'youtube', $diff);
+                $quotaManager->incrementGuestUsage($ip, $userAgent, 'youtube', -$diff);
             }
         }
         // Usage already incremented via "freeze" step.

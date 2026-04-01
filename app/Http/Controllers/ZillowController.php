@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Services\QuotaManager;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Services\ApifyService;
 
 class ZillowController extends Controller
 {

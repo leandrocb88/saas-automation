@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Digest;
 use App\Models\Video;
-use App\Services\ApifyService;
 use App\Services\OpenAIService;
 use App\Services\GeminiService;
 use App\Services\QuotaManager;

@@ -9,6 +9,8 @@ class QuotaManager
 {
     public function checkQuota(User $user, string $service, int $amount = 1): bool
     {
+        if ($amount <= 0) return true;
+        
         // Service argument might be redundant if User implies service, but keeping for config lookup
         $this->refreshQuotaIfNeeded($user, $service);
 
@@ -45,6 +47,8 @@ class QuotaManager
 
     public function getCost(?User $user, string $service, string $action): int
     {
+        if ($action === 'transcript') return 0;
+        
         // Since we decided transcripts are free for everyone, we just return the config value
         // The config for 'transcript' is now 0.
         return config("credits.{$service}.{$action}", 1);
@@ -185,6 +189,8 @@ class QuotaManager
 
     public function checkGuestQuota(string $ip, string $userAgent, string $service, int $amount = 1): bool
     {
+        if ($amount <= 0) return true;
+        
         $key = $this->getGuestKey($ip, $userAgent, $service);
         $usage = \Illuminate\Support\Facades\Cache::get($key, 0);
         $limit = config("plans.{$service}.free.limit", 1); 

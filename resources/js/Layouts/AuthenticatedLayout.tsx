@@ -114,6 +114,12 @@ export default function Authenticated({
                                             My Digests
                                         </NavLink>
                                         <NavLink
+                                            href={route('datasets.index')}
+                                            active={route().current('datasets.*')}
+                                        >
+                                            Knowledge Base
+                                        </NavLink>
+                                        <NavLink
                                             href={route('digest_runs.index')}
                                             active={route().current('digest_runs.*')}
                                         >
@@ -128,14 +134,6 @@ export default function Authenticated({
                                 >
                                     Plans
                                 </NavLink>
-                                {user && user.is_admin && (
-                                    <NavLink
-                                        href={route('admin.dashboard')}
-                                        active={route().current('admin.dashboard')}
-                                    >
-                                        Admin
-                                    </NavLink>
-                                )}
                             </div>
                         </div>
 
@@ -213,6 +211,11 @@ export default function Authenticated({
                                                     </div>
                                                 )}
                                             </div>
+                                            {user.is_admin && (
+                                                <Dropdown.Link href={route('admin.dashboard')}>
+                                                    Admin Dashboard
+                                                </Dropdown.Link>
+                                            )}
                                             <Dropdown.Link href={route('profile.edit')}>
                                                 Profile
                                             </Dropdown.Link>
@@ -319,6 +322,12 @@ export default function Authenticated({
                                     My Digests
                                 </ResponsiveNavLink>
                                 <ResponsiveNavLink
+                                    href={route('datasets.index')}
+                                    active={route().current('datasets.*')}
+                                >
+                                    Knowledge Base
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
                                     href={route('digest_runs.index')}
                                     active={route().current('digest_runs.*')}
                                 >
@@ -333,14 +342,6 @@ export default function Authenticated({
                         >
                             Plans
                         </ResponsiveNavLink>
-                        {user && user.is_admin && (
-                            <ResponsiveNavLink
-                                href={route('admin.dashboard')}
-                                active={route().current('admin.dashboard')}
-                            >
-                                Admin
-                            </ResponsiveNavLink>
-                        )}
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4 dark:border-gray-600">
@@ -383,6 +384,11 @@ export default function Authenticated({
 
                         {user && (
                             <div className="mt-3 space-y-1">
+                                {user.is_admin && (
+                                    <ResponsiveNavLink href={route('admin.dashboard')}>
+                                        Admin Dashboard
+                                    </ResponsiveNavLink>
+                                )}
                                 <ResponsiveNavLink href={route('profile.edit')}>
                                     Profile
                                 </ResponsiveNavLink>
@@ -410,7 +416,6 @@ export default function Authenticated({
                 </header>
             )}
             <main>
-                <FlashMessage />
                 {children}
             </main>
             <Footer />
@@ -418,64 +423,3 @@ export default function Authenticated({
     );
 }
 
-function FlashMessage() {
-    const { flash } = usePage().props as any;
-    const [visible, setVisible] = useState(false);
-    const [message, setMessage] = useState('');
-    const [type, setType] = useState<'success' | 'error'>('success');
-
-    useEffect(() => {
-        if (flash?.success) {
-            setMessage(flash.success);
-            setType('success');
-            setVisible(true);
-        } else if (flash?.error) {
-            setMessage(flash.error);
-            setType('error');
-            setVisible(true);
-        }
-
-        if (flash?.success || flash?.error) {
-            const timer = setTimeout(() => {
-                setVisible(false);
-            }, 5000);
-            
-            return () => clearTimeout(timer);
-        }
-    }, [flash?.success, flash?.error]);
-
-    if (!visible || !message) return null;
-
-    const isSuccess = type === 'success';
-
-    return (
-        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-            <div className={`${isSuccess ? 'bg-emerald-50 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800/60' : 'bg-red-50 dark:bg-red-900/40 border-red-200 dark:border-red-800/60'} border p-4 rounded-xl shadow-lg backdrop-blur-sm flex items-start gap-4 max-w-sm sm:max-w-md`}>
-                <div className="flex-shrink-0 mt-0.5">
-                    {isSuccess ? (
-                        <svg className="h-5 w-5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
-                        </svg>
-                    ) : (
-                        <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-                        </svg>
-                    )}
-                </div>
-                <div className="flex-1">
-                    <p className={`text-sm ${isSuccess ? 'text-emerald-800 dark:text-emerald-200' : 'text-red-800 dark:text-red-200'} font-semibold tracking-wide uppercase`}>
-                        {message}
-                    </p>
-                </div>
-                <button
-                    onClick={() => setVisible(false)}
-                    className={`flex-shrink-0 ${isSuccess ? 'text-emerald-600/70 hover:text-emerald-600 dark:text-emerald-400/70 dark:hover:text-emerald-400' : 'text-red-600/70 hover:text-red-600 dark:text-red-400/70 dark:hover:text-red-400'} transition-colors`}
-                >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-    );
-}
