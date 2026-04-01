@@ -137,7 +137,10 @@ class DatasetController extends Controller
 
         // We must select columns explicitly to avoid pulling the huge "transcript" blob into the sort buffer,
         // which causes MySQL to crash with "Out of sort memory" for large datasets.
-        $videos = $dataset->videos()
+        // We use a direct join instead of $dataset->videos() to prevent Laravel from automatically appending "videos.*".
+        $query = \App\Models\Video::query()
+            ->join('dataset_videos', 'videos.id', '=', 'dataset_videos.video_id')
+            ->where('dataset_videos.dataset_id', $dataset->id)
             ->select([
                 'videos.id', 
                 'videos.video_id', 
@@ -152,13 +155,13 @@ class DatasetController extends Controller
         // Search logic
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $videos->where(function($q) use ($search) {
+            $query->where(function($q) use ($search) {
                 $q->where('videos.title', 'like', "%{$search}%")
                   ->orWhere('videos.channel_title', 'like', "%{$search}%");
             });
         }
 
-        $videos = $videos->orderBy('videos.created_at', 'desc')
+        $videos = $query->orderBy('videos.created_at', 'desc')
             ->paginate(24)
             ->withQueryString();
 
