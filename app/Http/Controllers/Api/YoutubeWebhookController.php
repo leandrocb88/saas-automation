@@ -77,11 +77,22 @@ class YoutubeWebhookController extends Controller
 
         Log::info("YouTube Webhook (Railway branch): Detected Local ID: {$localDatasetId}, S3 ID: {$actorDatasetId}, Status: {$status}");
 
-        // 2. Dispatch the background job synchronously to bypass queue worker issues
-        ProcessDatasetSyncJob::dispatchSync($actorDatasetId, (int)$localDatasetId);
-
-        Log::info("YouTube Webhook: Processed ProcessDatasetSyncJob for local dataset #{$localDatasetId} synchronously.");
-
-        return response()->json(['message' => 'Webhook received and job dispatched', 'dataset_id' => $localDatasetId], 200);
+        try {
+            // 2. Dispatch the background job synchronously
+            ProcessDatasetSyncJob::dispatchSync($actorDatasetId, (int)$localDatasetId);
+            Log::info("YouTube Webhook: Processed ProcessDatasetSyncJob for local dataset #{$localDatasetId} synchronously.");
+            return response()->json(['message' => 'Webhook processed successfully', 'dataset_id' => $localDatasetId], 200);
+        } catch (\Exception $e) {
+            Log::error("YouTube Webhook: Critical failure during sync processing: " . $e->getMessage(), [
+                'local_dataset_id' => $localDatasetId,
+                'actor_source' => $actorDatasetId,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'message' => 'Internal processing error',
+                'error' => $e->getMessage(),
+                'dataset_id' => $localDatasetId
+            ], 500);
+        }
     }
 }
