@@ -26,6 +26,10 @@ class ProcessDatasetSyncJob implements ShouldQueue
      */
     public function handle(\App\Services\YoutubeService $youtube, \App\Services\DatasetService $datasetService): void
     {
+        // Increase memory and time limits for large dataset processing
+        ini_set('memory_limit', '512M');
+        set_time_limit(300); // 5 minutes
+
         \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob STARTED: Looking for Dataset ID #{$this->localDatasetId}");
         $dataset = \App\Models\Dataset::find($this->localDatasetId);
         
