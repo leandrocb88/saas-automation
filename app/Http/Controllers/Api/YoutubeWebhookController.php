@@ -75,11 +75,13 @@ class YoutubeWebhookController extends Controller
             return response()->json(['message' => 'Missing data'], 422);
         }
 
-        // 2. Dispatch the background job
-        ProcessDatasetSyncJob::dispatch($actorDatasetId, (int)$localDatasetId);
+        Log::info("YouTube Webhook (Railway branch): Detected Local ID: {$localDatasetId}, S3 ID: {$actorDatasetId}, Status: {$status}");
 
-        Log::info("YouTube Webhook: Dispatched ProcessDatasetSyncJob for local dataset #{$localDatasetId} with S3 source {$actorDatasetId}");
+        // 2. Dispatch the background job synchronously to bypass queue worker issues
+        ProcessDatasetSyncJob::dispatchSync($actorDatasetId, (int)$localDatasetId);
 
-        return response()->json(['message' => 'Webhook received and job dispatched'], 200);
+        Log::info("YouTube Webhook: Processed ProcessDatasetSyncJob for local dataset #{$localDatasetId} synchronously.");
+
+        return response()->json(['message' => 'Webhook received and job dispatched', 'dataset_id' => $localDatasetId], 200);
     }
 }

@@ -26,10 +26,11 @@ class ProcessDatasetSyncJob implements ShouldQueue
      */
     public function handle(\App\Services\YoutubeService $youtube, \App\Services\DatasetService $datasetService): void
     {
+        \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob STARTED: Looking for Dataset ID #{$this->localDatasetId}");
         $dataset = \App\Models\Dataset::find($this->localDatasetId);
         
         if (!$dataset) {
-            \Illuminate\Support\Facades\Log::error("ProcessDatasetSyncJob: Dataset not found: {$this->localDatasetId}");
+            \Illuminate\Support\Facades\Log::error("ProcessDatasetSyncJob ABORTED: Dataset #{$this->localDatasetId} not found in database.");
             return;
         }
 
