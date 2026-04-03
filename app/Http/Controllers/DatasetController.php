@@ -11,6 +11,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
 
 class DatasetController extends Controller
 {
@@ -161,14 +162,49 @@ class DatasetController extends Controller
             });
         }
 
-        $videos = $query->orderBy('videos.created_at', 'desc')
-            ->paginate(24)
-            ->withQueryString();
+        // Filter by Published Date Range
+        if ($request->filled('date_from')) {
+            $query->where('videos.published_at', '>=', Carbon::parse($request->input('date_from'))->startOfDay());
+        }
+        if ($request->filled('date_to')) {
+            $query->where('videos.published_at', '<=', Carbon::parse($request->input('date_to'))->endOfDay());
+        }
+
+        // Sort logic
+        $sort = $request->input('sort', 'published_newest');
+        switch ($sort) {
+            case 'published_oldest':
+                $query->orderBy('videos.published_at', 'asc');
+                break;
+            case 'older':
+                $query->orderBy('videos.created_at', 'asc'); // sort by created_at ASC (app added date)
+                break;
+            case 'alphabetical_asc':
+                $query->orderBy('videos.title', 'asc');
+                break;
+            case 'alphabetical_desc':
+                $query->orderBy('videos.title', 'desc');
+                break;
+            case 'newest':
+                $query->orderBy('videos.created_at', 'desc'); // sort by created_at DESC (app added date)
+                break;
+            case 'published_newest':
+            default:
+                $query->orderBy('videos.published_at', 'desc');
+                break;
+        }
+
+        $perPage = $request->input('per_page', 24);
+        if (!in_array($perPage, [24, 48, 60, 100])) {
+            $perPage = 24;
+        }
+
+        $videos = $query->paginate($perPage)->withQueryString();
 
         return Inertia::render('YouTube/Datasets/Videos', [
             'dataset' => $dataset,
             'videos' => $videos,
-            'filters' => (object) $request->only(['search']),
+            'filters' => (object) $request->only(['search', 'sort', 'per_page', 'date_from', 'date_to']),
         ]);
     }
 

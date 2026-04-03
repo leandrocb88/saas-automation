@@ -847,27 +847,45 @@ class YouTubeController extends Controller
 
     public function digestShow(Request $request, string $token)
     {
-        $videos = Video::with('user')->where('share_token', $token)
-            ->oldest('id')
-            ->get();
+        $user = $request->user();
 
-        if ($videos->isEmpty()) {
-            // Check if it exists in runs
-            $runExists = \App\Models\DigestRun::where('batch_id', $token)->exists();
-            if ($runExists) {
+        // 1. Try to find the DigestRun first as it's the definitive source of ownership
+        $digestRun = \App\Models\DigestRun::where('batch_id', $token)->first();
+        
+        if ($digestRun) {
+            if ($digestRun->user_id !== $user->id) {
+                abort(403);
+            }
+            
+            $videos = Video::where('share_token', $token)->oldest('id')->get();
+            
+            if ($videos->isEmpty() && $digestRun->status === 'processing') {
                 return Inertia::render('YouTube/BatchSummary', [
                     'results' => [],
                     'isHistoryView' => false,
-                    'error' => 'Videos for this digest run are still being processed or were not found.'
+                    'error' => 'Videos for this digest run are still being processed.'
                 ]);
             }
-            abort(404, 'Digest results not found.');
+            
+            return Inertia::render('YouTube/BatchSummary', [
+                'results' => $videos->map(fn($v) => $this->formatVideoForView($v)),
+                'isHistoryView' => false,
+            ]);
         }
 
-        return Inertia::render('YouTube/BatchSummary', [
-            'results' => $videos->map(fn($v) => $this->formatVideoForView($v)),
-            'isHistoryView' => false,
-        ]);
+        // 2. Fallback: Search videos directly (handle legacy or manually tagged videos)
+        $videos = Video::where('share_token', $token)->oldest('id')->get();
+        if ($videos->isNotEmpty()) {
+            if ($videos->first()->user_id !== $user->id) {
+                abort(403);
+            }
+            return Inertia::render('YouTube/BatchSummary', [
+                'results' => $videos->map(fn($v) => $this->formatVideoForView($v)),
+                'isHistoryView' => false,
+            ]);
+        }
+
+        abort(404, 'Digest results not found.');
     }
 
     public function generateSummary(Request $request, Video $video)
@@ -1233,6 +1251,13 @@ class YouTubeController extends Controller
             if ($video->session_id !== $this->getGuestId($request)) abort(403);
         }
 
+        $summaryReadTime = null;
+        if (!empty($video->summary_detailed)) {
+            $wordCount = str_word_count(strip_tags($video->summary_detailed));
+            $minutes = ceil($wordCount / 200);
+            $summaryReadTime = $minutes . ' min read';
+        }
+
         return response()->json([
             'pdf_status' => $video->pdf_status,
             'audio_status' => $video->audio_status,
@@ -1244,6 +1269,7 @@ class YouTubeController extends Controller
             'summary_translate_status' => \Illuminate\Support\Facades\Cache::get("video_{$video->id}_translate_summary_status", 'completed'),
             'summary' => $video->summary,
             'summary_detailed' => $video->summary_detailed,
+            'summary_read_time' => $summaryReadTime,
             'translations' => $video->translations,
         ]);
     }

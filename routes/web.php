@@ -36,7 +36,7 @@ Route::middleware('web')->group(function () {
             Route::delete('/history/clear', [App\Http\Controllers\YouTubeController::class, 'clearHistory'])->name('youtube.clear');
             Route::get('/video/{video}', [App\Http\Controllers\YouTubeController::class, 'show'])->name('youtube.show');
             Route::delete('/video/{video}', [App\Http\Controllers\YouTubeController::class, 'destroy'])->name('youtube.destroy');
-            Route::get('/digest/{token}', [App\Http\Controllers\YouTubeController::class, 'digestShow'])->name('youtube.digest.show');
+
             Route::get('/videos/{video}/status', [App\Http\Controllers\YouTubeController::class, 'videoStatus'])->name('video.status');
         });
 
@@ -50,6 +50,7 @@ Route::middleware('web')->group(function () {
             Route::get('/digest-runs/{digestRun}/pdf', [App\Http\Controllers\DigestRunController::class, 'downloadPdf'])->name('digest_runs.pdf');
             Route::get('/digest-runs/{digestRun}/audio', [App\Http\Controllers\DigestRunController::class, 'downloadAudio'])->name('digest_runs.audio');
             Route::get('/digest-runs/{digestRun}/status', [App\Http\Controllers\DigestRunController::class, 'status'])->name('digest_runs.status');
+            Route::get('/digest/{token}', [App\Http\Controllers\YouTubeController::class, 'digestShow'])->name('youtube.digest.show');
 
             // Video Downloads & Status
             Route::get('/videos/{video}/pdf', [App\Http\Controllers\YouTubeController::class, 'downloadVideoPdf'])->name('video.pdf');

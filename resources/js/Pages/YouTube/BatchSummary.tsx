@@ -342,6 +342,7 @@ export default function BatchSummary({ auth, results, isHistoryView = false }: B
                             ...v,
                             summary: response.data.summary ?? v.summary,
                             summary_detailed: response.data.summary_detailed ?? v.summary_detailed,
+                            summary_read_time: response.data.summary_read_time ?? v.summary_read_time,
                             translations: response.data.translations ?? v.translations,
                             summary_status: type === 'summary' ? 'completed' : v.summary_status,
                             summary_translate_status: type === 'summary_translate' ? 'completed' : v.summary_translate_status,
