@@ -270,4 +270,33 @@ Route::middleware(['auth', 'admin'])->group(function () {
             'active_digests' => $data
         ]);
     })->name('admin.digests.debug');
+
+    // Dataset Recovery & Debug Route
+    Route::get('/admin/datasets/debug', function() {
+        $recovered = \App\Models\Dataset::where('status', 'syncing')
+            ->where('updated_at', '<', now()->subMinutes(10))
+            ->update(['status' => 'idle']);
+
+        if (request()->has('reset_all')) {
+            \App\Models\Dataset::query()->update(['status' => 'idle']);
+        }
+
+        $datasets = \App\Models\Dataset::with('user')->get();
+        $data = $datasets->map(function($d) {
+            return [
+                'id' => $d->id,
+                'name' => $d->name,
+                'user' => $d->user->email,
+                'status' => $d->status,
+                'last_synced_at' => $d->last_synced_at ? $d->last_synced_at->toDateTimeString() : 'Never',
+            ];
+        });
+
+        return response()->json([
+            'message' => 'Dataset Recovery Report',
+            'recovered_stuck_count' => $recovered,
+            'server_utc_now' => now()->toDateTimeString(),
+            'active_datasets' => $data
+        ]);
+    })->name('admin.datasets.debug');
 });

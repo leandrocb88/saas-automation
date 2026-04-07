@@ -276,7 +276,7 @@ export default function Index({ auth, datasets, flash }: Props) {
                                                 </span>
                                             ) : (
                                                 <span className="text-xs text-gray-500">
-                                                    {dataset.last_synced_at ? 'Synced' : 'Ready'}
+                                                    {dataset.last_synced_at ? `Synced: ${new Date(dataset.last_synced_at).toLocaleString([], {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}` : 'Ready'}
                                                 </span>
                                             )}
                                         </Link>
