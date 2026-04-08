@@ -54,6 +54,41 @@ class DatasetService
     }
 
     /**
+     * Completely rebuild the dataset's knowledge file using database records.
+     * Use chunking to prevent memory exhaustion on large datasets.
+     */
+    public function regenerateKnowledgeFile(Dataset $dataset): void
+    {
+        $filePath = $this->getDatasetPath($dataset);
+        
+        // 1. Wipe existing file
+        if (Storage::exists($filePath)) {
+            Storage::delete($filePath);
+        }
+
+        $header = "# Knowledge Base: {$dataset->name}\n";
+        $header .= "Source: {$dataset->channel_url}\n";
+        $header .= "Generated on: " . now()->toDateTimeString() . "\n\n";
+        $header .= "---\n\n";
+
+        Storage::put($filePath, $header);
+
+        // 2. Stream videos ordered by published date into the file in chunks
+        $dataset->videos()->orderBy('published_at', 'desc')->chunk(50, function ($videos) use ($filePath) {
+            $content = "";
+            foreach ($videos as $video) {
+                $content .= $this->formatVideoAsMarkdown($video);
+            }
+            if (!empty($content)) {
+                Storage::append($filePath, $content);
+            }
+        });
+
+        // 3. Ensure Dataset points to this path
+        $dataset->update(['file_path' => $filePath]);
+    }
+
+    /**
      * Get the relative storage path for the dataset file.
      */
     public function getDatasetPath(Dataset $dataset): string

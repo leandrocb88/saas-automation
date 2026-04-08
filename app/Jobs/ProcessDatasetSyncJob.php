@@ -11,14 +11,16 @@ class ProcessDatasetSyncJob implements ShouldQueue
 
     protected string $s3FileIdOrActorId;
     protected int $localDatasetId;
+    protected bool $isFullSync;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(string $s3FileIdOrActorId, int $localDatasetId)
+    public function __construct(string $s3FileIdOrActorId, int $localDatasetId, bool $isFullSync = false)
     {
         $this->s3FileIdOrActorId = $s3FileIdOrActorId;
         $this->localDatasetId = $localDatasetId;
+        $this->isFullSync = $isFullSync;
     }
 
     /**
@@ -121,6 +123,11 @@ class ProcessDatasetSyncJob implements ShouldQueue
                 'status' => 'idle',
                 'last_synced_at' => now(),
             ]);
+
+            if ($this->isFullSync) {
+                \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob: Full Sync detected. Rebuilding entire markdown file...");
+                $datasetService->regenerateKnowledgeFile($dataset);
+            }
 
             \Illuminate\Support\Facades\Log::info("ProcessDatasetSyncJob: Mass-sync complete for Dataset #{$dataset->id}. Results finalized.");
 

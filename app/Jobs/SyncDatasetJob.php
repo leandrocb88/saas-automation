@@ -42,7 +42,10 @@ class SyncDatasetJob implements ShouldQueue
     public function handle(YoutubeService $youtube): void
     {
         $runId = \Illuminate\Support\Str::uuid()->toString();
-        $callbackUrl = route('webhooks.youtube.dataset-sync', ['dataset_id' => $this->dataset->id]);
+        $callbackUrl = route('webhooks.youtube.dataset-sync', [
+            'dataset_id' => $this->dataset->id,
+            'full_sync' => $this->isFullSync ? '1' : '0'
+        ]);
         
         $input = [
             'runId' => $runId,
