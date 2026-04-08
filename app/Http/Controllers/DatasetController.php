@@ -22,6 +22,13 @@ class DatasetController extends Controller
     {
         $this->youtube = $youtube;
         $this->datasetService = $datasetService;
+
+        $this->middleware(function ($request, $next) {
+            if (!$request->user() || !$request->user()->subscribed('youtube')) {
+                return redirect()->route('plans')->withErrors(['error' => 'The Knowledge Base feature is exclusive to Plus members.']);
+            }
+            return $next($request);
+        });
     }
 
     public function index(Request $request)
