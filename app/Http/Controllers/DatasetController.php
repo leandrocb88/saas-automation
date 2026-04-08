@@ -12,11 +12,25 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class DatasetController extends Controller
+class DatasetController extends Controller implements HasMiddleware
 {
     protected $youtube;
     protected $datasetService;
+
+    public static function middleware(): array
+    {
+        return [
+            new Middleware(function ($request, $next) {
+                if (!$request->user() || !$request->user()->subscribed('youtube')) {
+                    return redirect()->route('plans')->withErrors(['error' => 'The Knowledge Base feature is exclusive to Plus members.']);
+                }
+                return $next($request);
+            }),
+        ];
+    }
 
     public function __construct(YoutubeService $youtube, DatasetService $datasetService)
     {
