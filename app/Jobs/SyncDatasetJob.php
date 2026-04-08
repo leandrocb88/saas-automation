@@ -57,6 +57,8 @@ class SyncDatasetJob implements ShouldQueue
         if ($this->isFullSync || is_null($this->dataset->last_synced_at)) {
             $input['channelDateFilterMode'] = 'none';
             $input['maxVideosPerChannel'] = 1000000;
+            $input['maxShortsPerChannel'] = 1000000;
+            $input['maxStreamsPerChannel'] = 1000000;
             
             if (is_null($this->dataset->last_synced_at)) {
                 Log::info("Initial Sync (Full History) triggered for Dataset #{$this->dataset->id}.");
@@ -67,7 +69,9 @@ class SyncDatasetJob implements ShouldQueue
 
             $input['channelDateFilterMode'] = 'relative';
             $input['channelDaysBack'] = $daysBack;
-            $input['maxVideosPerChannel'] = 1000;
+            $input['maxVideosPerChannel'] = 1000000;
+            $input['maxShortsPerChannel'] = 1000000;
+            $input['maxStreamsPerChannel'] = 1000000;
             
             if (config('app.debug')) {
                 Log::info("Smart Catch-up Payload Fragment:", [
