@@ -60,15 +60,22 @@ Route::middleware('web')->group(function () {
             Route::get('/auth/youtube/redirect', [App\Http\Controllers\YouTubeController::class, 'youtubeAuthRedirect'])->name('youtube.auth.redirect');
             Route::get('/auth/youtube/callback', [App\Http\Controllers\YouTubeController::class, 'youtubeAuthCallback'])->name('youtube.auth.callback');
 
-            // Resource Datasets
-            Route::get('/datasets', [\App\Http\Controllers\DatasetController::class, 'index'])->name('datasets.index');
-            Route::post('/datasets', [\App\Http\Controllers\DatasetController::class, 'store'])->name('datasets.store');
-            Route::delete('/datasets/{dataset}', [\App\Http\Controllers\DatasetController::class, 'destroy'])->name('datasets.destroy');
-            Route::post('/datasets/{dataset}/sync', [\App\Http\Controllers\DatasetController::class, 'sync'])->name('datasets.sync');
-            Route::put('/datasets/{dataset}', [\App\Http\Controllers\DatasetController::class, 'update'])->name('datasets.update');
-            Route::patch('/datasets/{dataset}/toggle', [\App\Http\Controllers\DatasetController::class, 'toggle'])->name('datasets.toggle');
-            Route::get('/datasets/{dataset}/download', [\App\Http\Controllers\DatasetController::class, 'download'])->name('datasets.download');
-            Route::get('/datasets/{dataset}/videos', [\App\Http\Controllers\DatasetController::class, 'videos'])->name('datasets.videos');
+            // Resource Datasets (Pro-only)
+            Route::middleware(function ($request, $next) {
+                if (!$request->user() || !$request->user()->subscribed('youtube')) {
+                    return redirect()->route('plans')->withErrors(['error' => 'The Knowledge Base feature is exclusive to Plus members.']);
+                }
+                return $next($request);
+            })->group(function() {
+                Route::get('/datasets', [\App\Http\Controllers\DatasetController::class, 'index'])->name('datasets.index');
+                Route::post('/datasets', [\App\Http\Controllers\DatasetController::class, 'store'])->name('datasets.store');
+                Route::delete('/datasets/{dataset}', [\App\Http\Controllers\DatasetController::class, 'destroy'])->name('datasets.destroy');
+                Route::post('/datasets/{dataset}/sync', [\App\Http\Controllers\DatasetController::class, 'sync'])->name('datasets.sync');
+                Route::put('/datasets/{dataset}', [\App\Http\Controllers\DatasetController::class, 'update'])->name('datasets.update');
+                Route::patch('/datasets/{dataset}/toggle', [\App\Http\Controllers\DatasetController::class, 'toggle'])->name('datasets.toggle');
+                Route::get('/datasets/{dataset}/download', [\App\Http\Controllers\DatasetController::class, 'download'])->name('datasets.download');
+                Route::get('/datasets/{dataset}/videos', [\App\Http\Controllers\DatasetController::class, 'videos'])->name('datasets.videos');
+            });
         });
 
         // Redirect /welcome to /
